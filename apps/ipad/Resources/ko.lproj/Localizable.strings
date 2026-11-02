@@ -364,7 +364,6 @@
 "Backend API" = "백엔드 API";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "이 오프라인 버전은 백엔드 API에 연결되지 않았습니다. 설정에서 다른 제공업체를 선택하세요. 크레딧은 사용되지 않았습니다.";
 "Change provider" = "제공업체 변경";
-"Claim an available daily reward, watch a rewarded video, or wait until the next UTC day." = "일일 보상을 받거나 보상 동영상을 보거나 다음 UTC 날짜까지 기다리세요.";
 "Claim daily reward" = "일일 보상 받기";
 "Complete video and claim" = "동영상 완료 후 받기";
 "Cost" = "비용";
@@ -383,27 +382,19 @@
 "Next reward (UTC)" = "다음 보상 (UTC)";
 "Not connected" = "연결되지 않음";
 "Not enough credits" = "크레딧 부족";
-"One video access will be used instead of credits." = "크레딧 대신 동영상 이용권을 한 번 사용합니다.";
 "Open chapter" = "챕터 열기";
 "Playing demo video…" = "데모 동영상 재생 중…";
 "Premium" = "Premium";
 "Profile ID" = "프로필 ID";
 "Prompt assistance is charged when a valid suggestion is returned, even if you cancel its review. Image generation is charged separately." = "유효한 제안을 받으면 검토를 취소해도 프롬프트 비용이 발생합니다. 이미지 생성 비용은 별도입니다.";
 "Random prompt credit cost" = "무작위 프롬프트 비용";
-"Rewarded video" = "보상 동영상";
 "Rewarded video simulation" = "보상 동영상 시뮬레이션";
-"The video multiplier applies to today's daily reward. Claiming either option uses today's reward." = "동영상 배수는 오늘의 일일 보상에 적용됩니다. 어느 옵션이든 오늘의 보상을 사용합니다.";
 "This is a short offline preview. Closing it early gives no reward." = "짧은 오프라인 미리보기입니다. 일찍 닫으면 보상이 없습니다.";
 "This provider requires Premium. Choose Local GGUF, Backend API, OpenAI or Claude." = "이 제공업체는 Premium이 필요합니다. 로컬 GGUF, 백엔드 API, OpenAI 또는 Claude를 선택하세요.";
 "Today's reward" = "오늘의 보상";
 "Today's reward has already been claimed." = "오늘의 보상을 이미 받았습니다.";
 "Translate chapter" = "챕터 번역";
-"Video reward" = "동영상 보상";
 "Wait for the current operation to finish." = "현재 작업이 끝날 때까지 기다리세요.";
-"Watch video and claim %d credits" = "동영상 보고 %d 크레딧 받기";
-"Watch video to get %d credits" = "동영상으로 %d 크레딧 획득";
-"Watch video to unlock this action" = "동영상을 보고 이 작업 허용";
-"You can watch again whenever you need more credits. Credits are awarded only after the video completes." = "필요할 때마다 다시 볼 수 있습니다. 동영상을 완료해야 크레딧이 지급됩니다.";
 "credits" = "크레딧";
 "Free" = "Free";
 "Confirm credit use" = "크레딧 사용 확인";
@@ -431,7 +422,6 @@
 "Sign in to continue" = "계속하려면 로그인하세요";
 "Sign in to access your library, translation and image generation." = "라이브러리, 번역 및 이미지 생성을 이용하려면 로그인하세요.";
 "Checking sign-in…" = "로그인 확인 중…";
-"Free videos unlock one translation or image without adding credits. Enhance and random prompts need credits." = "무료 동영상은 크레딧 추가 없이 번역 또는 이미지 생성 1회를 제공합니다. 프롬프트 개선 및 무작위 생성에는 크레딧이 필요합니다.";
 "Choose a translation or image reward." = "번역 또는 이미지 생성 보상을 선택하세요.";
 "Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free." = "Rawkuma에서 번역할 때는 크레딧이 필요합니다. 다시 실행할 때는 백엔드 API를 사용하는 경우에만 크레딧이 필요합니다. 다운로드한 챕터는 무료로 읽을 수 있습니다.";
 
@@ -501,3 +491,9 @@
 "AdMob test ads" = "AdMob 테스트 광고";
 
 "Upgrade to Premium" = "Premium으로 업그레이드";
+"Watch a rewarded video to continue this action without spending credits. It starts automatically after you earn the reward." = "보상 동영상을 보면 크레딧을 사용하지 않고 이 작업을 계속할 수 있습니다. 보상을 받으면 자동으로 시작됩니다.";
+"Watch video and continue" = "동영상 보고 계속";
+"Return" = "돌아가기";
+"Claim ×%g credits with video" = "동영상으로 크레딧 %g배 받기";
+"Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "동영상을 보고 오늘 %d크레딧을 더 받으세요. 일반 보상을 받은 뒤에도 가능합니다.";
+"The video bonus is available again at the next daily reset." = "다음 일일 초기화 후 동영상 보너스를 다시 받을 수 있습니다.";

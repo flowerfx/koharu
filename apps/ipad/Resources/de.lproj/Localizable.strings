@@ -364,7 +364,6 @@
 "Backend API" = "Backend-API";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "Die Backend-API ist in dieser Offline-Version nicht verbunden. Wähle einen anderen Anbieter in den Einstellungen. Keine Credits verbraucht.";
 "Change provider" = "Anbieter wechseln";
-"Claim an available daily reward, watch a rewarded video, or wait until the next UTC day." = "Hole die verfügbare Tagesbelohnung ab, sieh ein Belohnungsvideo an oder warte auf den nächsten UTC-Tag.";
 "Claim daily reward" = "Tagesbelohnung abholen";
 "Complete video and claim" = "Video abschließen und abholen";
 "Cost" = "Kosten";
@@ -383,27 +382,19 @@
 "Next reward (UTC)" = "Nächste Belohnung (UTC)";
 "Not connected" = "Nicht verbunden";
 "Not enough credits" = "Nicht genügend Credits";
-"One video access will be used instead of credits." = "Ein Videozugang wird statt Credits verwendet.";
 "Open chapter" = "Kapitel öffnen";
 "Playing demo video…" = "Demo-Video läuft…";
 "Premium" = "Premium";
 "Profile ID" = "Profil-ID";
 "Prompt assistance is charged when a valid suggestion is returned, even if you cancel its review. Image generation is charged separately." = "Prompt-Hilfe wird bei einer gültigen Antwort berechnet, auch wenn du die Vorschau schließt. Bilder werden separat berechnet.";
 "Random prompt credit cost" = "Credits für Zufallsprompt";
-"Rewarded video" = "Belohnungsvideo";
 "Rewarded video simulation" = "Belohnungsvideo-Simulation";
-"The video multiplier applies to today's daily reward. Claiming either option uses today's reward." = "Der Video-Multiplikator gilt für die heutige Tagesbelohnung. Beide Optionen verbrauchen den heutigen Anspruch.";
 "This is a short offline preview. Closing it early gives no reward." = "Kurze Offline-Vorschau. Bei vorzeitigem Schließen gibt es keine Belohnung.";
 "This provider requires Premium. Choose Local GGUF, Backend API, OpenAI or Claude." = "Dieser Anbieter erfordert Premium. Wähle lokales GGUF, Backend-API, OpenAI oder Claude.";
 "Today's reward" = "Heutige Belohnung";
 "Today's reward has already been claimed." = "Heutige Belohnung bereits abgeholt.";
 "Translate chapter" = "Kapitel übersetzen";
-"Video reward" = "Video-Belohnung";
 "Wait for the current operation to finish." = "Warte, bis die aktuelle Aktion abgeschlossen ist.";
-"Watch video and claim %d credits" = "Video ansehen und %d Credits abholen";
-"Watch video to get %d credits" = "Video ansehen für %d Credits";
-"Watch video to unlock this action" = "Video ansehen und diese Aktion freischalten";
-"You can watch again whenever you need more credits. Credits are awarded only after the video completes." = "Du kannst bei Bedarf weitere Videos ansehen. Credits gibt es erst nach vollständigem Abspielen.";
 "credits" = "Credits";
 "Free" = "Free";
 "Confirm credit use" = "Credit-Verbrauch bestätigen";
@@ -431,7 +422,6 @@
 "Sign in to continue" = "Zum Fortfahren anmelden";
 "Sign in to access your library, translation and image generation." = "Melde dich an, um Bibliothek, Übersetzung und Bilderstellung zu nutzen.";
 "Checking sign-in…" = "Anmeldung wird geprüft…";
-"Free videos unlock one translation or image without adding credits. Enhance and random prompts need credits." = "Kostenlose Videos schalten eine Übersetzung oder ein Bild frei, ohne Credits hinzuzufügen. Verbesserungen und zufällige Prompts benötigen Credits.";
 "Choose a translation or image reward." = "Wähle eine Belohnung für Übersetzung oder Bilderstellung.";
 "Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free." = "Übersetzungen aus Rawkuma kosten Credits. Erneute Ausführungen kosten nur mit der Backend-API Credits. Heruntergeladene Kapitel können kostenlos gelesen werden.";
 
@@ -501,3 +491,9 @@
 "AdMob test ads" = "AdMob-Testanzeigen";
 
 "Upgrade to Premium" = "Auf Premium upgraden";
+"Watch a rewarded video to continue this action without spending credits. It starts automatically after you earn the reward." = "Sieh dir ein Belohnungsvideo an, um diese Aktion ohne Credits fortzusetzen. Nach der Belohnung startet sie automatisch.";
+"Watch video and continue" = "Video ansehen und fortfahren";
+"Return" = "Zurück";
+"Claim ×%g credits with video" = "Mit Video ×%g Credits erhalten";
+"Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "Sieh dir ein Video an und erhalte heute %d weitere Credits, auch nach Abholung der normalen Belohnung.";
+"The video bonus is available again at the next daily reset." = "Der Video-Bonus ist nach der nächsten täglichen Zurücksetzung wieder verfügbar.";

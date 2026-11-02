@@ -364,7 +364,6 @@
 "Backend API" = "واجهة الخادم";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "واجهة الخادم غير متصلة في هذا الإصدار المحلي. اختر مزوداً آخر في الإعدادات. لم يُستهلك أي رصيد.";
 "Change provider" = "تغيير المزود";
-"Claim an available daily reward, watch a rewarded video, or wait until the next UTC day." = "احصل على المكافأة اليومية المتاحة، أو شاهد فيديو، أو انتظر اليوم التالي بتوقيت UTC.";
 "Claim daily reward" = "استلام المكافأة اليومية";
 "Complete video and claim" = "إكمال الفيديو والاستلام";
 "Cost" = "التكلفة";
@@ -383,27 +382,19 @@
 "Next reward (UTC)" = "المكافأة التالية (UTC)";
 "Not connected" = "غير متصل";
 "Not enough credits" = "الرصيد غير كافٍ";
-"One video access will be used instead of credits." = "سيُستخدم تصريح فيديو واحد بدلاً من الرصيد.";
 "Open chapter" = "فتح الفصل";
 "Playing demo video…" = "جارٍ تشغيل فيديو المحاكاة…";
 "Premium" = "Premium";
 "Profile ID" = "معرّف الملف";
 "Prompt assistance is charged when a valid suggestion is returned, even if you cancel its review. Image generation is charged separately." = "تُحتسب مساعدة الوصف عند وصول اقتراح صالح حتى لو ألغيت المراجعة. إنشاء الصورة يُحتسب منفصلاً.";
 "Random prompt credit cost" = "تكلفة الوصف العشوائي";
-"Rewarded video" = "فيديو مكافأة";
 "Rewarded video simulation" = "محاكاة فيديو مكافأة";
-"The video multiplier applies to today's daily reward. Claiming either option uses today's reward." = "يُطبق مضاعف الفيديو على مكافأة اليوم. يستخدم كلا الخيارين مكافأة اليوم.";
 "This is a short offline preview. Closing it early gives no reward." = "هذا عرض محلي قصير. إغلاقه مبكراً لا يمنح مكافأة.";
 "This provider requires Premium. Choose Local GGUF, Backend API, OpenAI or Claude." = "هذا المزود يتطلب Premium. اختر GGUF المحلية أو واجهة الخادم أو OpenAI أو Claude.";
 "Today's reward" = "مكافأة اليوم";
 "Today's reward has already been claimed." = "تم استلام مكافأة اليوم بالفعل.";
 "Translate chapter" = "ترجمة الفصل";
-"Video reward" = "مكافأة الفيديو";
 "Wait for the current operation to finish." = "انتظر انتهاء العملية الحالية.";
-"Watch video and claim %d credits" = "شاهد الفيديو واستلم %d من الرصيد";
-"Watch video to get %d credits" = "شاهد الفيديو لتحصل على %d من الرصيد";
-"Watch video to unlock this action" = "شاهد الفيديو لفتح هذا الإجراء";
-"You can watch again whenever you need more credits. Credits are awarded only after the video completes." = "يمكنك المشاهدة مجدداً عند الحاجة. يُمنح الرصيد بعد اكتمال الفيديو فقط.";
 "credits" = "رصيد";
 "Free" = "Free";
 "Confirm credit use" = "تأكيد استخدام الرصيد";
@@ -431,7 +422,6 @@
 "Sign in to continue" = "سجّل الدخول للمتابعة";
 "Sign in to access your library, translation and image generation." = "سجّل الدخول لاستخدام المكتبة والترجمة وإنشاء الصور.";
 "Checking sign-in…" = "جارٍ التحقق من تسجيل الدخول…";
-"Free videos unlock one translation or image without adding credits. Enhance and random prompts need credits." = "تفتح الفيديوهات المجانية ترجمة واحدة أو إنشاء صورة دون إضافة رصيد. تحسين الأوامر والأوامر العشوائية تتطلب رصيدًا.";
 "Choose a translation or image reward." = "اختر مكافأة للترجمة أو إنشاء صورة.";
 "Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free." = "الترجمة من Rawkuma تستهلك رصيدًا. إعادة التشغيل تستهلك رصيدًا فقط مع واجهة الخادم. قراءة الفصول المنزّلة مجانية.";
 
@@ -501,3 +491,9 @@
 "AdMob test ads" = "إعلانات AdMob التجريبية";
 
 "Upgrade to Premium" = "الترقية إلى Premium";
+"Watch a rewarded video to continue this action without spending credits. It starts automatically after you earn the reward." = "شاهد فيديو بمكافأة لمتابعة هذا الإجراء دون إنفاق رصيد. سيبدأ تلقائيًا بعد حصولك على المكافأة.";
+"Watch video and continue" = "شاهد الفيديو وتابع";
+"Return" = "رجوع";
+"Claim ×%g credits with video" = "احصل على رصيد ×%g بالفيديو";
+"Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "شاهد فيديو لتحصل على %d رصيد إضافي اليوم، حتى بعد استلام المكافأة العادية.";
+"The video bonus is available again at the next daily reset." = "ستتوفر مكافأة الفيديو مجددًا عند إعادة التعيين اليومية التالية.";

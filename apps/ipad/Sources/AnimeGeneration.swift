@@ -150,7 +150,7 @@ extension MangaLibrary {
                 }
                 defer { reporting.cancel() }
                 do {
-                    ticket = try await credits.reserve(action: .image, provider: preferences.provider)
+                    ticket = try await credits.reserve(action: .image, provider: .local)
                     try Task.checkCancellation()
                     await translator.unload()
                     try Task.checkCancellation()

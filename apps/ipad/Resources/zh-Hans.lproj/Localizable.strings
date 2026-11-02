@@ -364,7 +364,6 @@
 "Backend API" = "后端 API";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "此离线版本尚未连接后端 API。请在设置中选择其他提供商。未扣除积分。";
 "Change provider" = "更换提供商";
-"Claim an available daily reward, watch a rewarded video, or wait until the next UTC day." = "领取可用的每日奖励、观看奖励视频，或等待下一个 UTC 日期。";
 "Claim daily reward" = "领取每日奖励";
 "Complete video and claim" = "完成视频并领取";
 "Cost" = "费用";
@@ -383,27 +382,19 @@
 "Next reward (UTC)" = "下次奖励（UTC）";
 "Not connected" = "未连接";
 "Not enough credits" = "积分不足";
-"One video access will be used instead of credits." = "将使用一次视频使用权代替积分。";
 "Open chapter" = "打开章节";
 "Playing demo video…" = "正在播放演示视频…";
 "Premium" = "Premium";
 "Profile ID" = "档案 ID";
 "Prompt assistance is charged when a valid suggestion is returned, even if you cancel its review. Image generation is charged separately." = "收到有效建议时即收取提示词费用，即使取消预览也不退还。图片生成单独收费。";
 "Random prompt credit cost" = "随机提示词费用";
-"Rewarded video" = "奖励视频";
 "Rewarded video simulation" = "奖励视频模拟";
-"The video multiplier applies to today's daily reward. Claiming either option uses today's reward." = "视频倍率适用于今天的每日奖励。选择任一方式都会使用今天的领奖机会。";
 "This is a short offline preview. Closing it early gives no reward." = "这是简短的离线演示。提前关闭不会获得奖励。";
 "This provider requires Premium. Choose Local GGUF, Backend API, OpenAI or Claude." = "此提供商需要 Premium。请选择本地 GGUF、后端 API、OpenAI 或 Claude。";
 "Today's reward" = "今日奖励";
 "Today's reward has already been claimed." = "今天的奖励已领取。";
 "Translate chapter" = "翻译章节";
-"Video reward" = "视频奖励";
 "Wait for the current operation to finish." = "请等待当前操作完成。";
-"Watch video and claim %d credits" = "观看视频并领取 %d 积分";
-"Watch video to get %d credits" = "观看视频获得 %d 积分";
-"Watch video to unlock this action" = "观看视频解锁此操作";
-"You can watch again whenever you need more credits. Credits are awarded only after the video completes." = "需要积分时可以再次观看。仅在视频完成后发放积分。";
 "credits" = "积分";
 "Free" = "Free";
 "Confirm credit use" = "确认使用积分";
@@ -431,7 +422,6 @@
 "Sign in to continue" = "登录以继续";
 "Sign in to access your library, translation and image generation." = "登录后即可使用书库、翻译和图像生成功能。";
 "Checking sign-in…" = "正在检查登录状态…";
-"Free videos unlock one translation or image without adding credits. Enhance and random prompts need credits." = "免费视频可解锁一次翻译或图片生成，不增加积分。提示词增强和随机提示词需要积分。";
 "Choose a translation or image reward." = "请选择翻译或图片生成奖励。";
 "Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free." = "从 Rawkuma 翻译章节需要积分。重新运行仅在使用后端 API 时消耗积分。阅读已下载的章节免费。";
 
@@ -501,3 +491,9 @@
 "AdMob test ads" = "AdMob 测试广告";
 
 "Upgrade to Premium" = "升级至 Premium";
+"Watch a rewarded video to continue this action without spending credits. It starts automatically after you earn the reward." = "观看奖励视频即可继续此操作，无需消耗点数。获得奖励后将自动开始。";
+"Watch video and continue" = "观看视频并继续";
+"Return" = "返回";
+"Claim ×%g credits with video" = "看视频领取%g倍点数";
+"Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "观看视频可在今天再获得%d点数。领取普通奖励后仍可观看。";
+"The video bonus is available again at the next daily reset." = "视频奖励将在下次每日重置后再次开放。";

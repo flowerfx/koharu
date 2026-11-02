@@ -128,7 +128,7 @@ import UIKit
         guard !busy else { return }
         guard chapters.contains(where: { $0.id == id && !$0.pages.isEmpty }) else { error = L("Chapter not found"); return }
         do { try requireCreditProvider() } catch { self.error = error.localizedDescription; return }
-        requestCredits(.translate, cost: rerunCreditCost, explanation: translationCreditExplanation) {
+        requestCredits(.translate, cost: rerunCreditCost, explanation: translationCreditExplanation, rerun: true) {
             self.startRun(id, force: force, page: page)
         }
     }

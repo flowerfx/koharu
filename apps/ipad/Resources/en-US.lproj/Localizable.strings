@@ -364,7 +364,6 @@
 "Backend API" = "Backend API";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent.";
 "Change provider" = "Change provider";
-"Claim an available daily reward, watch a rewarded video, or wait until the next UTC day." = "Claim an available daily reward, watch a rewarded video, or wait until the next UTC day.";
 "Claim daily reward" = "Claim daily reward";
 "Complete video and claim" = "Complete video and claim";
 "Cost" = "Cost";
@@ -383,27 +382,19 @@
 "Next reward (UTC)" = "Next reward (UTC)";
 "Not connected" = "Not connected";
 "Not enough credits" = "Not enough credits";
-"One video access will be used instead of credits." = "One video access will be used instead of credits.";
 "Open chapter" = "Open chapter";
 "Playing demo video…" = "Playing demo video…";
 "Premium" = "Premium";
 "Profile ID" = "Profile ID";
 "Prompt assistance is charged when a valid suggestion is returned, even if you cancel its review. Image generation is charged separately." = "Prompt assistance is charged when a valid suggestion is returned, even if you cancel its review. Image generation is charged separately.";
 "Random prompt credit cost" = "Random prompt credit cost";
-"Rewarded video" = "Rewarded video";
 "Rewarded video simulation" = "Rewarded video simulation";
-"The video multiplier applies to today's daily reward. Claiming either option uses today's reward." = "The video multiplier applies to today's daily reward. Claiming either option uses today's reward.";
 "This is a short offline preview. Closing it early gives no reward." = "This is a short offline preview. Closing it early gives no reward.";
 "This provider requires Premium. Choose Local GGUF, Backend API, OpenAI or Claude." = "This provider requires Premium. Choose Local GGUF, Backend API, OpenAI or Claude.";
 "Today's reward" = "Today's reward";
 "Today's reward has already been claimed." = "Today's reward has already been claimed.";
 "Translate chapter" = "Translate chapter";
-"Video reward" = "Video reward";
 "Wait for the current operation to finish." = "Wait for the current operation to finish.";
-"Watch video and claim %d credits" = "Watch video and claim %d credits";
-"Watch video to get %d credits" = "Watch video to get %d credits";
-"Watch video to unlock this action" = "Watch video to unlock this action";
-"You can watch again whenever you need more credits. Credits are awarded only after the video completes." = "You can watch again whenever you need more credits. Credits are awarded only after the video completes.";
 "credits" = "credits";
 "Free" = "Free";
 "Confirm credit use" = "Confirm credit use";
@@ -431,7 +422,6 @@
 "Sign in to continue" = "Sign in to continue";
 "Sign in to access your library, translation and image generation." = "Sign in to access your library, translation and image generation.";
 "Checking sign-in…" = "Checking sign-in…";
-"Free videos unlock one translation or image without adding credits. Enhance and random prompts need credits." = "Free videos unlock one translation or image without adding credits. Enhance and random prompts need credits.";
 "Choose a translation or image reward." = "Choose a translation or image reward.";
 "Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free." = "Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free.";
 
@@ -501,3 +491,9 @@
 "AdMob test ads" = "AdMob test ads";
 
 "Upgrade to Premium" = "Upgrade to Premium";
+"Watch a rewarded video to continue this action without spending credits. It starts automatically after you earn the reward." = "Watch a rewarded video to continue this action without spending credits. It starts automatically after you earn the reward.";
+"Watch video and continue" = "Watch video and continue";
+"Return" = "Return";
+"Claim ×%g credits with video" = "Claim ×%g credits with video";
+"Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "Watch a video to receive %d more credits today. You can also do this after claiming the normal reward.";
+"The video bonus is available again at the next daily reset." = "The video bonus is available again at the next daily reset.";

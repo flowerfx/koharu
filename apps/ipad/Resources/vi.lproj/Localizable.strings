@@ -364,7 +364,6 @@
 "Backend API" = "API backend";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "Bản offline chưa kết nối API backend. Hãy chọn provider khác trong Cài đặt. Chưa trừ credit.";
 "Change provider" = "Đổi provider";
-"Claim an available daily reward, watch a rewarded video, or wait until the next UTC day." = "Nhận thưởng ngày nếu còn, xem video thưởng hoặc chờ sang ngày UTC tiếp theo.";
 "Claim daily reward" = "Nhận thưởng ngày";
 "Complete video and claim" = "Hoàn tất video và nhận thưởng";
 "Cost" = "Chi phí";
@@ -383,27 +382,19 @@
 "Next reward (UTC)" = "Thưởng tiếp theo (UTC)";
 "Not connected" = "Chưa kết nối";
 "Not enough credits" = "Không đủ credit";
-"One video access will be used instead of credits." = "Sẽ dùng một lượt video thay cho credit.";
 "Open chapter" = "Mở chapter";
 "Playing demo video…" = "Đang phát video giả lập…";
 "Premium" = "Premium";
 "Profile ID" = "ID hồ sơ";
 "Prompt assistance is charged when a valid suggestion is returned, even if you cancel its review. Image generation is charged separately." = "Trợ lý prompt tính phí khi trả về gợi ý hợp lệ, kể cả khi bạn hủy màn hình duyệt. Tạo ảnh tính riêng.";
 "Random prompt credit cost" = "Credit prompt ngẫu nhiên";
-"Rewarded video" = "Video thưởng";
 "Rewarded video simulation" = "Giả lập video thưởng";
-"The video multiplier applies to today's daily reward. Claiming either option uses today's reward." = "Hệ số video áp dụng cho thưởng ngày hôm nay. Nhận theo cách nào cũng sử dụng lượt thưởng hôm nay.";
 "This is a short offline preview. Closing it early gives no reward." = "Đây là bản xem thử offline ngắn. Đóng sớm sẽ không nhận thưởng.";
 "This provider requires Premium. Choose Local GGUF, Backend API, OpenAI or Claude." = "Provider này cần Premium. Hãy chọn GGUF local, API backend, OpenAI hoặc Claude.";
 "Today's reward" = "Thưởng hôm nay";
 "Today's reward has already been claimed." = "Đã nhận thưởng hôm nay.";
 "Translate chapter" = "Dịch chapter";
-"Video reward" = "Phần thưởng video";
 "Wait for the current operation to finish." = "Hãy chờ tác vụ hiện tại hoàn tất.";
-"Watch video and claim %d credits" = "Xem video và nhận %d credit";
-"Watch video to get %d credits" = "Xem video để nhận %d credit";
-"Watch video to unlock this action" = "Xem video để mở khóa thao tác này";
-"You can watch again whenever you need more credits. Credits are awarded only after the video completes." = "Bạn có thể xem tiếp khi cần credit. Chỉ nhận thưởng sau khi video hoàn tất.";
 "credits" = "credit";
 "Free" = "Free";
 "Confirm credit use" = "Xác nhận dùng credit";
@@ -431,7 +422,6 @@
 "Sign in to continue" = "Đăng nhập để tiếp tục";
 "Sign in to access your library, translation and image generation." = "Đăng nhập để sử dụng thư viện, dịch truyện và tạo ảnh.";
 "Checking sign-in…" = "Đang kiểm tra đăng nhập…";
-"Free videos unlock one translation or image without adding credits. Enhance and random prompts need credits." = "Video miễn phí mở khóa một lượt dịch hoặc tạo ảnh, không cộng credit. Enhance và prompt ngẫu nhiên cần credit.";
 "Choose a translation or image reward." = "Chọn thưởng cho dịch truyện hoặc tạo ảnh.";
 "Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free." = "Dịch chương từ Rawkuma tốn credit. Dịch lại/chạy lại chỉ tốn credit khi dùng API backend. Đọc chapter đã tải là miễn phí.";
 
@@ -501,3 +491,9 @@
 "AdMob test ads" = "Quảng cáo test AdMob";
 
 "Upgrade to Premium" = "Nâng cấp lên Premium";
+"Watch a rewarded video to continue this action without spending credits. It starts automatically after you earn the reward." = "Xem video thưởng để thực hiện thao tác này mà không trừ credit. Thao tác sẽ tự bắt đầu sau khi bạn nhận thưởng.";
+"Watch video and continue" = "Xem video và tiếp tục";
+"Return" = "Quay lại";
+"Claim ×%g credits with video" = "Xem video nhận ×%g credit";
+"Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "Xem video để nhận thêm %d credit hôm nay. Bạn vẫn có thể xem sau khi đã nhận thưởng thường.";
+"The video bonus is available again at the next daily reset." = "Thưởng video sẽ mở lại vào lần đặt lại hằng ngày tiếp theo.";

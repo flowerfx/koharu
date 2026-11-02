@@ -47,7 +47,7 @@ final class BackendAIChecks: XCTestCase {
             backendContext: .init(reservationID: translationTicket, provider: config.backendProvider))
         XCTAssertEqual(translations.count, 2); XCTAssertTrue(translations.allSatisfy { !$0.isEmpty })
         let afterTranslation = try await profile("ai_finish", ["reservation_id": translationTicket])
-        XCTAssertEqual(afterTranslation.profile.credit, initial.profile.credit - initial.policy.cost_translate)
+        XCTAssertEqual(afterTranslation.profile.credit, initial.profile.credit - initial.policy.cost(.translate, tier: initial.profile.account_type, provider: .backend))
         let promptReservation = try await profile("profile_reserve", ["operation_id": UUID().uuidString.lowercased(), "action": "enhance", "provider": "backend", "rerun": false])
         let promptTicket = try XCTUnwrap(promptReservation.reservation_id)
         let input = try AnimePromptContract.request(.enhance, prompt: "An original anime girl with pink hair and a white dress in a garden.")
@@ -55,7 +55,7 @@ final class BackendAIChecks: XCTestCase {
             backendContext: .init(reservationID: promptTicket, provider: nil), backendTask: .enhance)
         let prompt = try AnimePromptContract.decode(data)
         let finished = try await profile("ai_finish", ["reservation_id": promptTicket])
-        XCTAssertEqual(finished.profile.credit, afterTranslation.profile.credit - initial.policy.cost_enhance_free)
+        XCTAssertEqual(finished.profile.credit, afterTranslation.profile.credit - initial.policy.cost(.enhance, tier: initial.profile.account_type, provider: .backend))
         XCTAssertTrue(prompt.prompt.lowercased().contains("pink"))
         let outputs = await trace.results(); XCTAssertEqual(outputs.count, 3)
         let report: [String: Any] = ["endpoint": connection.endpoint.absoluteString,

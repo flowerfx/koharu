@@ -12,7 +12,6 @@ enum CreditTier: String, Codable, CaseIterable, Identifiable {
 
 enum CreditAction: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
-    var supportsFreeVideo: Bool { [.translate, .image].contains(self) }
     case translate, image, enhance, generatePrompt
     var title: String {
         switch self {
@@ -28,10 +27,11 @@ struct CreditConfiguration: Codable {
     let daily_free_user: Int
     let daily_premium_user: Int
     let reward_video_multiplier: Double
-    let reward_video_credit: Int
-    let cost_translate: Int
-    let cost_api_prompt: Int
-    let cost_image: Int
+    let cost_translate_free: Int
+    let cost_translate_premium: Int
+    let cost_backend_surcharge: Int
+    let cost_rerun_backend: Int
+    let cost_image_free: Int
     let cost_image_premium: Int
     let cost_gen_prompt: Int
     let cost_enhance_free: Int
@@ -42,27 +42,27 @@ struct CreditConfiguration: Codable {
     }
     func validated() throws -> Self {
         let value = self
-        let amounts = [value.daily_free_user, value.daily_premium_user, value.reward_video_credit, value.cost_translate,
-                      value.cost_api_prompt, value.cost_image, value.cost_image_premium, value.cost_gen_prompt,
-                      value.cost_enhance_free, value.cost_enhance_premium]
+        let amounts = [value.daily_free_user, value.daily_premium_user, value.cost_translate_free, value.cost_translate_premium, value.cost_backend_surcharge, value.cost_rerun_backend, value.cost_image_free, value.cost_image_premium, value.cost_gen_prompt, value.cost_enhance_free, value.cost_enhance_premium]
         guard amounts.allSatisfy({ (0...100_000).contains($0) }), value.daily_free_user > 0,
-              value.daily_premium_user > 0, value.reward_video_credit > 0,
+              value.daily_premium_user > 0,
               value.reward_video_multiplier.isFinite, (1...10).contains(value.reward_video_multiplier) else {
             throw AppError.message(L("Invalid credit configuration"))
         }
         return value
     }
     func daily(_ tier: CreditTier) -> Int { tier == .free ? daily_free_user : daily_premium_user }
-    func cost(_ action: CreditAction, tier: CreditTier) -> Int {
+    func cost(_ action: CreditAction, tier: CreditTier, provider: TranslationProvider) -> Int {
+        let premium = tier == .premium
+        let surcharge = provider == .backend ? cost_backend_surcharge : 0
         switch action {
-        case .translate: return cost_translate
-        case .image: return tier == .premium ? cost_image_premium : cost_image
-        case .enhance: return tier == .premium ? cost_enhance_premium : cost_enhance_free
+        case .translate: return (premium ? cost_translate_premium : cost_translate_free) + surcharge
+        case .image: return premium ? cost_image_premium : cost_image_free
+        case .enhance: return (premium ? cost_enhance_premium : cost_enhance_free) + surcharge
         case .generatePrompt: return cost_gen_prompt
         }
     }
     func rerunCost(provider: TranslationProvider) -> Int {
-        provider == .backend ? cost_api_prompt : 0
+        provider == .backend ? cost_rerun_backend : 0
     }
 }
 
@@ -80,6 +80,8 @@ struct CreditResponse: Decodable {
     let policy: CreditConfiguration
     let server_time: Date
     let can_claim_daily: Bool
+    let daily_video_available: Bool
+    let daily_video_bonus: Int
     let video_access: [String: Int]
     let reservation_id: String?
     let video_id: String?
@@ -114,13 +116,15 @@ struct CreditResponse: Decodable {
     private(set) var offline = false
     private(set) var videoAccess: [String: Int] = [:]
     private(set) var canClaimDaily = false
+    private(set) var dailyVideoAvailable = false
+    private(set) var dailyVideoBonus = 0
     var tier: CreditTier { profile.account_type }
     var nextDaily: Date { profile.reset_daily_reward }
     init(authentication: NakamaAuthentication, policy: CreditConfiguration) {
         self.authentication = authentication; self.policy = policy
     }
     func clear() {
-        loaded = false; canClaimDaily = false; videoAccess = [:]; failure = nil; offline = false; revision = -1
+        loaded = false; canClaimDaily = false; dailyVideoAvailable = false; dailyVideoBonus = 0; videoAccess = [:]; failure = nil; offline = false; revision = -1
         profile = CreditProfile(id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!, credit: 0, account_type: .free, reset_daily_reward: .distantPast)
     }
     private func command(_ name: String, _ payload: [String: Any] = [:]) async throws -> CreditResponse {
@@ -137,6 +141,7 @@ struct CreditResponse: Decodable {
                 revision = response.revision
                 profile = response.profile; policy = response.policy
                 videoAccess = response.video_access; canClaimDaily = response.can_claim_daily
+                dailyVideoAvailable = response.daily_video_available; dailyVideoBonus = response.daily_video_bonus
                 loaded = true; failure = nil
             }
             offline = false
@@ -148,15 +153,15 @@ struct CreditResponse: Decodable {
     }
     func load() async throws { _ = try await command("profile_load") }
     func claimDaily() async throws { _ = try await command("profile_daily", ["operation_id": UUID().uuidString]) }
-    func startVideo(purpose: String, action: CreditAction) async throws -> String {
-        guard let id = try await command("profile_video_start", ["purpose": purpose, "action": action.rawValue]).video_id else {
+    func startVideo(purpose: String, operation: CreditOperation) async throws -> String {
+        guard let id = try await command("profile_video_start", ["purpose": purpose, "action": operation.action.rawValue, "provider": operation.provider.rawValue, "rerun": operation.rerun]).video_id else {
             throw AppError.message(L("Could not open credit profile"))
         }
         return id
     }
     func completeVideo(_ id: String) async throws { _ = try await command("profile_video_complete", ["operation_id": id]) }
-    func hasVideoAccess(_ action: CreditAction) -> Bool { tier == .free && action.supportsFreeVideo && videoAccess[action.rawValue, default: 0] > 0 }
-    func canAfford(_ amount: Int, action: CreditAction) -> Bool { loaded && failure == nil && (profile.credit >= amount || hasVideoAccess(action)) }
+    func hasVideoAccess(_ operation: CreditOperation) -> Bool { videoAccess[operation.fingerprint, default: 0] > 0 }
+    func canAfford(_ amount: Int, operation: CreditOperation) -> Bool { loaded && failure == nil && (profile.credit >= amount || hasVideoAccess(operation)) }
     func reserve(action: CreditAction, provider: TranslationProvider, rerun: Bool = false) async throws -> String? {
         try await command("profile_reserve", ["operation_id": UUID().uuidString.lowercased(), "action": action.rawValue, "provider": provider.rawValue, "rerun": rerun]).reservation_id
     }
@@ -171,9 +176,17 @@ struct CreditResponse: Decodable {
     func validateSubscription(_ jws: String) async throws { _ = try await command("profile_subscription", ["receipt": jws]) }
 }
 
+struct CreditOperation {
+    let action: CreditAction
+    let provider: TranslationProvider
+    let rerun: Bool
+    var fingerprint: String { "\(action.rawValue):\(provider.rawValue):\(rerun)" }
+}
+
 struct CreditRequest: Identifiable {
     let id = UUID()
-    let action: CreditAction
+    let operation: CreditOperation
+    var action: CreditAction { operation.action }
     let cost: Int
     let explanation: String
     let canChangeProvider: Bool
@@ -207,10 +220,10 @@ extension MangaLibrary {
          : L("If you stop or a later page fails, pages already translated are kept and the credits are used. Credits are refunded only when no page was translated."))
     }
     func creditCost(_ action: CreditAction) -> Int {
-        credits.policy.cost(action, tier: credits.tier)
+        credits.policy.cost(action, tier: credits.tier, provider: preferences.provider)
     }
     var rerunCreditCost: Int { credits.policy.rerunCost(provider: preferences.provider) }
-    func requestCredits(_ action: CreditAction, cost: Int, explanation: String = "", changeProvider: Bool = false, proceed: @escaping @MainActor () -> Void) {
+    func requestCredits(_ action: CreditAction, cost: Int, explanation: String = "", changeProvider: Bool = false, rerun: Bool = false, proceed: @escaping @MainActor () -> Void) {
         guard credits.loaded else {
             error = credits.offline ? L("You're offline. Saved chapters can still be read; translating and generating need a connection.") : L("Could not open credit profile")
             return
@@ -223,7 +236,7 @@ extension MangaLibrary {
             return
         }
         if cost == 0 { proceed(); return }
-        creditRequest = CreditRequest(action: action, cost: cost, explanation: explanation, canChangeProvider: changeProvider, proceed: proceed)
+        creditRequest = CreditRequest(operation: CreditOperation(action: action, provider: action == .image ? .local : preferences.provider, rerun: rerun), cost: cost, explanation: explanation, canChangeProvider: changeProvider, proceed: proceed)
     }
     func finishCredits(_ ticket: String?, success: Bool, provider: TranslationProvider = .local) async {
         // Settlement must survive cancellation of the generation/translation task.

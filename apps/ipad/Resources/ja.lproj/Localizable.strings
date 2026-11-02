@@ -364,7 +364,6 @@
 "Backend API" = "バックエンドAPI";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "このオフライン版ではバックエンドAPIに未接続です。設定で別のプロバイダーを選んでください。クレジットは消費されていません。";
 "Change provider" = "プロバイダーを変更";
-"Claim an available daily reward, watch a rewarded video, or wait until the next UTC day." = "受け取り可能なデイリー報酬か動画報酬を利用するか、次のUTC日付までお待ちください。";
 "Claim daily reward" = "デイリー報酬を受け取る";
 "Complete video and claim" = "動画を完了して受け取る";
 "Cost" = "必要数";
@@ -383,27 +382,19 @@
 "Next reward (UTC)" = "次の報酬（UTC）";
 "Not connected" = "未接続";
 "Not enough credits" = "クレジット不足";
-"One video access will be used instead of credits." = "クレジットの代わりに動画利用権を1回使います。";
 "Open chapter" = "章を開く";
 "Playing demo video…" = "デモ動画を再生中…";
 "Premium" = "Premium";
 "Profile ID" = "プロフィールID";
 "Prompt assistance is charged when a valid suggestion is returned, even if you cancel its review. Image generation is charged separately." = "有効な提案を受信した時点でプロンプト支援の料金が発生します。確認をキャンセルしても返還されません。画像生成は別料金です。";
 "Random prompt credit cost" = "ランダムプロンプトの必要数";
-"Rewarded video" = "報酬動画";
 "Rewarded video simulation" = "報酬動画シミュレーション";
-"The video multiplier applies to today's daily reward. Claiming either option uses today's reward." = "動画の倍率は今日のデイリー報酬に適用されます。どちらを選んでも今日の受け取り権を使います。";
 "This is a short offline preview. Closing it early gives no reward." = "短いオフラインデモです。途中で閉じると報酬はありません。";
 "This provider requires Premium. Choose Local GGUF, Backend API, OpenAI or Claude." = "このプロバイダーにはPremiumが必要です。ローカルGGUF、バックエンドAPI、OpenAI、Claudeを選んでください。";
 "Today's reward" = "今日の報酬";
 "Today's reward has already been claimed." = "今日の報酬は受け取り済みです。";
 "Translate chapter" = "章を翻訳";
-"Video reward" = "動画報酬";
 "Wait for the current operation to finish." = "現在の処理が完了するまでお待ちください。";
-"Watch video and claim %d credits" = "動画を見て%dクレジットを受け取る";
-"Watch video to get %d credits" = "動画で%dクレジット獲得";
-"Watch video to unlock this action" = "動画を見てこの操作を解除";
-"You can watch again whenever you need more credits. Credits are awarded only after the video completes." = "必要に応じて繰り返し視聴できます。動画が完了してからクレジットが付与されます。";
 "credits" = "クレジット";
 "Free" = "Free";
 "Confirm credit use" = "クレジット使用を確認";
@@ -431,7 +422,6 @@
 "Sign in to continue" = "ログインして続ける";
 "Sign in to access your library, translation and image generation." = "ライブラリ、翻訳、画像生成を利用するにはログインしてください。";
 "Checking sign-in…" = "ログインを確認中…";
-"Free videos unlock one translation or image without adding credits. Enhance and random prompts need credits." = "無料動画はクレジットを追加せず、翻訳または画像生成を1回解放します。強化とランダムプロンプトにはクレジットが必要です。";
 "Choose a translation or image reward." = "翻訳または画像生成の報酬を選んでください。";
 "Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free." = "Rawkumaからの翻訳にはクレジットが必要です。再実行はバックエンドAPI使用時のみクレジットが必要です。ダウンロード済みの章は無料で読めます。";
 
@@ -501,3 +491,9 @@
 "AdMob test ads" = "AdMobテスト広告";
 
 "Upgrade to Premium" = "Premiumにアップグレード";
+"Watch a rewarded video to continue this action without spending credits. It starts automatically after you earn the reward." = "リワード動画を見て、クレジットを使わずにこの操作を続けられます。報酬獲得後に自動で開始します。";
+"Watch video and continue" = "動画を見て続ける";
+"Return" = "戻る";
+"Claim ×%g credits with video" = "動画でクレジットを%g倍獲得";
+"Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "動画を見ると本日さらに%dクレジットを獲得できます。通常報酬の受け取り後も利用できます。";
+"The video bonus is available again at the next daily reset." = "動画ボーナスは次のデイリーリセット後に再び利用できます。";

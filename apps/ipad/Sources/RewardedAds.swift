@@ -35,8 +35,8 @@ import UserMessagingPlatform
         try await ConsentForm.presentPrivacyOptionsForm(from: nil)
         privacyOptionsRequired = ConsentInformation.shared.privacyOptionsRequirementStatus == .required
     }
-    func watch(purpose: String, action: CreditAction, credits: CreditStore) async throws {
-        guard !working else { return }
+    func watch(purpose: String, operation: CreditOperation, credits: CreditStore) async throws -> Bool {
+        guard !working else { return false }
         guard credits.loaded else { throw AppError.message(L("Could not open credit profile")) }
         let userID = credits.profile.id
         working = true; status = L("Loading rewarded ad…")
@@ -51,7 +51,7 @@ import UserMessagingPlatform
         } catch { throw unavailable }
         try Task.checkCancellation()
         guard credits.profile.id == userID, let ad else { throw NakamaFailure(status: 401) }
-        let ticket = try await credits.startVideo(purpose: purpose, action: action)
+        let ticket = try await credits.startVideo(purpose: purpose, operation: operation)
         guard credits.profile.id == userID else { throw NakamaFailure(status: 401) }
         earned = false
         status = L("Watching rewarded ad…")
@@ -59,12 +59,13 @@ import UserMessagingPlatform
             presentation = continuation
             ad.present(from: nil) { [weak self] in self?.earned = true }
         }
-        guard completed else { return } // Closing before the SDK reward event earns nothing.
+        guard completed else { return false } // Closing before the SDK reward event earns nothing.
         guard credits.profile.id == userID else { throw NakamaFailure(status: 401) }
         status = L("Updating reward…")
         // The SDK's earned callback is the sole ad-completion check. The existing
         // profile command persists the reward; no SSV callback or timer grants it.
         try await credits.completeVideo(ticket)
+        return true
     }
     private var unavailable: AppError { .message(L("Rewarded ads are unavailable right now. Please try again later.")) }
     func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {

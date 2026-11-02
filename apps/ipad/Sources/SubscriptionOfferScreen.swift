@@ -16,8 +16,8 @@ struct SubscriptionOfferScreen: View {
                     }.frame(maxWidth: .infinity)
                     VStack(alignment: .leading, spacing: 18) {
                         benefit("gift", String(format: L("%lld daily credits instead of %lld"), Int64(policy.daily(.premium)), Int64(policy.daily(.free))))
-                        benefit("paintpalette", String(format: L("Image generation: %lld credits per image"), Int64(policy.cost(.image, tier: .premium))))
-                        benefit("wand.and.stars", String(format: L("Prompt enhancement: %lld credits instead of %lld"), Int64(policy.cost(.enhance, tier: .premium)), Int64(policy.cost(.enhance, tier: .free))))
+                        benefit("paintpalette", String(format: L("Image generation: %lld credits per image"), Int64(policy.cost(.image, tier: .premium, provider: .local))))
+                        benefit("wand.and.stars", String(format: L("Prompt enhancement: %lld credits instead of %lld"), Int64(policy.cost(.enhance, tier: .premium, provider: .local)), Int64(policy.cost(.enhance, tier: .free, provider: .local))))
                         benefit("character.bubble", L("Access all supported translation providers"))
                     }
                     .padding(20).frame(maxWidth: .infinity, alignment: .leading)
