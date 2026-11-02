@@ -329,3 +329,22 @@
 "Image settings" = "Bildeinstellungen";
 "More steps may improve detail, but generation takes longer. Anima Turbo can reach its best quality with fewer steps; more is not always sharper." = "Mehr Schritte können Details verbessern, dauern aber länger. Anima Turbo kann mit wenigen Schritten die beste Qualität erreichen; mehr ist nicht immer schärfer.";
 "Larger images have more pixels and need more time and RAM. Start with 512 × 512; a larger size may not fit your device's available memory." = "Größere Bilder haben mehr Pixel und benötigen mehr Zeit und RAM. Beginnen Sie mit 512 × 512; größere Formate passen möglicherweise nicht in den verfügbaren Speicher.";
+
+// Optional local image upscaling
+"Upscale" = "Hochskalieren";
+"No upscale" = "Nicht hochskalieren";
+"Final image size" = "Endgültige Bildgröße";
+"Upscale takes longer and uses more RAM. 4× makes each side four times larger: 16× as many pixels." = "Hochskalieren benötigt mehr Zeit und RAM. 4× vergrößert jede Seite vierfach: 16× so viele Pixel.";
+"Download the selected upscaler first" = "Zuerst das gewählte Upscale-Modell herunterladen";
+"Upscale models" = "Upscale-Modelle";
+"No upscale keeps the original size. Choose and download a model before generating. Anima is unloaded before local Metal upscaling." = "Ohne Hochskalierung bleibt die Originalgröße. Vor dem Erstellen ein Modell wählen und herunterladen. Anima wird vor der lokalen Metal-Hochskalierung entladen.";
+"Optimized for anime illustrations; smaller 6-block model." = "Für Anime-Illustrationen optimiert; kleineres Modell mit 6 Blöcken.";
+"General image model; larger 23-block network." = "Allgemeines Bildmodell; größeres Netzwerk mit 23 Blöcken.";
+"Delete upscaler" = "Upscale-Modell löschen";
+"Download upscaler" = "Upscale-Modell herunterladen";
+"Keep the app open. Stop waits for the upscale pass to finish, then discards the result." = "App geöffnet lassen. Stopp wartet auf das Ende des Upscale-Durchlaufs und verwirft dann das Ergebnis.";
+"Delete upscaler?" = "Upscale-Modell löschen?";
+"Upscaling image" = "Bild wird hochskaliert";
+"Could not load the selected upscaler" = "Gewähltes Upscale-Modell konnte nicht geladen werden";
+"Could not upscale image" = "Bild konnte nicht hochskaliert werden";
+"Invalid upscale request" = "Ungültige Upscale-Anfrage";

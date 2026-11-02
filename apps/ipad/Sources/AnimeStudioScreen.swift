@@ -6,9 +6,12 @@ struct AnimeStudioScreen: View {
     @AppStorage("animePrompt") private var prompt = ""
     @AppStorage("animeGenerationSteps") private var steps = 6
     @AppStorage("animeGenerationSize") private var imageSize: AnimeImageSize = .square512
+    @AppStorage("animeUpscaler") private var upscaler: AnimeUpscaler = .none
     @State private var configuration: AnimeConfiguration?
     @State private var configurationError: String?
     @State private var removing = false
+    @State private var removingUpscaler = false
+    private var upscalerReady: Bool { upscaler.model?.ready(library.disk.modelsURL) ?? true }
 
     var body: some View {
         Form {
@@ -25,7 +28,7 @@ struct AnimeStudioScreen: View {
         }
         .sheet(item: Binding(get: { library.animePromptSuggestion }, set: { library.animePromptSuggestion = $0 })) { suggestion in
             AnimePromptReview(suggestion: suggestion, canGenerate: configuration.map { config in
-                AnimeConfiguration.deviceMemory.map { config.supportsDevice(memory: $0) } == true && config.model.ready(library.disk.modelsURL)
+                AnimeConfiguration.deviceMemory.map { config.supportsDevice(memory: $0) } == true && config.model.ready(library.disk.modelsURL) && upscalerReady
             } == true) { updated, generate in
                 guard prompt == suggestion.original else {
                     library.animePromptSuggestion = nil
@@ -70,6 +73,17 @@ struct AnimeStudioScreen: View {
             Picker(L("Resolution"), selection: $imageSize) {
                 ForEach(AnimeImageSize.allCases) { size in Text(size.title).tag(size) }
             }.disabled(library.busy)
+            Picker(L("Upscale"), selection: $upscaler) {
+                ForEach(AnimeUpscaler.allCases) { choice in Text(choice.title).tag(choice) }
+            }.disabled(library.busy || library.downloadingModel)
+            LabeledContent(L("Final image size"), value: "\(imageSize.dimensions.width * upscaler.scale) × \(imageSize.dimensions.height * upscaler.scale)")
+            if upscaler != .none {
+                Label(L("Upscale takes longer and uses more RAM. 4× makes each side four times larger: 16× as many pixels."), systemImage: "clock")
+                    .font(.caption).foregroundStyle(.orange)
+                if !upscalerReady {
+                    Label(L("Download the selected upscaler first"), systemImage: "arrow.down.circle").foregroundStyle(.orange)
+                }
+            }
             Text(L("More steps may improve detail, but generation takes longer. Anima Turbo can reach its best quality with fewer steps; more is not always sharper."))
                 .font(.caption).foregroundStyle(.secondary)
             Text(L("Larger images have more pixels and need more time and RAM. Start with 512 × 512; a larger size may not fit your device's available memory."))
@@ -85,9 +99,15 @@ struct AnimeStudioScreen: View {
             }
             .disabled(library.busy || library.downloadingModel || library.animePromptUnavailable != nil)
             Button(L("Generate image"), systemImage: "sparkles") { generateImage(prompt) }
-                .disabled(!supported || !ready || library.busy || library.downloadingModel || prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(!supported || !ready || !upscalerReady || library.busy || library.downloadingModel || prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         } header: { Text(L("Image description")) } footer: {
             Text(L("Image generation stays on this device. Prompt assistance uses your selected provider."))
+        }
+        if library.downloadingModel {
+            Section {
+                HStack { ProgressView(); Text(library.status) }
+                Button(L("Cancel download"), role: .cancel) { library.modelTask?.cancel() }
+            }
         }
         Section(L("Prompt assistant")) {
             if let reason = library.animePromptUnavailable {
@@ -105,6 +125,31 @@ struct AnimeStudioScreen: View {
                 Text(L("4. Review and edit the English suggestion. Use prompt replaces the editor only when you choose it; Use and generate also starts Anima. Cancel keeps your original text."))
                 Text(L("5. Check character details before generating. Keep the app in the foreground while Anima works; loading and image generation can take several minutes. Stop is cooperative and may finish the current phase first."))
             }
+        }
+        Section(L("Upscale models")) {
+            Text(L("No upscale keeps the original size. Choose and download a model before generating. Anima is unloaded before local Metal upscaling."))
+                .font(.caption).foregroundStyle(.secondary)
+            if let upscaleModel = upscaler.model {
+                Text(upscaler.title).font(.headline)
+                Text(upscaler.detail).font(.caption).foregroundStyle(.secondary)
+                LabeledContent(L("Total download"), value: ByteCountFormatter.string(fromByteCount: upscaleModel.bytes, countStyle: .file))
+                if upscalerReady {
+                    Label(L("Model ready"), systemImage: "checkmark.circle").foregroundStyle(.green)
+                    Button(L("Delete upscaler"), systemImage: "trash", role: .destructive) { removingUpscaler = true }
+                        .disabled(library.busy || library.downloadingModel)
+                } else {
+                    Button(L("Download upscaler"), systemImage: "arrow.down.circle") { library.downloadAnimeUpscaler(upscaler) }
+                        .disabled(!supported || library.busy || library.downloadingModel)
+                }
+                Link(L("Model source"), destination: upscaleModel.source)
+                Link(L("Model license"), destination: URL(string: "https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE")!)
+            }
+            Text(L("Keep the app open. Stop waits for the upscale pass to finish, then discards the result."))
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .confirmationDialog(L("Delete upscaler?"), isPresented: $removingUpscaler, titleVisibility: .visible) {
+            Button(L("Delete"), role: .destructive) { if let model = upscaler.model { library.removeVisionModel(model) } }
+            Button(L("Cancel"), role: .cancel) {}
         }
         if let latest = library.animeImages.first {
             Section(L("Latest image")) { AnimeImageContent(image: latest) }
@@ -141,10 +186,6 @@ struct AnimeStudioScreen: View {
                 Button(L("Download Anima models"), systemImage: "arrow.down.circle") { library.downloadAnimeModels() }
                     .disabled(!supported || library.busy || library.downloadingModel)
             }
-            if library.downloadingModel {
-                HStack { ProgressView(); Text(library.status) }
-                Button(L("Cancel download"), role: .cancel) { library.modelTask?.cancel() }
-            }
         } header: { Text(L("Model files")) } footer: {
             Text(L("Downloads are checked with SHA-256 and stored on this device."))
         }
@@ -158,7 +199,7 @@ struct AnimeStudioScreen: View {
         }
     }
     private func generateImage(_ text: String) {
-        do { library.generateAnime(prompt: text, settings: try AnimeGenerationSettings(steps: steps, size: imageSize)) }
+        do { library.generateAnime(prompt: text, settings: try AnimeGenerationSettings(steps: steps, size: imageSize, upscaler: upscaler)) }
         catch { library.error = error.localizedDescription }
     }
 }

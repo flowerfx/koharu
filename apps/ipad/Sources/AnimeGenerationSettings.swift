@@ -22,9 +22,10 @@ enum AnimeImageSize: String, CaseIterable, Identifiable, Sendable {
 struct AnimeGenerationSettings: Equatable, Sendable {
     let steps: Int
     let size: AnimeImageSize
-    init(steps: Int, size: AnimeImageSize) throws {
+    let upscaler: AnimeUpscaler
+    init(steps: Int, size: AnimeImageSize, upscaler: AnimeUpscaler = .none) throws {
         guard (5...20).contains(steps) else { throw AppError.message(L("Invalid image generation settings")) }
-        self.steps = steps; self.size = size
+        self.steps = steps; self.size = size; self.upscaler = upscaler
     }
     init(configuration: AnimeConfiguration.Generation) throws {
         guard let size = AnimeImageSize.allCases.first(where: {
@@ -36,5 +37,8 @@ struct AnimeGenerationSettings: Equatable, Sendable {
     // guidance, not a measured peak or a guarantee that larger frames fit.
     var memoryHeadroomBytes: UInt64 {
         512 * 1024 * 1024 * UInt64(size.dimensions.width) * UInt64(size.dimensions.height) / (512 * 512)
+    }
+    var outputDimensions: (width: Int, height: Int) {
+        (size.dimensions.width * upscaler.scale, size.dimensions.height * upscaler.scale)
     }
 }

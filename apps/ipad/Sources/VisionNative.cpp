@@ -153,6 +153,49 @@ int koharu_anima_generate(void *opaque, const char *diffusion, const char *text,
     } catch (const std::exception &e) { report(error, capacity, e.what()); return 0; }
 }
 
+int koharu_anima_upscale(void *opaque, const char *model, const uint8_t *rgb, int width, int height,
+                         int scale, uint8_t *output, size_t output_capacity, char *error, size_t capacity) {
+    auto *job = static_cast<AnimaJob *>(opaque);
+    if (!job || !model || !rgb || !output || width < 1 || height < 1 || width > 1024 || height > 1280 ||
+        scale != 4 || output_capacity != (size_t)width * height * scale * scale * 3) {
+        report(error, capacity, "Invalid upscale request"); return 0;
+    }
+    try {
+        if (job->cancelled) return 0;
+        job->phase = 4;
+        // Anima has already been freed before entering this stage. Fixed 128px
+        // tiles bound the graph working set. The upstream upscaler has no abort
+        // hook: Stop discards the result after the current upscale pass finishes.
+        std::string metal;
+        for (int i = 0; i < sd_dart_gpu_device_count(); ++i) {
+            sd_dart_gpu_device_memory_t device{};
+            if (sd_dart_gpu_device_memory(i, &device) == SD_DART_GPU_OK &&
+                (strncmp(device.name, "MTL", 3) == 0 || strncmp(device.name, "Metal", 5) == 0)) {
+                metal = device.name; break;
+            }
+        }
+        if (metal.empty()) { report(error, capacity, "Metal is not available on this device"); return 0; }
+        std::unique_ptr<upscaler_ctx_t, decltype(&free_upscaler_ctx)> runtime(
+            new_upscaler_ctx(model, false, 4, 128, metal.c_str(), "*=cpu"), free_upscaler_ctx);
+        if (!runtime || get_upscale_factor(runtime.get()) != scale) {
+            report(error, capacity, "Could not load the selected upscaler"); return 0;
+        }
+        if (job->cancelled) return 0;
+        sd_image_t input{(uint32_t)width, (uint32_t)height, 3, const_cast<uint8_t *>(rgb)};
+        sd_image_t *images = nullptr; int count = 0;
+        struct Batch { sd_image_t *&images; int &count; ~Batch() { if (images) free_sd_images(images, count); } } batch{images, count};
+        bool ok = upscale(runtime.get(), input, scale, &images, &count);
+        if (job->cancelled) return 0;
+        if (!ok || count != 1 || !images || !images[0].data || images[0].channel != 3 ||
+            images[0].width != width * scale || images[0].height != height * scale) {
+            report(error, capacity, "Could not upscale image"); return 0;
+        }
+        memcpy(output, images[0].data, output_capacity);
+        job->phase = 3;
+        return 1;
+    } catch (const std::exception &e) { report(error, capacity, e.what()); return 0; }
+}
+
 #if __has_include(<llama/mtmd.h>)
 #include <llama/llama.h>
 #include <llama/mtmd.h>

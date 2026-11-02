@@ -67,7 +67,7 @@ extension MangaLibrary {
             downloadModelFiles(configuration.model)
         } catch { self.error = error.localizedDescription }
     }
-    private func downloadModelFiles(_ model: VisionModel) {
+    func downloadModelFiles(_ model: VisionModel) {
         downloadingModel = true
         modelTask = Task {
             defer { downloadingModel = false; modelTask = nil }

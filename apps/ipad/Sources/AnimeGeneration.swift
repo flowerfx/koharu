@@ -11,10 +11,10 @@ final class AnimeGenerationJob: @unchecked Sendable {
     }
     deinit { koharu_anima_job_free(pointer) }
     func cancel() { koharu_anima_job_cancel(pointer) }
-    func progress() -> (step: Int, steps: Int, loading: Bool) {
+    func progress() -> (step: Int, steps: Int, phase: Int32) {
         var step: Int32 = 0, steps: Int32 = 0
         let phase = koharu_anima_job_progress(pointer, &step, &steps)
-        return (Int(step), Int(steps), phase == 1)
+        return (Int(step), Int(steps), phase)
     }
 }
 
@@ -36,6 +36,9 @@ extension PagePipeline {
             try Task.checkCancellation()
             let model = configuration.model
             guard model.ready(root) else { throw AppError.message(L("Download the selected model in Settings first")) }
+            if let upscaler = settings.upscaler.model, !upscaler.ready(root) {
+                throw AppError.message(L("Download the selected upscaler first"))
+            }
             // A conservative admission estimate, separate from the physical
             // device target; CPU-mapped weights and tiled Metal compute share RAM.
             guard GGUFMemory.available > UInt64(model.bytes) + settings.memoryHeadroomBytes else {
@@ -55,10 +58,28 @@ extension PagePipeline {
                                                &rgb, &error, error.count)
             try Task.checkCancellation()
             guard ok != 0 else { throw AppError.message(L(String(cString: error))) }
-            let image = try VisionRaster(width: width, height: height, rgb: rgb).image()
+            let raster = try upscaleAnimeRaster(VisionRaster(width: width, height: height, rgb: rgb), selection: settings.upscaler, root: root, job: job)
+            let image = try raster.image()
             guard let data = image.pngData() else { throw AppError.message(L("Could not generate anime image")) }
             return data
         }
+    }
+    private func upscaleAnimeRaster(_ raster: VisionRaster, selection: AnimeUpscaler, root: URL, job: AnimeGenerationJob) throws -> VisionRaster {
+        guard let model = selection.model else { return raster }
+        try Task.checkCancellation()
+        guard model.ready(root) else { throw AppError.message(L("Download the selected upscaler first")) }
+        let width = raster.width * selection.scale, height = raster.height * selection.scale
+        guard GGUFMemory.available > UInt64(model.bytes) + 512 * 1024 * 1024 + UInt64(width * height) * 32 else {
+            throw AppError.message(L("Not enough available RAM"))
+        }
+        var output = [UInt8](repeating: 0, count: width * height * 3)
+        var error = [CChar](repeating: 0, count: 8192)
+        let ok = koharu_anima_upscale(job.pointer, model.directory(root).appendingPathComponent(model.files[0].path).path,
+                                     raster.rgb, Int32(raster.width), Int32(raster.height), Int32(selection.scale),
+                                     &output, output.count, &error, error.count)
+        try Task.checkCancellation()
+        guard ok != 0 else { throw AppError.message(L(String(cString: error))) }
+        return VisionRaster(width: width, height: height, rgb: output)
     }
 }
 
@@ -78,19 +99,23 @@ extension MangaLibrary {
             guard configuration.model.ready(disk.modelsURL) else {
                 throw AppError.message(L("Download Anima models first"))
             }
+            if let model = settings.upscaler.model, !model.ready(disk.modelsURL) {
+                throw AppError.message(L("Download the selected upscaler first"))
+            }
             let job = try AnimeGenerationJob()
             let image = GeneratedAnimeImage(prompt: prompt, seed: Int64.random(in: 0...Int64.max), modelID: configuration.id,
-                                           width: settings.size.dimensions.width, height: settings.size.dimensions.height, steps: settings.steps)
+                                           width: settings.outputDimensions.width, height: settings.outputDimensions.height, steps: settings.steps)
             busy = true; progress = 0; status = L("Generating anime image")
             activeTask = Task {
                 defer { busy = false; activeTask = nil }
                 let reporting = Task { @MainActor in
                     while !Task.isCancelled {
-                        let (step, steps, loading) = job.progress()
-                        if loading { progress = 0; status = L("Loading Anima model") }
+                        let (step, steps, phase) = job.progress()
+                        if phase == 4 { progress = 0; status = L("Upscaling image") }
+                        else if phase == 1 { progress = 0; status = L("Loading Anima model") }
                         // The runtime also reports weight-loading counters.
                         // Only the configured sampling pass belongs in this bar.
-                        else if steps == settings.steps && (1...steps).contains(step) {
+                        else if phase == 2 && steps == settings.steps && (1...steps).contains(step) {
                             progress = min(1, max(0, Double(step) / Double(steps)))
                             status = "\(L("Generating anime image")) · \(step)/\(steps)"
                         } else { status = L("Generating anime image") }

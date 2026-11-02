@@ -30,3 +30,10 @@ OCR preprocessing/decoding follows the pinned publisher's `onnx_infer.py` (Baber
 Local text translation catalog: [unsloth/Qwen3.5-0.8B-GGUF](https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF) and [unsloth/Qwen3.5-4B-GGUF](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF), Apache-2.0 according to their cards. Pins are in `Resources/app-config.json`. Imported models have their own terms and hardware requirements.
 
 Rawkuma is an external content source. This fork is not affiliated with the site or model publishers.
+
+## Optional Anime Studio upscalers
+
+Real-ESRGAN by Xintao Wang and contributors, BSD-3-Clause: [source and license](https://github.com/xinntao/Real-ESRGAN), [model zoo](https://github.com/xinntao/Real-ESRGAN/blob/master/docs/model_zoo.md). Weights are downloaded separately, never bundled. Copyright (c) 2021 Xintao Wang.
+
+- Anime 6B: [AMD mirror](https://huggingface.co/amd/realesrgan-x4plus-anime-6b/tree/b14ff5f8ecb5a4b56ce4049a58d0bca1f8814690), `RealESRGAN_x4plus_anime_6B.pth`, SHA-256 `f872d837d3c90ed2e05227bed711af5671a6fd1c9f7d7e91c911a61f155e99da`.
+- General x4plus: [Annotators mirror](https://huggingface.co/lllyasviel/Annotators/tree/982e7edaec38759d914a963c48c4726685de7d96), `RealESRGAN_x4plus.pth`, SHA-256 `4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1`.

@@ -329,3 +329,22 @@
 "Image settings" = "Configurações da imagem";
 "More steps may improve detail, but generation takes longer. Anima Turbo can reach its best quality with fewer steps; more is not always sharper." = "Mais passos podem melhorar os detalhes, mas demoram mais. O Anima Turbo pode atingir sua melhor qualidade com poucos passos; mais nem sempre significa mais nitidez.";
 "Larger images have more pixels and need more time and RAM. Start with 512 × 512; a larger size may not fit your device's available memory." = "Imagens maiores têm mais pixels e exigem mais tempo e RAM. Comece com 512 × 512; um tamanho maior pode exceder a memória disponível.";
+
+// Optional local image upscaling
+"Upscale" = "Ampliação";
+"No upscale" = "Sem ampliação";
+"Final image size" = "Tamanho final";
+"Upscale takes longer and uses more RAM. 4× makes each side four times larger: 16× as many pixels." = "A ampliação exige mais tempo e RAM. 4× multiplica cada lado por quatro: 16× mais pixels.";
+"Download the selected upscaler first" = "Baixe primeiro o modelo selecionado";
+"Upscale models" = "Modelos de ampliação";
+"No upscale keeps the original size. Choose and download a model before generating. Anima is unloaded before local Metal upscaling." = "Sem ampliação mantém o tamanho original. Escolha e baixe um modelo antes de gerar. Anima é descarregado da memória antes da ampliação local com Metal.";
+"Optimized for anime illustrations; smaller 6-block model." = "Otimizado para ilustrações anime; modelo menor de 6 blocos.";
+"General image model; larger 23-block network." = "Modelo geral; rede maior de 23 blocos.";
+"Delete upscaler" = "Excluir modelo";
+"Download upscaler" = "Baixar modelo";
+"Keep the app open. Stop waits for the upscale pass to finish, then discards the result." = "Mantenha o app aberto. Parar aguarda o fim da ampliação e depois descarta o resultado.";
+"Delete upscaler?" = "Excluir modelo?";
+"Upscaling image" = "Ampliando imagem";
+"Could not load the selected upscaler" = "Não foi possível carregar o modelo selecionado";
+"Could not upscale image" = "Não foi possível ampliar a imagem";
+"Invalid upscale request" = "Solicitação de ampliação inválida";

@@ -329,3 +329,22 @@
 "Image settings" = "Paramètres de l’image";
 "More steps may improve detail, but generation takes longer. Anima Turbo can reach its best quality with fewer steps; more is not always sharper." = "Plus d’étapes peuvent améliorer les détails mais prennent plus de temps. Anima Turbo peut atteindre sa meilleure qualité avec peu d’étapes ; davantage ne signifie pas toujours plus net.";
 "Larger images have more pixels and need more time and RAM. Start with 512 × 512; a larger size may not fit your device's available memory." = "Les grandes images ont plus de pixels et demandent plus de temps et de RAM. Commencez par 512 × 512 ; un grand format peut dépasser la mémoire disponible.";
+
+// Optional local image upscaling
+"Upscale" = "Agrandissement";
+"No upscale" = "Sans agrandissement";
+"Final image size" = "Taille finale";
+"Upscale takes longer and uses more RAM. 4× makes each side four times larger: 16× as many pixels." = "L’agrandissement demande plus de temps et de RAM. 4× multiplie chaque côté par quatre : 16× plus de pixels.";
+"Download the selected upscaler first" = "Téléchargez d’abord le modèle choisi";
+"Upscale models" = "Modèles d’agrandissement";
+"No upscale keeps the original size. Choose and download a model before generating. Anima is unloaded before local Metal upscaling." = "Sans agrandissement, la taille reste identique. Choisissez et téléchargez un modèle avant la génération. Anima est déchargé avant l’agrandissement local avec Metal.";
+"Optimized for anime illustrations; smaller 6-block model." = "Optimisé pour les illustrations anime ; petit modèle à 6 blocs.";
+"General image model; larger 23-block network." = "Modèle généraliste ; réseau plus grand à 23 blocs.";
+"Delete upscaler" = "Supprimer le modèle";
+"Download upscaler" = "Télécharger le modèle";
+"Keep the app open. Stop waits for the upscale pass to finish, then discards the result." = "Gardez l’app ouverte. Arrêter attend la fin de l’agrandissement, puis ignore le résultat.";
+"Delete upscaler?" = "Supprimer ce modèle ?";
+"Upscaling image" = "Agrandissement en cours";
+"Could not load the selected upscaler" = "Impossible de charger le modèle choisi";
+"Could not upscale image" = "Impossible d’agrandir l’image";
+"Invalid upscale request" = "Demande d’agrandissement non valide";

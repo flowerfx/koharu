@@ -329,3 +329,22 @@
 "Image settings" = "Thông số ảnh";
 "More steps may improve detail, but generation takes longer. Anima Turbo can reach its best quality with fewer steps; more is not always sharper." = "Tăng số bước có thể cải thiện chi tiết nhưng tạo ảnh lâu hơn. Anima Turbo có thể đạt chất lượng tốt với ít bước; nhiều bước hơn không phải lúc nào cũng nét hơn.";
 "Larger images have more pixels and need more time and RAM. Start with 512 × 512; a larger size may not fit your device's available memory." = "Ảnh lớn có nhiều pixel hơn và cần thêm thời gian, RAM. Nên bắt đầu với 512 × 512; kích thước lớn có thể vượt RAM khả dụng của thiết bị.";
+
+// Optional local image upscaling
+"Upscale" = "Upscale";
+"No upscale" = "Không upscale";
+"Final image size" = "Kích thước ảnh cuối";
+"Upscale takes longer and uses more RAM. 4× makes each side four times larger: 16× as many pixels." = "Upscale mất thêm thời gian và RAM. 4× tăng mỗi chiều gấp bốn: số pixel gấp 16 lần.";
+"Download the selected upscaler first" = "Hãy tải model upscale đã chọn trước";
+"Upscale models" = "Model upscale";
+"No upscale keeps the original size. Choose and download a model before generating. Anima is unloaded before local Metal upscaling." = "Không upscale giữ nguyên kích thước. Chọn và tải model trước khi tạo ảnh. Anima được giải phóng trước khi upscale local bằng Metal.";
+"Optimized for anime illustrations; smaller 6-block model." = "Tối ưu cho tranh anime; model nhỏ hơn với 6 khối.";
+"General image model; larger 23-block network." = "Model ảnh tổng quát; mạng lớn hơn với 23 khối.";
+"Delete upscaler" = "Xóa model upscale";
+"Download upscaler" = "Tải model upscale";
+"Keep the app open. Stop waits for the upscale pass to finish, then discards the result." = "Giữ ứng dụng mở. Khi nhấn Dừng, ứng dụng chờ lượt upscale hoàn tất rồi bỏ kết quả.";
+"Delete upscaler?" = "Xóa model upscale?";
+"Upscaling image" = "Đang upscale ảnh";
+"Could not load the selected upscaler" = "Không thể tải model upscale đã chọn vào bộ nhớ";
+"Could not upscale image" = "Không thể upscale ảnh";
+"Invalid upscale request" = "Yêu cầu upscale không hợp lệ";

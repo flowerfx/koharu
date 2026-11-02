@@ -329,3 +329,22 @@
 "Image settings" = "圖像設定";
 "More steps may improve detail, but generation takes longer. Anima Turbo can reach its best quality with fewer steps; more is not always sharper." = "增加步數可能改善細節，但會耗時更久。Anima Turbo 可能在較少步數時達到最佳品質，並非步數越多就越清晰。";
 "Larger images have more pixels and need more time and RAM. Start with 512 × 512; a larger size may not fit your device's available memory." = "大圖像的像素更多，需要更多時間和記憶體。建議從 512 × 512 開始；較大的尺寸可能超出裝置的可用記憶體。";
+
+// Optional local image upscaling
+"Upscale" = "超解析度";
+"No upscale" = "不放大";
+"Final image size" = "最終影像尺寸";
+"Upscale takes longer and uses more RAM. 4× makes each side four times larger: 16× as many pixels." = "超解析度需要更多時間和記憶體。4× 將寬高各放大四倍，像素數變為16倍。";
+"Download the selected upscaler first" = "請先下載所選放大模型";
+"Upscale models" = "超解析度模型";
+"No upscale keeps the original size. Choose and download a model before generating. Anima is unloaded before local Metal upscaling." = "不放大會保留原始尺寸。產生前請先選擇並下載模型。Anima 會先釋放，再透過 Metal 在本機放大。";
+"Optimized for anime illustrations; smaller 6-block model." = "針對動漫插畫最佳化的較小6區塊模型。";
+"General image model; larger 23-block network." = "通用影像模型；較大的23區塊網路。";
+"Delete upscaler" = "刪除放大模型";
+"Download upscaler" = "下載放大模型";
+"Keep the app open. Stop waits for the upscale pass to finish, then discards the result." = "請保持應用程式開啟。停止會等待本次放大完成，然後捨棄結果。";
+"Delete upscaler?" = "刪除放大模型？";
+"Upscaling image" = "正在放大影像";
+"Could not load the selected upscaler" = "無法載入所選放大模型";
+"Could not upscale image" = "無法放大影像";
+"Invalid upscale request" = "無效的放大要求";

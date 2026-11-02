@@ -329,3 +329,22 @@
 "Image settings" = "Image settings";
 "More steps may improve detail, but generation takes longer. Anima Turbo can reach its best quality with fewer steps; more is not always sharper." = "More steps may improve detail, but generation takes longer. Anima Turbo can reach its best quality with fewer steps; more is not always sharper.";
 "Larger images have more pixels and need more time and RAM. Start with 512 × 512; a larger size may not fit your device's available memory." = "Larger images have more pixels and need more time and RAM. Start with 512 × 512; a larger size may not fit your device's available memory.";
+
+// Optional local image upscaling
+"Upscale" = "Upscale";
+"No upscale" = "No upscale";
+"Final image size" = "Final image size";
+"Upscale takes longer and uses more RAM. 4× makes each side four times larger: 16× as many pixels." = "Upscale takes longer and uses more RAM. 4× makes each side four times larger: 16× as many pixels.";
+"Download the selected upscaler first" = "Download the selected upscaler first";
+"Upscale models" = "Upscale models";
+"No upscale keeps the original size. Choose and download a model before generating. Anima is unloaded before local Metal upscaling." = "No upscale keeps the original size. Choose and download a model before generating. Anima is unloaded before local Metal upscaling.";
+"Optimized for anime illustrations; smaller 6-block model." = "Optimized for anime illustrations; smaller 6-block model.";
+"General image model; larger 23-block network." = "General image model; larger 23-block network.";
+"Delete upscaler" = "Delete upscaler";
+"Download upscaler" = "Download upscaler";
+"Keep the app open. Stop waits for the upscale pass to finish, then discards the result." = "Keep the app open. Stop waits for the upscale pass to finish, then discards the result.";
+"Delete upscaler?" = "Delete upscaler?";
+"Upscaling image" = "Upscaling image";
+"Could not load the selected upscaler" = "Could not load the selected upscaler";
+"Could not upscale image" = "Could not upscale image";
+"Invalid upscale request" = "Invalid upscale request";

@@ -329,3 +329,22 @@
 "Image settings" = "이미지 설정";
 "More steps may improve detail, but generation takes longer. Anima Turbo can reach its best quality with fewer steps; more is not always sharper." = "단계 수를 늘리면 세부 묘사가 개선될 수 있지만 더 오래 걸립니다. Anima Turbo는 적은 단계로 최적의 품질에 도달할 수 있으며, 많다고 항상 선명해지는 것은 아닙니다.";
 "Larger images have more pixels and need more time and RAM. Start with 512 × 512; a larger size may not fit your device's available memory." = "큰 이미지는 픽셀이 많아 시간과 RAM이 더 필요합니다. 512 × 512로 시작하세요. 큰 크기는 사용 가능한 메모리를 초과할 수 있습니다.";
+
+// Optional local image upscaling
+"Upscale" = "업스케일";
+"No upscale" = "업스케일 안 함";
+"Final image size" = "최종 이미지 크기";
+"Upscale takes longer and uses more RAM. 4× makes each side four times larger: 16× as many pixels." = "업스케일은 시간과 RAM을 더 사용합니다. 4×는 가로와 세로를 4배로 늘려 픽셀 수가 16배가 됩니다.";
+"Download the selected upscaler first" = "먼저 선택한 업스케일 모델을 다운로드하세요";
+"Upscale models" = "업스케일 모델";
+"No upscale keeps the original size. Choose and download a model before generating. Anima is unloaded before local Metal upscaling." = "업스케일 안 함은 원본 크기를 유지합니다. 생성 전에 모델을 선택하고 다운로드하세요. Anima를 해제한 뒤 Metal로 기기에서 확대합니다.";
+"Optimized for anime illustrations; smaller 6-block model." = "애니메이션 일러스트에 최적화된 작은 6블록 모델.";
+"General image model; larger 23-block network." = "일반 이미지용 대형 23블록 모델.";
+"Delete upscaler" = "모델 삭제";
+"Download upscaler" = "모델 다운로드";
+"Keep the app open. Stop waits for the upscale pass to finish, then discards the result." = "앱을 열어 두세요. 중지를 누르면 업스케일 작업이 끝난 뒤 결과를 버립니다.";
+"Delete upscaler?" = "모델을 삭제할까요?";
+"Upscaling image" = "이미지 업스케일 중";
+"Could not load the selected upscaler" = "선택한 모델을 불러올 수 없습니다";
+"Could not upscale image" = "이미지를 업스케일할 수 없습니다";
+"Invalid upscale request" = "잘못된 업스케일 요청";
