@@ -4,6 +4,12 @@ configs:
   StagingRelease: release
   Production: release
 packages:
+  GoogleMobileAds:
+    url: https://github.com/googleads/swift-package-manager-google-mobile-ads.git
+    exactVersion: 13.11.0
+  GoogleUMP:
+    url: https://github.com/googleads/swift-package-manager-google-user-messaging-platform.git
+    exactVersion: 3.1.0
   Firebase:
     url: https://github.com/firebase/firebase-ios-sdk
     exactVersion: 13.1.1
@@ -21,17 +27,25 @@ settings:
     TARGETED_DEVICE_FAMILY: '1,2'
     PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga
     DEVELOPMENT_TEAM: 6B86Z886QA
+    KOHARU_ADMOB_APP_ID: ca-app-pub-9623603115892772~2803757650
+    KOHARU_REWARDED_AD_UNIT: ca-app-pub-9623603115892772/3441604792
+    KOHARU_ADS_TESTING: 'NO'
     KOHARU_BUNDLE_SUFFIX: ''
+    # Base64 raw Ed25519 public key. When set, remote app-config.json must be
+    # signed (scripts/sign_config.py). Empty keeps unsigned remote configuration.
+    KOHARU_CONFIG_SIGNING_KEY: ''
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
   configs:
     Staging:
+      KOHARU_ADS_TESTING: YES
       KOHARU_BUNDLE_SUFFIX: .staging
       KOHARU_ENVIRONMENT: staging
       KOHARU_DISPLAY_NAME: AI Anime Translator Staging
       PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga.staging
       KOHARU_APNS_ENVIRONMENT: development
     StagingRelease:
+      KOHARU_ADS_TESTING: YES
       KOHARU_BUNDLE_SUFFIX: .staging
       KOHARU_ENVIRONMENT: staging
       KOHARU_DISPLAY_NAME: AI Anime Translator Staging
@@ -47,6 +61,10 @@ targetTemplates:
     type: application
     platform: iOS
     dependencies:
+      - package: GoogleMobileAds
+        product: GoogleMobileAds
+      - package: GoogleUMP
+        product: GoogleUserMessagingPlatform
       - package: Firebase
         product: FirebaseAnalyticsCore
       - package: Firebase

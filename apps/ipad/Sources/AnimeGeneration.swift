@@ -32,7 +32,9 @@ struct GeneratedAnimeImage: Codable, Identifiable {
 
 extension PagePipeline {
     func generateAnime(_ configuration: AnimeConfiguration, settings: AnimeGenerationSettings, root: URL, prompt: String, seed: Int64, job: AnimeGenerationJob) throws -> Data {
-        try performVisionInference {
+        // Anima needs the RAM held by any cached OCR/cleanup sessions.
+        releaseCachedModels()
+        return try performVisionInference {
             try Task.checkCancellation()
             let model = configuration.model
             guard model.ready(root) else { throw AppError.message(L("Download the selected model in Settings first")) }
@@ -128,7 +130,7 @@ extension MangaLibrary {
             let job = try AnimeGenerationJob()
             let image = GeneratedAnimeImage(prompt: prompt, seed: Int64.random(in: 0...Int64.max), modelID: configuration.id,
                                            width: settings.outputDimensions.width, height: settings.outputDimensions.height, steps: settings.steps)
-            busy = true; progress = 0; status = L("Generating anime image")
+            busy = true; activeJobUsesGPU = true; progress = 0; status = L("Generating anime image")
             activeTask = Task {
                 var succeeded = false
                 var ticket: String?

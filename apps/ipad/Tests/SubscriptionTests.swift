@@ -5,7 +5,7 @@ import SwiftUI
 
 final class SubscriptionTests: XCTestCase {
     @MainActor func testContinueWorksWithoutCatalogAndAuthenticationCannotGrantPremium() throws {
-        let credits = CreditStore(authentication: NakamaAuthentication(), policy: try CreditConfiguration.bundled())
+        let credits = CreditStore(authentication: NakamaAuthentication(), policy: try AppConfiguration.decode(AppConfiguration.bundledData()).credit)
         let store = SubscriptionStore(credits: credits, environment: .production)
         XCTAssertFalse(store.hasPremium)
         XCTAssertFalse(credits.tier.allows(.gemini))
@@ -52,7 +52,7 @@ final class SubscriptionTests: XCTestCase {
     @MainActor func testOfferSnapshot() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
-        let credits = CreditStore(authentication: NakamaAuthentication(), policy: try CreditConfiguration.bundled())
+        let credits = CreditStore(authentication: NakamaAuthentication(), policy: try AppConfiguration.decode(AppConfiguration.bundledData()).credit)
         let store = SubscriptionStore(credits: credits, environment: .staging)
         await store.prepareLaunchOffer()
         let previousLanguage = AppLocalization.shared.language

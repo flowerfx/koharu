@@ -4,11 +4,19 @@ struct CreditSummary: View {
     @Environment(MangaLibrary.self) private var library
     var body: some View {
         HStack(spacing: 12) {
-            Label("\(library.credits.profile.credit) \(L("credits"))", systemImage: "sparkles").monospacedDigit()
-            Text(library.credits.tier.title).font(.caption).foregroundStyle(.secondary)
-            Spacer()
-            Button(L(library.credits.canClaimDaily ? "Daily reward" : "Get credits")) { library.showCreditRewards = true }
-                .disabled(library.busy || library.downloadingModel)
+            if library.credits.loaded {
+                Label("\(library.credits.profile.credit) \(L("credits"))", systemImage: "sparkles").monospacedDigit()
+                Text(library.credits.tier.title).font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button(L(library.credits.canClaimDaily ? "Daily reward" : "Get credits")) { library.showCreditRewards = true }
+                    .disabled(library.busy || library.downloadingModel)
+            } else {
+                Label(L("Offline · saved chapters only"), systemImage: "wifi.slash").foregroundStyle(.secondary)
+                Spacer()
+                if library.credits.working { ProgressView().controlSize(.small) }
+                Button(L("Try again")) { Task { await library.loginCredits() } }
+                    .disabled(library.credits.working)
+            }
         }
         .font(.subheadline).padding(.horizontal).padding(.vertical, 8).background(.bar)
     }
@@ -28,8 +36,11 @@ struct CreditAccountSection: View {
             } else {
                 Button(L("View Premium")) { library.subscriptions.showOffer = true }
             }
-            Text(L("Rewarded videos are simulated in this build. No real advertisement is shown."))
-                .font(.caption).foregroundStyle(.orange)
+            if library.rewardedAds.privacyOptionsRequired {
+                Button(L("Ad privacy choices")) {
+                    Task { do { try await library.rewardedAds.showPrivacyOptions() } catch { library.error = error.localizedDescription } }
+                }
+            }
             LabeledContent(L("Profile ID"), value: library.credits.profile.id.uuidString).font(.caption).textSelection(.enabled)
             LabeledContent(L("Next reward (UTC)"), value: library.credits.nextDaily.ISO8601Format()).font(.caption)
             if let expiry = library.credits.profile.next_subscription_date {
@@ -40,12 +51,9 @@ struct CreditAccountSection: View {
     }
 }
 
-private struct CreditVideo: Identifiable { let id: String }
-
 struct CreditPanel: View {
     @Environment(MangaLibrary.self) private var library
     @Environment(\.dismiss) private var dismiss
-    @State private var video: CreditVideo?
     @State private var notice: String?
     @State private var freeVideoAction: CreditAction = .translate
     private var account: CreditStore { library.credits }
@@ -53,7 +61,20 @@ struct CreditPanel: View {
         NavigationStack {
             Form {
                 Section {
-                    LabeledContent(L("Membership"), value: account.tier.title)
+                    LabeledContent(L("Membership")) {
+                        HStack {
+                            Text(account.tier.title)
+                            if account.tier == .free {
+                                Button(L("Upgrade to Premium")) {
+                                    library.subscriptions.offerAfterCredits = true
+                                    dismiss()
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .font(.subheadline)
+                                .accessibilityIdentifier("credit-upgrade-premium")
+                            }
+                        }
+                    }
                     LabeledContent(L("Credits"), value: String(account.profile.credit)).font(.title2)
                 }
                 if let request = library.creditRequest {
@@ -91,13 +112,15 @@ struct CreditPanel: View {
                         LabeledContent(L("Today's reward"), value: "\(account.policy.daily(account.tier)) \(L("credits"))")
                         Button(L("Claim daily reward"), systemImage: "gift") { claimDaily() }
                             .accessibilityIdentifier("credit-claim-daily")
-                        Button {
-                            startVideo("daily", action: .translate)
-                        } label: {
-                            Label(String(format: L("Watch video and claim %d credits"), Int((Double(account.policy.daily(account.tier)) * account.policy.reward_video_multiplier).rounded(.down))), systemImage: "play.rectangle")
-                        }.accessibilityIdentifier("credit-daily-video")
-                        Text(L("The video multiplier applies to today's daily reward. Claiming either option uses today's reward."))
-                            .font(.caption).foregroundStyle(.secondary)
+                        Group {
+                            Button {
+                                startVideo("daily", action: .translate)
+                            } label: {
+                                Label(String(format: L("Watch video and claim %d credits"), Int((Double(account.policy.daily(account.tier)) * account.policy.reward_video_multiplier).rounded(.down))), systemImage: "play.rectangle")
+                            }.accessibilityIdentifier("credit-daily-video")
+                            Text(L("The video multiplier applies to today's daily reward. Claiming either option uses today's reward."))
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
                     } else {
                         Label(L("Today's reward has already been claimed."), systemImage: "checkmark.circle")
                         LabeledContent(L("Next reward (UTC)"), value: account.nextDaily.ISO8601Format()).font(.caption)
@@ -124,24 +147,15 @@ struct CreditPanel: View {
                     }
                 }
                 Section {
-                    Text(L("Rewarded videos are simulated in this build. No real advertisement is shown."))
-                        .font(.caption).foregroundStyle(.orange)
+                    if library.rewardedAds.testing { Text(L("AdMob test ads")).font(.caption).foregroundStyle(.secondary) }
+                    if library.rewardedAds.working { ProgressView(library.rewardedAds.status) }
                     Text(L("Daily rewards reset at 00:00 UTC. Unused credits carry over; missed days are not accumulated."))
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
-            .disabled(account.working)
+            .disabled(account.working || library.rewardedAds.working)
             .navigationTitle(L(library.creditRequest == nil ? "Daily reward" : "Confirm credit use"))
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button(L("Close")) { dismiss() } } }
-            .sheet(item: $video) { purpose in
-                OfflineRewardVideo {
-                    Task {
-                        do { try await account.completeVideo(purpose.id) }
-                        catch { notice = error.localizedDescription }
-                        video = nil
-                    }
-                }
-            }
             .alert(L("Credits"), isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
                 Button(L("OK")) { notice = nil }
             } message: { Text(notice ?? "") }
@@ -156,7 +170,7 @@ struct CreditPanel: View {
     }
     private func startVideo(_ purpose: String, action: CreditAction) {
         Task {
-            do { video = CreditVideo(id: try await account.startVideo(purpose: purpose, action: action)) }
+            do { try await library.rewardedAds.watch(purpose: purpose, action: action, credits: account) }
             catch { notice = error.localizedDescription }
         }
     }
@@ -173,34 +187,5 @@ struct CreditPanel: View {
             Text(L("Free videos unlock one translation or image without adding credits. Enhance and random prompts need credits."))
                 .font(.caption).foregroundStyle(.secondary)
         }
-    }
-}
-
-private struct OfflineRewardVideo: View {
-    let complete: () -> Void
-    @Environment(\.dismiss) private var dismiss
-    @State private var ready = false
-    @State private var awarded = false
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                Image(systemName: "play.rectangle.fill").font(.system(size: 64)).foregroundStyle(.pink)
-                Text(L("Rewarded video simulation")).font(.title2)
-                Text(L("This is a short offline preview. Closing it early gives no reward.")).multilineTextAlignment(.center)
-                if ready {
-                    Button(L("Complete video and claim")) {
-                        guard !awarded else { return }
-                        awarded = true; complete()
-                    }.buttonStyle(.borderedProminent).disabled(awarded).accessibilityIdentifier("credit-video-complete")
-                } else { ProgressView(L("Playing demo video…")) }
-            }.padding(32).frame(maxWidth: .infinity, maxHeight: .infinity)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button(L("Cancel")) { dismiss() } } }
-            .task {
-                do { try await Task.sleep(for: .seconds(3)); try Task.checkCancellation(); ready = true }
-                catch { }
-            }
-        }
-        .presentationSizing(.page)
-        .interactiveDismissDisabled(awarded)
     }
 }

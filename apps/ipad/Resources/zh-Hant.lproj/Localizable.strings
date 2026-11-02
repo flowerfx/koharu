@@ -464,3 +464,40 @@
 
 "Subscription ends (UTC)" = "訂閱到期時間 (UTC)";
 "Your profile, credits and membership are synced with your account." = "個人資料、點數和會員狀態會與您的帳號同步。";
+"If you stop or a later page fails, pages already translated are kept and the credits are used. Credits are refunded only when no page was translated." = "如果你停止或之後的頁面失敗，已翻譯的頁面會保留，點數會被扣除。只有在沒有翻譯任何頁面時才會退還點數。";
+"HTTP is only allowed for local network addresses. Use HTTPS for other servers." = "HTTP 僅允許用於區域網路位址。其他伺服器請使用 HTTPS。";
+"Claim an available daily reward or wait until the next UTC day." = "領取可用的每日獎勵，或等待下一個 UTC 日期。";
+"Free image generation costs credits. Premium image generation has no credit fee. Failed or canceled generation is refunded." = "Free 生成圖片需要點數。Premium 生成圖片不扣點數。失敗或取消將退還。";
+"Your account has been deleted." = "你的帳號已刪除。";
+"You're offline. Saved chapters can still be read; translating and generating need a connection." = "你目前處於離線狀態。仍可閱讀已儲存的章節；翻譯和生成需要網路連線。";
+"Offline · saved chapters only" = "離線 · 僅限已儲存章節";
+"Delete account" = "刪除帳號";
+"Delete your account?" = "要刪除你的帳號嗎？";
+"Your backend account, credits, membership record and sign-in links will be permanently deleted. Chapters, images and models saved on this device are kept. An App Store subscription is not canceled automatically; cancel it in your Apple Account settings." = "你的後端帳號、點數、會員記錄和登入連結將被永久刪除。儲存在此裝置上的章節、圖片和模型會保留。App Store 訂閱不會自動取消，請在 Apple 帳號設定中取消。";
+"Work was stopped because the app moved to the background. Pages and images already finished are kept. Keep the app open while translating or generating images." = "App 已移至背景，工作已停止。已完成的頁面和圖片會保留。翻譯或生成圖片時請保持 App 開啟。";
+"This server uses HTTP. The API token is sent unencrypted on your local network." = "此伺服器使用 HTTP。API 權杖會在你的區域網路中以未加密方式傳送。";
+"Verifying model" = "正在驗證模型";
+
+"Server-selected model" = "由伺服器選擇模型";
+"The AI service returned an invalid response. Please try again." = "AI 服務傳回無效回應，請重試。";
+"The AI request is too large or invalid. Reduce segments per request or shorten the instructions." = "AI 請求過大或無效，請減少每次請求的段落數或縮短指令。";
+"The AI request is taking too long. A running request may still finish on the server." = "AI 請求耗時過長，執行中的請求仍可能在伺服器上完成。";
+"The AI service has no available provider. Please try again later." = "目前沒有可用的 AI 供應商，請稍後重試。";
+"The AI provider could not process this content. Please revise your request." = "AI 供應商無法處理此內容，請修改請求。";
+"The AI request was interrupted. Please try again." = "AI 請求已中斷，請重試。";
+"The AI service could not complete the request. Please try again later." = "AI 服務無法完成請求，請稍後重試。";
+"Preferred AI provider" = "偏好的 AI 供應商";
+"Automatic (random available provider)" = "自動（隨機選擇可用供應商）";
+"Currently unavailable; automatic fallback" = "目前無法使用，將自動切換";
+"Refresh available providers" = "重新整理可用供應商";
+"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "提示詞會安全地傳送到伺服器。伺服器選擇已設定的模型並傳回 AI 結果。偏好的供應商無法使用時，會自動切換到其他供應商。";
+"Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "Backend API 在傳回 AI 結果時扣除點數，即使之後停止工作或算繪失敗也一樣。未傳回 AI 結果的失敗請求會退還點數。";
+
+"Loading rewarded ad…" = "正在載入獎勵廣告…";
+"Watching rewarded ad…" = "正在播放獎勵廣告…";
+"Updating reward…" = "正在更新獎勵…";
+"Rewarded ads are unavailable right now. Please try again later." = "目前無法載入獎勵廣告，請稍後重試。";
+"Ad privacy choices" = "廣告隱私選項";
+"AdMob test ads" = "AdMob 測試廣告";
+
+"Upgrade to Premium" = "升級至 Premium";

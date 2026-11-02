@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import CryptoKit
 
 struct ConfigurationTarget: Equatable, Sendable {
     enum Environment: String, Sendable { case staging, production }
@@ -9,6 +10,7 @@ struct ConfigurationTarget: Equatable, Sendable {
     var prefix: String { "apps/aimangatranslator/env/\(environment.rawValue)/\(version)/configs/" }
     var key: String { prefix + "app-config.json" }
     var objectURL: URL { Self.bucket.appendingPathComponent(key) }
+    var signatureURL: URL { Self.bucket.appendingPathComponent(key + ".sig") }
     init(environment: Environment, version: String) throws {
         guard version.range(of: "^[0-9]+\\.[0-9]+\\.[0-9]+$", options: .regularExpression) != nil else { throw ConfigurationSyncError.invalidTarget }
         self.environment = environment; self.version = version
@@ -28,7 +30,25 @@ struct ConfigurationTarget: Equatable, Sendable {
 }
 
 enum ConfigurationSyncError: Error {
-    case invalidTarget, invalidListing, missingObject, invalidResponse, oversized, changedDuringDownload
+    case invalidTarget, invalidListing, missingObject, invalidResponse, oversized, changedDuringDownload, invalidSignature
+}
+
+// Remote app-config.json can redirect model downloads, so a build that bundles
+// a public key (KoharuConfigSigningKey, base64 raw Ed25519) only accepts a remote
+// configuration accompanied by app-config.json.sig: a base64 Ed25519 signature
+// over the exact bytes. scripts/sign_config.py creates keys and signatures.
+// Builds without a key keep the previous unsigned behaviour.
+enum ConfigurationSignature {
+    static var publicKey: Curve25519.Signing.PublicKey? {
+        guard let text = Bundle.main.object(forInfoDictionaryKey: "KoharuConfigSigningKey") as? String,
+              let raw = Data(base64Encoded: text.trimmingCharacters(in: .whitespacesAndNewlines)) else { return nil }
+        return try? Curve25519.Signing.PublicKey(rawRepresentation: raw)
+    }
+    static func verify(_ body: Data, signature: Data, key: Curve25519.Signing.PublicKey) throws {
+        guard let text = String(data: signature, encoding: .utf8),
+              let raw = Data(base64Encoded: text.trimmingCharacters(in: .whitespacesAndNewlines)),
+              key.isValidSignature(raw, for: body) else { throw ConfigurationSyncError.invalidSignature }
+    }
 }
 
 struct ConfigurationObject: Equatable, Sendable {
@@ -91,7 +111,9 @@ final class ConfigurationListing: NSObject, XMLParserDelegate {
 
 actor ConfigurationClient {
     private let session: URLSession
-    init(session: URLSession? = nil) {
+    private let signingKey: Curve25519.Signing.PublicKey?
+    init(session: URLSession? = nil, signingKey: Curve25519.Signing.PublicKey? = ConfigurationSignature.publicKey) {
+        self.signingKey = signingKey
         if let session { self.session = session }
         else {
             let config = URLSessionConfiguration.ephemeral
@@ -133,6 +155,12 @@ actor ConfigurationClient {
                 guard body.count == object.size, http.value(forHTTPHeaderField: "ETag") == object.etag,
                       let date = http.value(forHTTPHeaderField: "Last-Modified").flatMap(ConfigurationListing.httpDate),
                       floor(date.timeIntervalSince1970) == floor(object.modified.timeIntervalSince1970) else { throw ConfigurationSyncError.changedDuringDownload }
+                if let key = signingKey {
+                    var signed = URLRequest(url: target.signatureURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: max(0.1, deadline.timeIntervalSinceNow))
+                    signed.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
+                    let (signature, _) = try await read(signed, limit: 1024)
+                    try ConfigurationSignature.verify(body, signature: signature, key: key)
+                }
                 return (body, object)
             }
             guard let next = listing.continuation else { throw ConfigurationSyncError.missingObject }

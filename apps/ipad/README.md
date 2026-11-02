@@ -287,7 +287,7 @@ See [THIRD_PARTY.md](THIRD_PARTY.md) for runtime and downloadable model sources/
 
 ## Server credit policy
 
-Downloaded chapters open for free, including at zero credit. Translating a chapter from Rawkuma costs one credit for every provider. Run and Retranslate on a saved chapter cost one credit only with Backend API; other providers rerun for free and their rerun buttons omit any credit amount. Initial translation uses `cost_translate`; backend reruns use `cost_api_prompt`, with no second fee added. Failed or cancelled operations refund their reservation. Free rewarded videos grant one translation/image access; Premium videos add ten credits. Image generation remains Free 1/Premium 0, enhance Free 2/Premium 1, and random prompts cost 1 for every provider. Nakama owns the policy in the backend `credit-policy.json`. The bundled resource only seeds labels before loading the server response. Every claim, video ticket, credit reservation and settlement goes through authenticated Nakama RPCs. Rewarded video playback remains an explicitly labeled simulation; no real ad network is integrated.
+Downloaded chapters open for free, including at zero credit. Translating a chapter from Rawkuma costs one credit for every provider. Run and Retranslate on a saved chapter cost one credit only with Backend API; other providers rerun for free and their rerun buttons omit any credit amount. Initial translation uses `cost_translate`; backend reruns use `cost_api_prompt`, with no second fee added. Local/hosted failed or cancelled operations refund their reservation. Backend API captures the reservation when the first valid AI output is returned, even if later page rendering fails or the user stops; a run without any successful AI output is refunded by the server. Free rewarded videos grant one translation/image access; Premium videos add ten credits. Image generation remains Free 1/Premium 0, enhance Free 2/Premium 1, and random prompts cost 1 for every provider. Daily rewards and all fees are grouped under `credit` in `app-config.json`; the separate credit-config resource is removed. Nakama applies the production S3 credit settings for the shared backend and sends the current policy with profile responses. The app-config snapshot only seeds client labels until that response arrives. Every claim, video ticket, credit reservation and settlement goes through authenticated Nakama RPCs. Rewarded ads use Google Mobile Ads SDK. Completion is checked only through the SDK earned callback on the client, then the existing authenticated credit RPC persists the reward. No AdMob SSV is used.
 
 Reading admission and `cost_read` have been removed. During development deployment, existing reading-video allowances were transferred once to translation allowances with a protected profile backup; the app does not retain an old-profile compatibility parser.
 
@@ -314,3 +314,44 @@ The public, owner-readable `user_profile/profile` contains exactly `id`, `credit
 The server-only credit ledger commits atomically with the profile using storage versions, so concurrent devices cannot claim daily rewards twice. Idempotent operation IDs prevent duplicate charges/refunds after lost responses. Successful work settles its reservation; failed/canceled work refunds it. Unsettled reservations recover after 24 hours on the next server command. Profile writes are denied to clients, and stale response revisions cannot overwrite a newer in-memory snapshot. No existing local profile is imported as trusted credit or membership.
 
 Both App Store Connect apps send production and sandbox v2 notifications to the shared Nakama endpoint `/v2/console/apple/subscriptions/koharu-apple-v2`. Nakama verifies Apple signatures and updates its subscription ledger before the runtime synchronizes the profile. Stored provider payloads must match app/product/account ownership before granting Premium. `NakamaProfileChecks` tests the native shared-backend profile on a physical device without buying a subscription. A real sandbox purchase/renewal/refund cycle still requires a sandbox tester and is not established by catalog/profile checks.
+
+## Backend API text generation
+
+Selecting Backend API uses the authenticated Nakama session for chapter translation,
+reruns, prompt enhancement and random anime/original prompts. Settings fetches
+`ai_catalog`; Automatic leaves routing to the server, while a preferred provider
+ID is sent without a model, URL or vendor credential. The server owns active
+status, key validation, model selection, bounded transient retries and random fallback. Translation retains
+the shared prompt builder, batch size and strict segment-ID validation.
+
+Each chapter/action reserves credits once. `ai_generate` submits a UUID-bound job;
+`ai_result` polls until a validated result or a sanitized error is returned. A lost
+submission response retries the same request ID. Stop attempts `ai_cancel` for
+queued work. `ai_finish` closes batch admission and releases an unused reservation;
+already running calls settle on the server. Client `profile_settle` is used only
+for work that the server does not own. Closing the app cannot undo a vendor call.
+
+The versioned S3 app-config for each environment must include
+`{"id":"backend","enable":true}`. Staging and Production use the same Nakama
+connection and server provider configuration. `BackendAITests` covers protocol,
+batching, strict decoding and cancellation with an isolated RPC fixture.
+`BackendAIChecks/testNativeBackendTranslationAndAnimePrompt` runs the real native
+flow on a physical device with an isolated account and requires at least one
+active server provider; its report is `Documents/backend-ai-check.json` and an
+xcresult attachment. It does not change the user's saved account or provider keys.
+
+## AdMob rewarded ads
+
+Google Mobile Ads 13.11.0 and UMP 3.1.0 are pinned in `project.yml`. Production uses
+AdMob app `ca-app-pub-9623603115892772~2803757650` and rewarded unit
+`ca-app-pub-9623603115892772/3441604792`. Staging requests Google demo rewarded ads.
+For a Production test build use `KOHARU_ADS_TESTING=YES`; the default Production
+archive setting is NO. The demo unit is `ca-app-pub-3940256099942544/1712485313`.
+
+Consent information refreshes once per launch; any required UMP form appears
+before ads load. The account section exposes ad privacy choices when required.
+The SDK full-screen dismissal grants a reward only if its earned callback fired.
+Closing early, loading errors and presentation failures grant nothing. The
+existing server profile ticket/receipt only persists the client-reported reward
+idempotently; it does not validate ad views. There is no SSV endpoint or simulated
+ad timer. Reward amounts and free action access still follow app-config.credit.

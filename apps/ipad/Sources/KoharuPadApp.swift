@@ -20,7 +20,7 @@ import UIKit
                     AppUpdateScreen(update: update).tint(.pink)
                 } else if let library, let store {
                     AuthenticatedAppScreen(refreshConfiguration: { Task { await refreshConfiguration() } })
-                        .environment(library).tint(.pink).disabled(store.isRefreshing)
+                        .environment(library).tint(.pink)
                 } else if let startupError {
                     ContentUnavailableView(L("Could not open library"), systemImage: "exclamationmark.triangle", description: Text(startupError))
                 } else { ProgressView(L("Checking configuration…")) }
@@ -30,6 +30,7 @@ import UIKit
             .task { await start() }
             .task { await cloud.refreshUpdates() }
             .onChange(of: phase) { _, phase in
+                if phase == .background { library?.enterBackground() }
                 if phase == .active {
                     if let library { Task { await library.subscriptions.refreshEntitlements(); await library.loginCredits() } }
                     if library != nil { Task { await refreshConfiguration() } }
@@ -42,15 +43,22 @@ import UIKit
         guard !starting, library == nil, let store else { return }
         starting = true
         defer { starting = false }
-        // Fetch before creating first-run preferences so remote defaults apply.
-        await store.refresh()
-        guard !Task.isCancelled else { return }
         do {
+            // Surface a broken bundle as a startup error rather than a crash.
             let disk = try LibraryDisk()
-            if !FileManager.default.fileExists(atPath: disk.root.appendingPathComponent("preferences.json").path) {
+            let firstRun = !FileManager.default.fileExists(atPath: disk.root.appendingPathComponent("preferences.json").path)
+            if firstRun {
+                // Fetch before creating first-run preferences so remote defaults apply.
+                await store.refresh()
+                guard !Task.isCancelled else { return }
                 UserDefaults.standard.set(true, forKey: "translationProviderSetupPending")
             }
-            library = MangaLibrary(disk: disk)
+            let opened = MangaLibrary(disk: disk)
+            library = opened
+            Task { await opened.rewardedAds.refreshConsent() }
+            // Later launches open the saved library immediately (also offline);
+            // the refresh runs in the background and defers while work is busy.
+            if !firstRun { Task { await refreshConfiguration() } }
         } catch { startupError = error.localizedDescription }
     }
     @MainActor private func refreshConfiguration() async {
@@ -71,7 +79,9 @@ struct AuthenticatedAppScreen: View {
             if restoring {
                 ProgressView(L("Checking sign-in…"))
             } else if let user = account.user {
-                if library.credits.loaded && library.credits.profile.id.uuidString.lowercased() == user.id.lowercased() {
+                // Offline, the saved library opens without a credit profile; credit
+                // actions stay blocked until the profile reloads from the backend.
+                if (library.credits.loaded && library.credits.profile.id.uuidString.lowercased() == user.id.lowercased()) || library.credits.offline {
                     RootScreen(refreshConfiguration: refreshConfiguration).id(user.id)
                 } else if library.credits.working {
                     ProgressView(L("Checking sign-in…"))
@@ -180,9 +190,10 @@ struct RootScreen: View {
         // selected tab, browser and durable reading state remain above it.
         .id(AppLocalization.shared.isRightToLeft)
         .tabViewStyle(.sidebarAdaptable)
-        .task {
-            CloudServices.shared.trackScreen(selection.rawValue)
+        .task(id: library.credits.loaded) {
+            if library.credits.loaded { CloudServices.shared.trackScreen(selection.rawValue) }
             await subscriptions.prepareLaunchOffer()
+            if !library.credits.loaded { return }
             await library.loginCredits()
         }
         .sheet(isPresented: $subscriptions.showOffer, onDismiss: { subscriptions.continueWithoutSubscription() }) {
@@ -196,7 +207,10 @@ struct RootScreen: View {
             library.approvedCreditRequest = nil
             library.showCreditRewards = false
             library.creditRequest = nil
-            approved?.proceed()
+            if subscriptions.offerAfterCredits {
+                subscriptions.offerAfterCredits = false
+                subscriptions.showOffer = true
+            } else { approved?.proceed() }
         }) { CreditPanel() }
         .onChange(of: library.showCreditProviderSettings) { _, show in
             if show {
@@ -244,7 +258,7 @@ struct RootScreen: View {
             if !downloading && (try? ConfigurationStore.shared.get().refreshDeferred) == true { refreshConfiguration() }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in
-            if !library.busy { Task { await library.translator.unload() } }
+            if !library.busy { Task { await library.translator.unload(); await library.pipeline.releaseCachedModels() } }
         }
     }
 }
@@ -328,6 +342,7 @@ struct ReaderScreen: View {
     @State private var editing = false
     @State private var clear = false
     @State private var share: URL?
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var rerunCreditSuffix: String {
         library.preferences.provider == .backend ? " · \(library.rerunCreditCost) \(L("credits"))" : ""
     }
@@ -337,13 +352,23 @@ struct ReaderScreen: View {
             if let chapter, !chapter.pages.isEmpty {
                 let page = chapter.pages[min(index, chapter.pages.count - 1)]
                 VStack(spacing: 0) {
-                    HStack {
-                        Button { index = max(0, index - 1) } label: { Image(systemName: "chevron.backward") }.disabled(index == 0).accessibilityLabel(L("Previous page"))
-                        Text("\(index + 1) / \(chapter.pages.count)").monospacedDigit()
-                        Button { index = min(chapter.pages.count - 1, index + 1) } label: { Image(systemName: "chevron.forward") }.disabled(index == chapter.pages.count - 1).accessibilityLabel(L("Next page"))
-                        Slider(value: Binding(get: { Double(index) }, set: { index = Int($0.rounded()) }), in: 0...Double(max(1, chapter.pages.count - 1)), step: 1).disabled(chapter.pages.count == 1)
-                        Toggle(L("Original"), isOn: $original).toggleStyle(.button)
-                        Button(L("Edit text"), systemImage: "text.cursor") { editing = true }.disabled(library.busy || page.segments.isEmpty)
+                    // iPhone widths put the page slider on its own row and show
+                    // the edit action as an icon, so no control is squeezed out.
+                    let compact = horizontalSizeClass == .compact
+                    VStack(spacing: 6) {
+                        HStack {
+                            Button { index = max(0, index - 1) } label: { Image(systemName: "chevron.backward") }.disabled(index == 0).accessibilityLabel(L("Previous page"))
+                            Text("\(index + 1) / \(chapter.pages.count)").monospacedDigit()
+                            Button { index = min(chapter.pages.count - 1, index + 1) } label: { Image(systemName: "chevron.forward") }.disabled(index == chapter.pages.count - 1).accessibilityLabel(L("Next page"))
+                            if compact { Spacer() } else { pageSlider(chapter.pages.count) }
+                            Toggle(L("Original"), isOn: $original).toggleStyle(.button)
+                            if compact {
+                                Button(L("Edit text"), systemImage: "text.cursor") { editing = true }.labelStyle(.iconOnly).disabled(library.busy || page.segments.isEmpty)
+                            } else {
+                                Button(L("Edit text"), systemImage: "text.cursor") { editing = true }.disabled(library.busy || page.segments.isEmpty)
+                            }
+                        }
+                        if compact { pageSlider(chapter.pages.count) }
                     }.padding(10).background(.bar)
                     if library.readingMode == .vertical {
                         ContinuousReader(urls: chapter.pages.map { pageURL($0) }, index: index) { index = $0 }
@@ -379,14 +404,15 @@ struct ReaderScreen: View {
                 index = min(chapter.readPage, max(0, chapter.pages.count - 1))
             }
         }
-        .onChange(of: index) { _, value in
-            guard var chapter else { return }; chapter.readPage = value
-            do { try library.update(chapter, recordUndo: false) } catch { library.error = error.localizedDescription }
-        }
+        .onChange(of: index) { _, value in library.setReadPage(chapterID, value) }
+        .onDisappear { library.flushReadPositions() }
         .sheet(item: Binding(get: { share.map { ShareDocument(url: $0) } }, set: { share = $0?.url })) { ActivityShare(items: [$0.url]) }
         .confirmationDialog(L("Clear rendered cache? Originals, OCR and edited text are kept."), isPresented: $clear, titleVisibility: .visible) {
             Button(L("Clear cache"), role: .destructive) { library.clearCache(chapterID) }
         }
+    }
+    private func pageSlider(_ count: Int) -> some View {
+        Slider(value: Binding(get: { Double(index) }, set: { index = Int($0.rounded()) }), in: 0...Double(max(1, count - 1)), step: 1).disabled(count == 1)
     }
     private func pageURL(_ page: MangaPage) -> URL {
         if !original, let rendered = page.rendered {
@@ -400,7 +426,12 @@ struct ReaderScreen: View {
         Task {
             do {
                 share = try await Task.detached {
-                    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pdf")
+                    // One export folder, emptied before each export, so shared PDFs
+                    // do not accumulate in tmp for the life of the install.
+                    let folder = FileManager.default.temporaryDirectory.appendingPathComponent("exports", isDirectory: true)
+                    try? FileManager.default.removeItem(at: folder)
+                    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                    let url = folder.appendingPathComponent(UUID().uuidString + ".pdf")
                     guard let context = CGContext(url as CFURL, mediaBox: nil, nil) else { throw AppError.message(L("Could not create PDF")) }
                     defer { context.closePDF() }
                     for page in chapter.pages {
@@ -476,6 +507,7 @@ final class PageScrollView: UIScrollView, UIScrollViewDelegate, UIGestureRecogni
     var turnPage: ((Int) -> Void)?
     private let picture = UIImageView()
     private var url: URL?
+    private var loading: Task<Void, Never>?
     private var previousSize: CGSize = .zero
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -489,9 +521,16 @@ final class PageScrollView: UIScrollView, UIScrollViewDelegate, UIGestureRecogni
     required init?(coder: NSCoder) { fatalError("init(coder:) is unavailable") }
     func show(_ url: URL) {
         guard self.url != url else { return }
-        self.url = url; picture.image = UIImage(contentsOfFile: url.path)
-        picture.frame = CGRect(origin: .zero, size: picture.image?.size ?? CGSize(width: 1, height: 1))
-        previousSize = .zero; setNeedsLayout()
+        self.url = url
+        loading?.cancel()
+        // Full resolution is kept for zooming, but decoded off the main thread.
+        loading = Task { @MainActor [weak self] in
+            let image = await PageImageLoader.load(url)
+            guard let self, !Task.isCancelled, self.url == url else { return }
+            self.picture.image = image
+            self.picture.frame = CGRect(origin: .zero, size: image?.size ?? CGSize(width: 1, height: 1))
+            self.previousSize = .zero; self.setNeedsLayout()
+        }
     }
     override func layoutSubviews() {
         super.layoutSubviews()

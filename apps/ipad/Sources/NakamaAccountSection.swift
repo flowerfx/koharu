@@ -3,6 +3,7 @@ import AuthenticationServices
 
 struct NakamaAccountSection: View {
     @Environment(MangaLibrary.self) private var library
+    @State private var confirmingDeletion = false
     var body: some View {
         let account = library.backendAuthentication
         Section(L("Backend account")) {
@@ -17,6 +18,9 @@ struct NakamaAccountSection: View {
                     NakamaAppleSignInButton()
                     Button(L("Sign out of backend")) { Task { await account.signOut() } }
                         .disabled(account.working || library.busy || library.downloadingModel)
+                    Button(L("Delete account"), role: .destructive) { confirmingDeletion = true }
+                        .disabled(account.working || library.busy || library.downloadingModel)
+                        .accessibilityIdentifier("nakama-delete-account")
                 } else {
                     NakamaSignInButtons()
                 }
@@ -25,6 +29,14 @@ struct NakamaAccountSection: View {
                 Text(L("Your profile, credits and membership are synced with your account."))
                     .font(.caption).foregroundStyle(.secondary)
             }
+        }
+        .confirmationDialog(L("Delete your account?"), isPresented: $confirmingDeletion, titleVisibility: .visible) {
+            Button(L("Delete account"), role: .destructive) {
+                Task { _ = await account.deleteAccount() }
+            }
+            Button(L("Cancel"), role: .cancel) {}
+        } message: {
+            Text(L("Your backend account, credits, membership record and sign-in links will be permanently deleted. Chapters, images and models saved on this device are kept. An App Store subscription is not canceled automatically; cancel it in your Apple Account settings."))
         }
     }
 }

@@ -61,7 +61,7 @@ struct NakamaSession: Codable, Sendable {
     let refresh_token: String
 }
 struct NakamaAccount: Decodable, Sendable {
-    struct User: Decodable, Sendable {
+    struct User: Codable, Sendable {
         let id: String
         let username: String
         let apple_id: String?
@@ -96,11 +96,11 @@ actor NakamaClient {
         session = URLSession(configuration: config, delegate: NakamaTLS(certificate: certificate, host: connection.endpoint.host!), delegateQueue: nil)
     }
     deinit { session.invalidateAndCancel() }
-    private func send(_ path: String, body: [String: Any]?, token: String? = nil, query: [URLQueryItem] = []) async throws -> Data {
+    private func send(_ path: String, body: [String: Any]?, token: String? = nil, query: [URLQueryItem] = [], method: String? = nil) async throws -> Data {
         var url = URLComponents(url: connection.endpoint.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
         if !query.isEmpty { url.queryItems = query }
         var request = URLRequest(url: url.url!)
-        request.httpMethod = body == nil ? "GET" : "POST"
+        request.httpMethod = method ?? (body == nil ? "GET" : "POST")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let token { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
         else { request.setValue("Basic " + Data((connection.server_key + ":").utf8).base64EncodedString(), forHTTPHeaderField: "Authorization") }
@@ -137,7 +137,7 @@ actor NakamaClient {
                 guard (200...299).contains(http.statusCode), data.count <= 1_048_576 else { throw NakamaFailure(status: http.statusCode) }
                 struct RPC: Decodable { let payload: String }
                 return try JSONDecoder().decode(RPC.self, from: data).payload
-            } catch let error as URLError where attempt == 0 && name.hasPrefix("profile_") &&
+            } catch let error as URLError where attempt == 0 && (name.hasPrefix("profile_") || ["ai_generate", "ai_result", "ai_catalog", "ai_cancel", "ai_finish"].contains(name)) &&
                 [.networkConnectionLost, .timedOut, .cannotConnectToHost].contains(error.code) {
                 // Reuse the operation ID: a lost response cannot charge or award twice.
                 try Task.checkCancellation()
@@ -156,6 +156,11 @@ actor NakamaClient {
         try JSONDecoder().decode(NakamaSession.self, from: await send("v2/account/authenticate/apple",
             body: ["token": identityToken, "vars": ["challenge_user_id": challenge.user_id]], query: [.init(name: "create", value: "true")]))
     }
+    // Nakama's DeleteAccount removes the user and the storage objects it owns,
+    // including the credit profile, ledger and Apple/device links.
+    func deleteAccount(_ auth: NakamaSession) async throws {
+        _ = try await send("v2/account", body: nil, token: auth.token, method: "DELETE")
+    }
     func logout(_ auth: NakamaSession) async throws {
         _ = try await send("v2/session/logout", body: ["token": auth.token, "refresh_token": auth.refresh_token], token: auth.token)
     }
@@ -170,6 +175,9 @@ actor NakamaClient {
     private(set) var working = false
     private(set) var endpoint: String?
     private(set) var unavailable: String?
+    // True when a saved session was restored without reaching the backend.
+    // Reading the local library stays available; credit actions need a connection.
+    private(set) var offline = false
     var message: String?
     init() {
         do {
@@ -183,6 +191,10 @@ actor NakamaClient {
         }
     }
     func profileCommand(_ name: String, payload: String) async throws -> CreditResponse {
+        let result = try await rpcCommand(name, payload: payload)
+        return try CreditResponse.decoder().decode(CreditResponse.self, from: Data(result.utf8))
+    }
+    func rpcCommand(_ name: String, payload: String) async throws -> String {
         guard let client, let auth, let userID = user?.id else { throw NakamaFailure(status: 401) }
         let result: String
         do { result = try await client.rpc(name, payload: payload, auth: auth) }
@@ -192,7 +204,8 @@ actor NakamaClient {
             try await publish(refreshed, client: client, expectedUserID: userID)
             result = try await client.rpc(name, payload: payload, auth: refreshed)
         }
-        return try CreditResponse.decoder().decode(CreditResponse.self, from: Data(result.utf8))
+        guard user?.id == userID else { throw NakamaFailure(status: 401) }
+        return result
     }
     private func publish(_ session: NakamaSession, client: NakamaClient, expectedUserID: String? = nil) async throws {
         let account = try await client.account(session)
@@ -202,7 +215,10 @@ actor NakamaClient {
         }
         let saved = String(decoding: try JSONEncoder().encode(session), as: UTF8.self)
         try Credentials.save(saved, credentialScope + ":session")
-        auth = session; user = account.user
+        if let cached = try? JSONEncoder().encode(account.user) {
+            try? Credentials.save(String(decoding: cached, as: UTF8.self), credentialScope + ":user")
+        }
+        auth = session; user = account.user; offline = false
     }
     func restore() async {
         guard !working, user == nil, let client else { return }
@@ -214,6 +230,12 @@ actor NakamaClient {
             catch let failure as NakamaFailure where failure.status == 401 { try await publish(client.refresh(saved), client: client) }
         } catch {
             if (error as? NakamaFailure)?.status == 401 { try? clearSession() }
+            else if isConnectivityError(error), let cached = cachedUser() {
+                // The saved session is revalidated (and refreshed) on the next
+                // backend command; until then only local reading is unlocked.
+                auth = saved; user = cached; offline = true; message = nil
+                return
+            }
             message = error.localizedDescription
         }
         await prepareChallenge()
@@ -283,9 +305,33 @@ actor NakamaClient {
         working = false
         await prepareAppleSignIn()
     }
+    private func cachedUser() -> NakamaAccount.User? {
+        let value = Credentials.read(credentialScope + ":user")
+        guard let user = try? JSONDecoder().decode(NakamaAccount.User.self, from: Data(value.utf8)), UUID(uuidString: user.id) != nil else { return nil }
+        return user
+    }
     private func clearSession() throws {
         try Credentials.save("", credentialScope + ":session")
-        auth = nil; user = nil; challenge = nil
+        try? Credentials.save("", credentialScope + ":user")
+        auth = nil; user = nil; challenge = nil; offline = false
+    }
+    func deleteAccount() async -> Bool {
+        guard !working, let client, let auth else { return false }
+        working = true; defer { working = false }
+        do {
+            do { try await client.deleteAccount(auth) }
+            catch let failure as NakamaFailure where failure.status == 401 {
+                try await client.deleteAccount(client.refresh(auth))
+            }
+            try clearSession()
+            // A new guest sign-in must create a new account, not reuse this one.
+            try? Credentials.save("", credentialScope + ":device")
+            message = L("Your account has been deleted.")
+            return true
+        } catch {
+            message = error.localizedDescription
+            return false
+        }
     }
     func signOut() async {
         guard !working, let client, let auth else { return }
@@ -297,6 +343,10 @@ actor NakamaClient {
                 catch let expired as NakamaFailure where expired.status == 401 { }
             }
             try clearSession()
+            message = nil
+        } catch let error where isConnectivityError(error) {
+            // Signing out must work offline; the server session simply expires.
+            try? clearSession()
             message = nil
         } catch { message = error.localizedDescription }
     }

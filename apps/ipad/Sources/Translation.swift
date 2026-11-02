@@ -94,9 +94,14 @@ enum TranslationContract {
 actor TranslationEngine {
     let local = LocalInference()
     let hosted: HostedTranslation
-    init(hosted: HostedTranslation = HostedTranslation()) { self.hosted = hosted }
-    func translate(_ texts: [String], config: Preferences, model: URL?, catalog: GGUFDownload? = nil, batchSize: Int) async throws -> [String] {
-        try AppConfiguration.current.requireProvider(config.provider)
+    let backend: BackendAI?
+    private let configuration: @Sendable () -> AppConfiguration
+    init(hosted: HostedTranslation = HostedTranslation(), backend: BackendAI? = nil,
+         configuration: @escaping @Sendable () -> AppConfiguration = { .current }) {
+        self.hosted = hosted; self.backend = backend; self.configuration = configuration
+    }
+    func translate(_ texts: [String], config: Preferences, model: URL?, catalog: GGUFDownload? = nil, batchSize: Int, backendContext: BackendAIContext? = nil) async throws -> [String] {
+        try configuration().requireProvider(config.provider)
         if config.provider == .local, let catalog {
             guard catalog.enable else { throw AppError.message(L("This provider or model is disabled in app-config.json. Choose another option in Settings.")) }
             guard config.contextSize <= catalog.maxTokens else { throw AppError.message(L("Context tokens exceed this GGUF model’s configured maximum.")) }
@@ -116,17 +121,19 @@ actor TranslationEngine {
                                                   system: system, user: user, count: batch.count, instructions: config.instructions)
             } else {
                 data = try await generateStructured(TranslationContract.request(system: system, user: user, count: batch.count),
-                                                    config: config, model: model, catalog: catalog)
+                                                    config: config, model: model, catalog: catalog, backendContext: backendContext, backendTask: .translate, count: batch.count)
             }
             result += try TranslationContract.decode(data, count: batch.count)
         }
         return result
     }
-    func generateStructured(_ input: StructuredTextRequest, config: Preferences, model: URL?, catalog: GGUFDownload? = nil) async throws -> Data {
-        try AppConfiguration.current.requireProvider(config.provider)
+    func generateStructured(_ input: StructuredTextRequest, config: Preferences, model: URL?, catalog: GGUFDownload? = nil,
+                            backendContext: BackendAIContext? = nil, backendTask: BackendAITask = .generatePrompt, count: Int? = nil) async throws -> Data {
+        try configuration().requireProvider(config.provider)
         switch config.provider {
         case .backend:
-            throw AppError.message(L("Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent."))
+            guard let backend, let backendContext else { throw AppError.message(L("Could not open credit profile")) }
+            return try await backend.generate(input, task: backendTask, context: backendContext, count: count)
         case .local:
             guard let model else { throw AppError.message(L("Download or import a GGUF model and select it in Settings")) }
             if let catalog {
@@ -168,7 +175,11 @@ actor TranslationEngine {
     func unload() async { await local.unload() }
 }
 
+// Token generation blocks for minutes. A dedicated serial queue keeps it off
+// Swift's cooperative thread pool, which is sized to the CPU core count.
 actor LocalInference {
+    private nonisolated let queue = DispatchSerialQueue(label: "koharu.local-inference", qos: .userInitiated)
+    nonisolated var unownedExecutor: UnownedSerialExecutor { queue.asUnownedSerialExecutor() }
     #if canImport(llama)
     private var model: OpaquePointer?
     private var context: OpaquePointer?
@@ -223,8 +234,10 @@ actor LocalInference {
             let code = chunk.withUnsafeMutableBufferPointer { llama_decode(context, llama_batch_get_one($0.baseAddress, Int32($0.count))) }
             guard code == 0 else { throw AppError.message(L("Local inference failed during prompt processing")) }
         }
-        guard let chain = llama_sampler_chain_init(llama_sampler_chain_default_params()), let grammar = llama_sampler_init_grammar(vocab, request.grammar, "root") else { throw AppError.message(L("Could not create structured-output sampler")) }
+        guard let chain = llama_sampler_chain_init(llama_sampler_chain_default_params()) else { throw AppError.message(L("Could not create structured-output sampler")) }
+        // The chain owns every sampler added to it, including on early exit.
         defer { llama_sampler_free(chain) }
+        guard let grammar = llama_sampler_init_grammar(vocab, request.grammar, "root") else { throw AppError.message(L("Could not create structured-output sampler")) }
         llama_sampler_chain_add(chain, grammar)
         if let temperature = request.temperature, temperature > 0 {
             llama_sampler_chain_add(chain, llama_sampler_init_top_k(40))

@@ -8,7 +8,30 @@ enum CleanupProgress: Sendable {
     case tiles(completed: Int, total: Int)
 }
 
+// OCR, cleanup and Anima inference run synchronously for seconds to minutes.
+// The actor's own serial queue keeps that work off the cooperative pool.
 actor PagePipeline {
+    private nonisolated let queue = DispatchSerialQueue(label: "koharu.page-pipeline", qos: .userInitiated)
+    nonisolated var unownedExecutor: UnownedSerialExecutor { queue.asUnownedSerialExecutor() }
+    // Vision/cleanup models stay loaded across the pages of one run.
+    var vision: VisionONNX?
+    var cachedDiffusion: (key: String, handle: UnsafeMutableRawPointer)?
+    deinit { if let cachedDiffusion { koharu_diffusion_close(cachedDiffusion.handle) } }
+    func visionRuntime() throws -> VisionONNX {
+        if let vision { return vision }
+        let runtime = try VisionONNX()
+        vision = runtime
+        return runtime
+    }
+    func releaseDiffusion() {
+        if let cachedDiffusion { koharu_diffusion_close(cachedDiffusion.handle) }
+        cachedDiffusion = nil
+    }
+    // Called at the end of a run and before another large model is loaded.
+    func releaseCachedModels() {
+        vision = nil
+        releaseDiffusion()
+    }
     func recognize(_ url: URL, modelID: String? = nil, modelRoot: URL? = nil) async throws -> [TextSegment] {
         try Task.checkCancellation()
         _ = try AppConfiguration.current.requireVision(modelID ?? "apple")
@@ -64,7 +87,7 @@ actor PagePipeline {
                 guard let crop = image.cropping(to: rect) else { throw AppError.message(L("Could not prepare OCR crop")) }
                 return UIImage(cgImage: crop)
             }
-            let texts = try performVisionInference { try VisionONNX().read(crops, model: VisionModel.named(modelID), root: modelRoot) }
+            let texts = try performVisionInference { try visionRuntime().read(crops, model: VisionModel.named(modelID), root: modelRoot) }
             for index in segments.indices { segments[index].source = texts[index] }
         }
         return segments
@@ -122,8 +145,9 @@ actor PagePipeline {
             let allocationFailed = message.contains("bad_alloc") || message.contains("out of memory") || message.contains("failed to allocate memory") ||
                 ((error as NSError).domain == NSPOSIXErrorDomain && (error as NSError).code == Int(ENOMEM))
             guard allocationFailed else { throw error }
-            // Every stage owns its sessions locally. Unwinding + the autorelease
-            // pool unloads them before a fresh memory check in the one retry.
+            // Drop every cached session; unwinding + the autorelease pool then
+            // unload them before a fresh memory check in the one retry.
+            releaseCachedModels()
             try Task.checkCancellation()
             Thread.sleep(forTimeInterval: 0.15)
             try Task.checkCancellation()

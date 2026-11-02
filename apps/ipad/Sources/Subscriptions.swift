@@ -11,6 +11,7 @@ import StoreKit
     private(set) var message: String?
     private(set) var launchOfferFinished = false
     var showOffer = false
+    var offerAfterCredits = false
     var hasPremium: Bool { credits.tier == .premium }
 
     init(credits: CreditStore, environment: ConfigurationTarget.Environment) {
@@ -22,15 +23,25 @@ import StoreKit
 
     func prepareLaunchOffer() async {
         guard !launchOfferFinished else { return }
+        // Offline, membership is unknown: never present the paywall to a member.
+        // RootScreen calls this again once the credit profile loads.
+        guard credits.loaded else { await loadProduct(); return }
         await refreshEntitlements()
         guard !Task.isCancelled else { return }
         if hasPremium { launchOfferFinished = true }
-        else { showOffer = true }
+        else if let shown = UserDefaults.standard.object(forKey: Self.offerShownKey) as? Date, Date().timeIntervalSince(shown) < 86_400 {
+            // The launch offer is shown at most once a day; Premium stays in Settings.
+            launchOfferFinished = true
+        } else {
+            showOffer = true
+            UserDefaults.standard.set(Date(), forKey: Self.offerShownKey)
+        }
         await loadProduct()
     }
+    private static let offerShownKey = "subscriptionOfferShownAt"
 
     func resetAccount() {
-        showOffer = false; launchOfferFinished = false; message = nil
+        showOffer = false; offerAfterCredits = false; launchOfferFinished = false; message = nil
     }
 
     func continueWithoutSubscription() {

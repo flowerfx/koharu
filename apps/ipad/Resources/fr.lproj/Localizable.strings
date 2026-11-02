@@ -464,3 +464,40 @@
 
 "Subscription ends (UTC)" = "Fin de l’abonnement (UTC)";
 "Your profile, credits and membership are synced with your account." = "Votre profil, vos crédits et votre abonnement sont synchronisés avec votre compte.";
+"If you stop or a later page fails, pages already translated are kept and the credits are used. Credits are refunded only when no page was translated." = "Si vous arrêtez ou si une page suivante échoue, les pages déjà traduites sont conservées et les crédits sont utilisés. Les crédits ne sont remboursés que si aucune page n’a été traduite.";
+"HTTP is only allowed for local network addresses. Use HTTPS for other servers." = "Le HTTP n’est autorisé que pour les adresses du réseau local. Utilisez HTTPS pour les autres serveurs.";
+"Claim an available daily reward or wait until the next UTC day." = "Récupérez la récompense quotidienne disponible ou attendez le prochain jour UTC.";
+"Free image generation costs credits. Premium image generation has no credit fee. Failed or canceled generation is refunded." = "Les images Free coûtent des crédits. Les images Premium ne coûtent aucun crédit. Les échecs et annulations sont remboursés.";
+"Your account has been deleted." = "Votre compte a été supprimé.";
+"You're offline. Saved chapters can still be read; translating and generating need a connection." = "Vous êtes hors ligne. Les chapitres enregistrés restent lisibles ; la traduction et la génération nécessitent une connexion.";
+"Offline · saved chapters only" = "Hors ligne · chapitres enregistrés uniquement";
+"Delete account" = "Supprimer le compte";
+"Delete your account?" = "Supprimer votre compte ?";
+"Your backend account, credits, membership record and sign-in links will be permanently deleted. Chapters, images and models saved on this device are kept. An App Store subscription is not canceled automatically; cancel it in your Apple Account settings." = "Votre compte backend, vos crédits, votre historique d’abonnement et vos liens de connexion seront définitivement supprimés. Les chapitres, images et modèles enregistrés sur cet appareil sont conservés. Un abonnement App Store n’est pas résilié automatiquement ; résiliez-le dans les réglages de votre compte Apple.";
+"Work was stopped because the app moved to the background. Pages and images already finished are kept. Keep the app open while translating or generating images." = "Le travail a été arrêté car l’app est passée en arrière-plan. Les pages et images déjà terminées sont conservées. Gardez l’app ouverte pendant la traduction ou la génération d’images.";
+"This server uses HTTP. The API token is sent unencrypted on your local network." = "Ce serveur utilise HTTP. Le jeton d’API est envoyé sans chiffrement sur votre réseau local.";
+"Verifying model" = "Vérification du modèle";
+
+"Server-selected model" = "Modèle choisi par le serveur";
+"The AI service returned an invalid response. Please try again." = "Le service IA a renvoyé une réponse invalide. Veuillez réessayer.";
+"The AI request is too large or invalid. Reduce segments per request or shorten the instructions." = "La requête IA est trop volumineuse ou invalide. Réduisez le nombre de segments par requête ou raccourcissez les instructions.";
+"The AI request is taking too long. A running request may still finish on the server." = "La requête IA prend trop de temps. Une requête en cours peut encore se terminer sur le serveur.";
+"The AI service has no available provider. Please try again later." = "Aucun fournisseur IA n’est disponible. Veuillez réessayer plus tard.";
+"The AI provider could not process this content. Please revise your request." = "Le fournisseur IA n’a pas pu traiter ce contenu. Veuillez modifier votre requête.";
+"The AI request was interrupted. Please try again." = "La requête IA a été interrompue. Veuillez réessayer.";
+"The AI service could not complete the request. Please try again later." = "Le service IA n’a pas pu terminer la requête. Veuillez réessayer plus tard.";
+"Preferred AI provider" = "Fournisseur IA préféré";
+"Automatic (random available provider)" = "Automatique (fournisseur disponible au hasard)";
+"Currently unavailable; automatic fallback" = "Indisponible actuellement ; remplacement automatique";
+"Refresh available providers" = "Actualiser les fournisseurs disponibles";
+"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "Les prompts sont envoyés au serveur de manière sécurisée. Il choisit le modèle configuré et renvoie le résultat IA. Si le fournisseur préféré est indisponible, un autre est utilisé automatiquement.";
+"Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "L’API Backend utilise des crédits dès qu’un résultat IA est renvoyé, même si vous arrêtez ou si le rendu échoue ensuite. Les requêtes échouées sans résultat IA sont remboursées.";
+
+"Loading rewarded ad…" = "Chargement de la publicité avec récompense…";
+"Watching rewarded ad…" = "Lecture de la publicité avec récompense…";
+"Updating reward…" = "Mise à jour de la récompense…";
+"Rewarded ads are unavailable right now. Please try again later." = "Les publicités avec récompense sont indisponibles. Veuillez réessayer plus tard.";
+"Ad privacy choices" = "Confidentialité des publicités";
+"AdMob test ads" = "Publicités de test AdMob";
+
+"Upgrade to Premium" = "Passer à Premium";

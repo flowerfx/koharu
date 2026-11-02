@@ -9,7 +9,7 @@ final class SubscriptionCatalogChecks: XCTestCase {
         let environment = try ConfigurationTarget(bundle: .main).environment
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
-        let credits = CreditStore(authentication: NakamaAuthentication(), policy: try CreditConfiguration.bundled())
+        let credits = CreditStore(authentication: NakamaAuthentication(), policy: try AppConfiguration.decode(AppConfiguration.bundledData()).credit)
         let store = SubscriptionStore(credits: credits, environment: environment)
         await store.prepareLaunchOffer()
         let report: [String: Any] = [

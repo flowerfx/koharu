@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 import os
 
 struct GGUFDownload: Decodable, Identifiable {
@@ -11,6 +12,8 @@ struct GGUFDownload: Decodable, Identifiable {
     let ramReferenceTokens: Int
     let bytes: Int64
     let contextBytesPerToken: UInt64
+    // Optional pinned SHA-256 of the file; verified after download when present.
+    let sha256: String?
     func estimatedMemory(context: Int) -> UInt64 {
         let reference = ramRequirementMB * 1024 * 1024
         return context >= ramReferenceTokens ? reference + UInt64(context - ramReferenceTokens) * contextBytesPerToken : reference - UInt64(ramReferenceTokens - max(0, context)) * contextBytesPerToken
@@ -81,6 +84,12 @@ extension MangaLibrary {
                 defer { try? FileManager.default.removeItem(at: file) }
                 guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw AppError.message(L("Model download failed")) }
                 try Task.checkCancellation(); try Self.validateGGUF(file)
+                if let expected = catalog?.sha256 {
+                    status = L("Verifying model")
+                    let verification = Task.detached { try Self.sha256(of: file) }
+                    let actual = try await withTaskCancellationHandler { try await verification.value } onCancel: { verification.cancel() }
+                    guard actual == expected else { throw AppError.message(L("Model checksum verification failed")) }
+                }
                 let id = UUID(); let destination = disk.modelsURL.appendingPathComponent(id.uuidString + ".gguf")
                 try FileManager.default.moveItem(at: file, to: destination)
                 var excluded = destination; var attributes = URLResourceValues(); attributes.isExcludedFromBackup = true; try excluded.setResourceValues(attributes)
@@ -93,6 +102,14 @@ extension MangaLibrary {
             } catch is CancellationError { status = L("Stopped") }
             catch { self.error = error.localizedDescription }
         }
+    }
+    nonisolated private static func sha256(of url: URL) throws -> String {
+        let reader = try FileHandle(forReadingFrom: url); defer { try? reader.close() }
+        var hash = SHA256()
+        while let data = try reader.read(upToCount: 4 * 1024 * 1024), !data.isEmpty {
+            try Task.checkCancellation(); hash.update(data: data)
+        }
+        return hash.finalize().map { String(format: "%02x", $0) }.joined()
     }
     nonisolated private static func validateGGUF(_ url: URL) throws {
         let file = try FileHandle(forReadingFrom: url); defer { try? file.close() }

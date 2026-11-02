@@ -46,18 +46,40 @@ enum InterfaceLanguage: String, CaseIterable, Identifiable {
     }
 }
 
-@Observable final class AppLocalization {
+@Observable final class AppLocalization: @unchecked Sendable {
     static let shared = AppLocalization()
     var language: InterfaceLanguage {
-        didSet { UserDefaults.standard.set(language.rawValue, forKey: "interfaceLanguage") }
+        didSet {
+            UserDefaults.standard.set(language.rawValue, forKey: "interfaceLanguage")
+            let identifier = identifier
+            lock.withLock { backgroundIdentifier = identifier }
+        }
     }
-    private init() { language = InterfaceLanguage(rawValue: UserDefaults.standard.string(forKey: "interfaceLanguage") ?? "system") ?? .system }
+    // Inference actors and detached tasks format errors off the main thread.
+    // They read this lock-protected copy instead of the observed property.
+    @ObservationIgnored private let lock = NSLock()
+    @ObservationIgnored private var backgroundIdentifier = InterfaceLanguage.englishUS.rawValue
+    @ObservationIgnored private var bundles: [String: Bundle] = [:]
+    private init() {
+        language = InterfaceLanguage(rawValue: UserDefaults.standard.string(forKey: "interfaceLanguage") ?? "system") ?? .system
+        backgroundIdentifier = identifier
+    }
     var resolvedLanguage: InterfaceLanguage { language == .system ? .preferred(for: Locale.preferredLanguages) : language }
     var identifier: String { resolvedLanguage.rawValue }
     var locale: Locale { Locale(identifier: identifier) }
     var isRightToLeft: Bool { locale.language.characterDirection == .rightToLeft }
     func text(_ key: String) -> String {
-        guard let path = Bundle.main.path(forResource: identifier, ofType: "lproj"), let bundle = Bundle(path: path) else { return key }
+        // Main-thread reads stay observed so SwiftUI refreshes on a language change.
+        let identifier = Thread.isMainThread ? self.identifier : lock.withLock { backgroundIdentifier }
+        guard let bundle = bundle(identifier) else { return key }
         return bundle.localizedString(forKey: key, value: key, table: nil)
+    }
+    private func bundle(_ identifier: String) -> Bundle? {
+        lock.withLock {
+            if let cached = bundles[identifier] { return cached }
+            guard let path = Bundle.main.path(forResource: identifier, ofType: "lproj"), let bundle = Bundle(path: path) else { return nil }
+            bundles[identifier] = bundle
+            return bundle
+        }
     }
 }

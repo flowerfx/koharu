@@ -5,10 +5,44 @@ import OnnxRuntimeBindings
 // Pre/postprocessing follows the checkpoint-pinned publisher implementations:
 // Baberu onnx_infer.py; Hayai inference_onnx.py; Manga OCR's ViT/TrOCR +
 // manga_ocr postprocessor. Exact artifact revisions/hashes live in app-config.json.
+//
+// One instance is kept by PagePipeline for a whole chapter run, so OCR and
+// cleanup sessions load once instead of once per page. PagePipeline drops it
+// before another large model (local GGUF, Anima) needs the memory.
 final class VisionONNX {
     let environment: ORTEnv
+    private var sessions: [String: ORTSession] = [:]
+    private var paddle: (directory: String, handle: UnsafeMutableRawPointer)?
     init() throws { environment = try ORTEnv(loggingLevel: .error) }
+    deinit { if let paddle { koharu_paddle_close(paddle.handle) } }
+    // Memory admission applies only before loading; a loaded model's own
+    // footprint must not make the next page fail the same check.
+    func isLoaded(_ directory: URL) -> Bool {
+        let prefix = directory.path + "/"
+        return paddle?.directory == directory.path || sessions.keys.contains { $0.hasPrefix(prefix) }
+    }
+    func admit(_ model: VisionModel, at directory: URL) throws {
+        guard !isLoaded(directory) else { return }
+        do { try model.checkMemory() }
+        catch {
+            // Another stage's cached model may hold the RAM; drop it and recheck once.
+            evictAll()
+            try model.checkMemory()
+        }
+    }
+    func evictAll() {
+        sessions.removeAll()
+        if let paddle { koharu_paddle_close(paddle.handle) }
+        paddle = nil
+    }
     func session(_ url: URL, coreMLCache: URL? = nil) throws -> ORTSession {
+        let key = url.path + "|" + (coreMLCache?.path ?? "")
+        if let cached = sessions[key] { return cached }
+        let session = try makeSession(url, coreMLCache: coreMLCache)
+        sessions[key] = session
+        return session
+    }
+    private func makeSession(_ url: URL, coreMLCache: URL?) throws -> ORTSession {
         let options = try ORTSessionOptions()
         try options.setIntraOpNumThreads(4)
         if let coreMLCache {
@@ -48,13 +82,18 @@ final class VisionONNX {
         return chosen
     }
     func read(_ crops: [UIImage], model: VisionModel, root: URL) throws -> [String] {
-        try model.checkMemory()
         guard model.ready(root) else { throw AppError.message(L("Download the selected model in Settings first")) }
         let directory = model.directory(root)
+        try admit(model, at: directory)
         if model.id == "paddle" {
             var error = [CChar](repeating: 0, count: 8192)
-            guard let handle = koharu_paddle_open(directory.path, &error, error.count) else { throw AppError.message(L(String(cString: error))) }
-            defer { koharu_paddle_close(handle) }
+            let handle: UnsafeMutableRawPointer
+            if let paddle, paddle.directory == directory.path { handle = paddle.handle }
+            else {
+                if let paddle { koharu_paddle_close(paddle.handle); self.paddle = nil }
+                guard let opened = koharu_paddle_open(directory.path, &error, error.count) else { throw AppError.message(L(String(cString: error))) }
+                paddle = (directory.path, opened); handle = opened
+            }
             return try crops.map { image in
                 try Task.checkCancellation()
                 let pixels = try VisionRaster(image)

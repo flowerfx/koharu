@@ -69,8 +69,14 @@ actor SourceImages {
               width > 0, height > 0, width <= 20000, height <= 30000, width * height <= 24_000_000 else {
             throw AppError.message(L("Image is invalid or too large for on-device processing"))
         }
-        let bytes = try Data(contentsOf: temporary, options: .mappedIfSafe)
+        var bytes = try Data(contentsOf: temporary, options: .mappedIfSafe)
+        // Name by the source bytes so revalidation and de-duplication stay stable.
         let filename = digest(bytes) + ".image"
+        // OCR crops and inpainting read raw pixels, while layout uses the oriented
+        // size. Store EXIF-rotated sources upright so both agree.
+        if let orientation = props[kCGImagePropertyOrientation] as? Int, orientation != 1 {
+            bytes = try Self.upright(image, longestSide: max(width, height))
+        }
         let destination = disk.pageURL(chapter, filename)
         try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         if !FileManager.default.fileExists(atPath: destination.path) { try bytes.write(to: destination, options: .atomic) }
@@ -79,6 +85,24 @@ actor SourceImages {
         page.modified = http.value(forHTTPHeaderField: "Last-Modified")
         return page
     }
+    private static func upright(_ source: CGImageSource, longestSide: Int) throws -> Data {
+        let options: [CFString: Any] = [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceCreateThumbnailWithTransform: true,
+                                        kCGImageSourceThumbnailMaxPixelSize: longestSide]
+        let output = NSMutableData()
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary),
+              let destination = CGImageDestinationCreateWithData(output as CFMutableData, "public.png" as CFString, 1, nil) else {
+            throw AppError.message(L("Image is invalid or too large for on-device processing"))
+        }
+        CGImageDestinationAddImage(destination, image, nil)
+        guard CGImageDestinationFinalize(destination) else { throw AppError.message(L("Image is invalid or too large for on-device processing")) }
+        return output as Data
+    }
+}
+
+func isConnectivityError(_ error: Error) -> Bool {
+    guard let error = error as? URLError else { return false }
+    return [.notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost,
+            .dnsLookupFailed, .internationalRoamingOff, .dataNotAllowed, .callIsActive].contains(error.code)
 }
 
 enum LMStudio {
@@ -88,7 +112,17 @@ enum LMStudio {
               ["http", "https"].contains(url.scheme ?? ""), let host = url.host, !host.isEmpty,
               url.user == nil, url.password == nil, url.query == nil, url.fragment == nil,
               url.path.isEmpty || url.path == "/" else { throw AppError.message(L("Enter a server root URL without /v1")) }
+        // App Transport Security only permits plain HTTP on the local network.
+        guard url.scheme == "https" || isLocalHost(host) else {
+            throw AppError.message(L("HTTP is only allowed for local network addresses. Use HTTPS for other servers."))
+        }
         return url
+    }
+    static func isLocalHost(_ host: String) -> Bool {
+        let name = host.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+        if !name.contains(".") || name.hasSuffix(".local") { return true }
+        var v4 = in_addr(), v6 = in6_addr()
+        return inet_pton(AF_INET, name, &v4) == 1 || inet_pton(AF_INET6, name, &v6) == 1
     }
     static func session(timeout: Double = 120) -> URLSession {
         let config = URLSessionConfiguration.ephemeral

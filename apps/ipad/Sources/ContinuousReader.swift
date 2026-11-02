@@ -108,18 +108,32 @@ final class ContinuousPageScrollView: UIScrollView, UIScrollViewDelegate {
             if let existing = pictures[index] {
                 picture = existing.1
                 if existing.0 != url {
-                    picture.image = UIImage(contentsOfFile: url.path)
+                    // Keep the previous image until the replacement is decoded.
                     pictures[index] = (url, picture)
+                    load(url, at: index, into: picture)
                 }
             } else {
-                picture = UIImageView(image: UIImage(contentsOfFile: url.path))
+                picture = UIImageView()
                 picture.contentMode = .scaleAspectFit
                 picture.isAccessibilityElement = true
                 picture.accessibilityLabel = "\(index + 1) / \(urls.count)"
                 canvas.addSubview(picture)
                 pictures[index] = (url, picture)
+                load(url, at: index, into: picture)
             }
             picture.frame = pageFrames[index]
+        }
+    }
+    // Pages are decoded off the main thread at twice the display width, so a
+    // nearby window of pages costs a few MB each instead of ~96 MB at 24 MP.
+    private func load(_ url: URL, at index: Int, into picture: UIImageView) {
+        let size = imageSizes.indices.contains(index) ? imageSizes[index] : CGSize(width: 1, height: 1)
+        let scale = max(1, traitCollection.displayScale)
+        let longest = max(layoutWidth, bounds.width, 1) * scale * 2 * max(1, size.height / max(1, size.width))
+        Task { @MainActor [weak self, weak picture] in
+            let image = await PageImageLoader.load(url, maxPixel: longest)
+            guard let self, let picture, let current = self.pictures[index], current.0 == url, current.1 === picture else { return }
+            picture.image = image
         }
     }
     private var visibleCanvasRect: CGRect {

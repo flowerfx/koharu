@@ -10,6 +10,7 @@ struct AppConfiguration: Decodable {
         let contextTokens: Int
     }
     let defaults: Defaults
+    let credit: CreditConfiguration
     let provider: [Provider]
     let gguf: [GGUFDownload]
     let ocr: [VisionModel]
@@ -22,7 +23,14 @@ struct AppConfiguration: Decodable {
         return try Data(contentsOf: url)
     }
     // Every consumer reads the currently published immutable snapshot.
-    static var current: Self { try! ConfigurationStore.shared.get().configuration }
+    // KoharuPadApp shows a startup error instead of the library when the store
+    // cannot open, so the bundled fallback only covers early or test callers.
+    static var current: Self {
+        if let configuration = try? ConfigurationStore.shared.get().configuration { return configuration }
+        guard let bundled = bundledFallback else { preconditionFailure("The bundled app-config.json is missing or invalid") }
+        return bundled
+    }
+    private static let bundledFallback: Self? = try? decode(bundledData())
     var providers: [TranslationProvider] { provider.filter(\.enable).map(\.id) }
     var enabledGGUF: [GGUFDownload] { gguf.filter(\.enable) }
     var enabledOCR: [VisionModel] { ocr.filter(\.enable) }
@@ -31,6 +39,7 @@ struct AppConfiguration: Decodable {
     static func decode(_ data: Data) throws -> Self {
         do {
             let config = try JSONDecoder().decode(Self.self, from: data)
+            _ = try config.credit.validated()
             func unique(_ ids: [String]) -> Bool { Set(ids).count == ids.count }
             func secure(_ url: URL) -> Bool { url.scheme == "https" && url.host != nil && url.user == nil && url.password == nil }
             let vision = config.ocr + config.inpainting
@@ -43,6 +52,7 @@ struct AppConfiguration: Decodable {
                   config.gguf.allSatisfy({ model in
                       guard let url = URL(string: model.url) else { return false }
                       return !model.id.isEmpty && !model.name.isEmpty && secure(url) && url.pathExtension == "gguf" &&
+                          (model.sha256.map { $0.range(of: "^[a-f0-9]{64}$", options: .regularExpression) != nil } ?? true) &&
                           model.bytes > 0 && model.bytes < 1_000_000_000_000 && (1024...1_048_576).contains(model.maxTokens) &&
                           (1...1_048_576).contains(model.ramReferenceTokens) && model.contextBytesPerToken > 0 && model.contextBytesPerToken < 16_777_216 &&
                           model.ramRequirementMB < 1_048_576 && model.ramRequirementMB * 1024 * 1024 > UInt64(model.bytes) + UInt64(model.ramReferenceTokens) * model.contextBytesPerToken

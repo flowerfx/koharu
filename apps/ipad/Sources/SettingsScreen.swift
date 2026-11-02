@@ -23,7 +23,7 @@ struct SettingsScreen: View {
     var body: some View {
         @Bindable var library = library
         @Bindable var localization = AppLocalization.shared
-        let configuration = try! ConfigurationStore.shared.get()
+        let configuration = try? ConfigurationStore.shared.get()
         ScrollViewReader { proxy in
         Form {
             NakamaAccountSection()
@@ -52,9 +52,6 @@ struct SettingsScreen: View {
                     if !AppConfiguration.current.providers.contains(library.preferences.provider) {
                         Text(library.preferences.provider.name + " · " + L("Disabled in app configuration")).tag(library.preferences.provider).disabled(true)
                     }
-                    if !AppConfiguration.current.providers.contains(.backend) {
-                        Text(L("Backend API") + " · " + L("Not connected")).tag(TranslationProvider.backend).disabled(true)
-                    }
                     ForEach(AppConfiguration.current.providers) { provider in
                         Text(provider.name + (library.credits.tier.allows(provider) ? "" : " · " + L("Premium")))
                             .tag(provider).disabled(!library.credits.tier.allows(provider))
@@ -72,19 +69,16 @@ struct SettingsScreen: View {
                 }
                 Text(L("Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small.")).font(.caption).foregroundStyle(.secondary)
             }
-            if library.preferences.provider == .backend {
-                Section(L("Backend API")) {
-                    Text(L("Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent."))
-                        .font(.callout).foregroundStyle(.orange)
-                    Text(L("Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free."))
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-            }
+            if library.preferences.provider == .backend { BackendProviderSettings() }
             if library.preferences.provider == .lmStudio && AppConfiguration.current.providers.contains(.lmStudio) {
                 Section("LM Studio") {
                     TextField(L("Server URL"), text: $library.preferences.server).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled().environment(\.layoutDirection, .leftToRight)
                     Text(L("Use the server root URL, without /v1. Enable LAN serving in LM Studio.")).font(.caption).foregroundStyle(.secondary)
                     SecureField(L("API token (optional)"), text: $token).textInputAutocapitalization(.never).autocorrectionDisabled().environment(\.layoutDirection, .leftToRight)
+                    if !token.isEmpty, (try? LMStudio.baseURL(library.preferences.server))?.scheme == "http" {
+                        Label(L("This server uses HTTP. The API token is sent unencrypted on your local network."), systemImage: "exclamationmark.triangle")
+                            .font(.caption).foregroundStyle(.orange)
+                    }
                     Button(L("Save credential")) {
                         do { try Credentials.save(token, library.preferences.server) } catch { library.error = error.localizedDescription }
                     }
@@ -188,6 +182,7 @@ struct SettingsScreen: View {
                     Button(L("Cancel download"), role: .cancel) { library.modelTask?.cancel() }
                 }
             }
+            if let configuration {
             Section(L("Configuration")) {
                 LabeledContent(L("Environment"), value: configuration.target.environment.rawValue + " · " + configuration.target.version)
                 Text(configuration.statusText).font(.caption).foregroundStyle(configuration.status == .failed ? Color.orange : .secondary)
@@ -196,6 +191,7 @@ struct SettingsScreen: View {
                 Button(L("Check configuration updates")) { Task { await configuration.refresh { !library.busy && !library.downloadingModel } } }
                     .disabled(library.busy || library.downloadingModel || configuration.isRefreshing)
                 Link(L("Configuration source"), destination: configuration.target.objectURL)
+            }
             }
             Section(L("About")) {
                 Text("Koharu iPad \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")

@@ -464,3 +464,40 @@
 
 "Subscription ends (UTC)" = "구독 만료 (UTC)";
 "Your profile, credits and membership are synced with your account." = "프로필, 크레딧 및 멤버십이 계정과 동기화됩니다.";
+"If you stop or a later page fails, pages already translated are kept and the credits are used. Credits are refunded only when no page was translated." = "중지하거나 이후 페이지에서 실패해도 번역된 페이지는 유지되며 크레딧이 사용됩니다. 번역된 페이지가 하나도 없을 때만 환불됩니다.";
+"HTTP is only allowed for local network addresses. Use HTTPS for other servers." = "HTTP는 로컬 네트워크 주소에서만 사용할 수 있습니다. 다른 서버에는 HTTPS를 사용하세요.";
+"Claim an available daily reward or wait until the next UTC day." = "일일 보상을 받거나 다음 UTC 날짜까지 기다리세요.";
+"Free image generation costs credits. Premium image generation has no credit fee. Failed or canceled generation is refunded." = "Free 이미지 생성은 크레딧을 사용합니다. Premium은 무료입니다. 실패하거나 취소하면 환불됩니다.";
+"Your account has been deleted." = "계정이 삭제되었습니다.";
+"You're offline. Saved chapters can still be read; translating and generating need a connection." = "오프라인 상태입니다. 저장된 챕터는 읽을 수 있지만 번역과 생성에는 연결이 필요합니다.";
+"Offline · saved chapters only" = "오프라인 · 저장된 챕터만";
+"Delete account" = "계정 삭제";
+"Delete your account?" = "계정을 삭제할까요?";
+"Your backend account, credits, membership record and sign-in links will be permanently deleted. Chapters, images and models saved on this device are kept. An App Store subscription is not canceled automatically; cancel it in your Apple Account settings." = "백엔드 계정, 크레딧, 멤버십 기록, 로그인 연결이 영구적으로 삭제됩니다. 이 기기에 저장된 챕터, 이미지, 모델은 유지됩니다. App Store 구독은 자동으로 취소되지 않으니 Apple 계정 설정에서 취소하세요.";
+"Work was stopped because the app moved to the background. Pages and images already finished are kept. Keep the app open while translating or generating images." = "앱이 백그라운드로 이동하여 작업이 중지되었습니다. 완료된 페이지와 이미지는 유지됩니다. 번역하거나 이미지를 생성하는 동안에는 앱을 열어 두세요.";
+"This server uses HTTP. The API token is sent unencrypted on your local network." = "이 서버는 HTTP를 사용합니다. API 토큰이 로컬 네트워크에서 암호화되지 않은 채로 전송됩니다.";
+"Verifying model" = "모델 확인 중";
+
+"Server-selected model" = "서버가 선택한 모델";
+"The AI service returned an invalid response. Please try again." = "AI 서비스가 유효하지 않은 응답을 반환했습니다. 다시 시도해 주세요.";
+"The AI request is too large or invalid. Reduce segments per request or shorten the instructions." = "AI 요청이 너무 크거나 유효하지 않습니다. 요청당 구간 수를 줄이거나 지침을 짧게 해 주세요.";
+"The AI request is taking too long. A running request may still finish on the server." = "AI 요청이 너무 오래 걸리고 있습니다. 실행 중인 요청은 서버에서 계속 완료될 수 있습니다.";
+"The AI service has no available provider. Please try again later." = "현재 사용 가능한 AI 제공자가 없습니다. 나중에 다시 시도해 주세요.";
+"The AI provider could not process this content. Please revise your request." = "AI 제공자가 이 콘텐츠를 처리하지 못했습니다. 요청을 수정해 주세요.";
+"The AI request was interrupted. Please try again." = "AI 요청이 중단되었습니다. 다시 시도해 주세요.";
+"The AI service could not complete the request. Please try again later." = "AI 서비스가 요청을 완료하지 못했습니다. 나중에 다시 시도해 주세요.";
+"Preferred AI provider" = "선호하는 AI 제공자";
+"Automatic (random available provider)" = "자동 (사용 가능한 제공자 무작위 선택)";
+"Currently unavailable; automatic fallback" = "현재 사용 불가, 자동 대체";
+"Refresh available providers" = "사용 가능한 제공자 새로 고침";
+"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "프롬프트는 서버로 안전하게 전송됩니다. 서버는 설정된 모델을 선택하고 AI 결과를 반환합니다. 선호하는 제공자를 사용할 수 없으면 다른 제공자로 자동 전환합니다.";
+"Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "Backend API는 AI 결과가 반환될 때 크레딧을 사용하며, 이후 중지하거나 렌더링이 실패해도 동일합니다. AI 결과 없이 실패한 요청은 환불됩니다.";
+
+"Loading rewarded ad…" = "보상형 광고 불러오는 중…";
+"Watching rewarded ad…" = "보상형 광고 시청 중…";
+"Updating reward…" = "보상 업데이트 중…";
+"Rewarded ads are unavailable right now. Please try again later." = "현재 보상형 광고를 이용할 수 없습니다. 나중에 다시 시도해 주세요.";
+"Ad privacy choices" = "광고 개인정보 설정";
+"AdMob test ads" = "AdMob 테스트 광고";
+
+"Upgrade to Premium" = "Premium으로 업그레이드";

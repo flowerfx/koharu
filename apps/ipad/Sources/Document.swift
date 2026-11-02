@@ -54,6 +54,7 @@ struct Preferences: Codable, Equatable {
     var server = "http://localhost:1234"
     var remoteModel = ""
     var hosted: [String: HostedConfiguration]?
+    var backendProvider: String?
     var localModel: UUID?
     var target = AppLocalization.shared.resolvedLanguage.translationTarget
     var instructions = ""
@@ -61,6 +62,30 @@ struct Preferences: Codable, Equatable {
     var inpaint = AppConfiguration.current.defaults.aiInpainting
     var ocrModel: String? = AppConfiguration.current.defaults.ocr == "apple" ? nil : AppConfiguration.current.defaults.ocr
     var cleanupModel: String? = AppConfiguration.current.defaults.inpainting
+}
+// The page-cache key covers only what changes rendered output: the model that
+// translates, the target and instructions, and cleanup. Server URLs, regions,
+// context size or other providers' settings no longer invalidate pages.
+struct RenderFingerprint: Encodable {
+    let provider: TranslationProvider
+    let model: String
+    let target: String
+    let instructions: String
+    let inpaint: Bool
+    let cleanupModel: String?
+    init(_ preferences: Preferences) {
+        provider = preferences.provider
+        switch preferences.provider {
+        case .local: model = preferences.localModel?.uuidString ?? ""
+        case .lmStudio: model = preferences.remoteModel
+        case .backend: model = preferences.backendProvider ?? ""
+        default: model = preferences.hosted?[preferences.provider.rawValue]?.model ?? ""
+        }
+        target = preferences.target
+        instructions = preferences.instructions
+        inpaint = preferences.inpaint
+        cleanupModel = preferences.inpaint ? (preferences.cleanupModel ?? AppConfiguration.current.defaults.inpainting) : nil
+    }
 }
 struct LocalModel: Codable, Identifiable {
     var id: UUID
@@ -167,6 +192,21 @@ struct LibraryDisk {
         try save(chapter, to: folder.appendingPathComponent("chapter.json"))
         try? FileManager.default.removeItem(at: from)
         return chapter
+    }
+    // Each render writes a new PNG. Keep the files referenced by the chapter
+    // and its undo/redo snapshots; delete superseded ones. Nothing is removed
+    // when the current manifest cannot be read.
+    func pruneRendered(_ id: UUID) {
+        let folder = chapterURL(id)
+        guard let current = try? load(Chapter.self, folder.appendingPathComponent("chapter.json")) else { return }
+        var keep = Set(current.pages.compactMap(\.rendered))
+        for name in ["undo.json", "redo.json"] {
+            if let snapshot = try? load(Chapter.self, folder.appendingPathComponent(name)) { keep.formUnion(snapshot.pages.compactMap(\.rendered)) }
+        }
+        let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+        for file in files where file.pathExtension == "png" && !keep.contains(file.lastPathComponent) {
+            try? FileManager.default.removeItem(at: file)
+        }
     }
     func clearDerived(_ id: UUID) throws {
         var chapter = try load(Chapter.self, chapterURL(id).appendingPathComponent("chapter.json"))

@@ -24,7 +24,7 @@ enum CreditAction: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-struct CreditConfiguration: Decodable {
+struct CreditConfiguration: Codable {
     let daily_free_user: Int
     let daily_premium_user: Int
     let reward_video_multiplier: Double
@@ -38,7 +38,10 @@ struct CreditConfiguration: Decodable {
     let cost_enhance_premium: Int
 
     static func decode(_ data: Data) throws -> Self {
-        let value = try JSONDecoder().decode(Self.self, from: data)
+        try JSONDecoder().decode(Self.self, from: data).validated()
+    }
+    func validated() throws -> Self {
+        let value = self
         let amounts = [value.daily_free_user, value.daily_premium_user, value.reward_video_credit, value.cost_translate,
                       value.cost_api_prompt, value.cost_image, value.cost_image_premium, value.cost_gen_prompt,
                       value.cost_enhance_free, value.cost_enhance_premium]
@@ -48,12 +51,6 @@ struct CreditConfiguration: Decodable {
             throw AppError.message(L("Invalid credit configuration"))
         }
         return value
-    }
-    static func bundled() throws -> Self {
-        guard let file = Bundle.main.url(forResource: "credit-config", withExtension: "json") else {
-            throw AppError.message(L("Invalid credit configuration"))
-        }
-        return try decode(Data(contentsOf: file))
     }
     func daily(_ tier: CreditTier) -> Int { tier == .free ? daily_free_user : daily_premium_user }
     func cost(_ action: CreditAction, tier: CreditTier) -> Int {
@@ -112,6 +109,9 @@ struct CreditResponse: Decodable {
     private var revision = -1
     var working: Bool { operations > 0 }
     private(set) var failure: String?
+    // The last backend command could not reach the server. The local library
+    // remains usable; credit-gated actions wait for a successful reload.
+    private(set) var offline = false
     private(set) var videoAccess: [String: Int] = [:]
     private(set) var canClaimDaily = false
     var tier: CreditTier { profile.account_type }
@@ -120,7 +120,7 @@ struct CreditResponse: Decodable {
         self.authentication = authentication; self.policy = policy
     }
     func clear() {
-        loaded = false; canClaimDaily = false; videoAccess = [:]; failure = nil; revision = -1
+        loaded = false; canClaimDaily = false; videoAccess = [:]; failure = nil; offline = false; revision = -1
         profile = CreditProfile(id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!, credit: 0, account_type: .free, reset_daily_reward: .distantPast)
     }
     private func command(_ name: String, _ payload: [String: Any] = [:]) async throws -> CreditResponse {
@@ -139,9 +139,10 @@ struct CreditResponse: Decodable {
                 videoAccess = response.video_access; canClaimDaily = response.can_claim_daily
                 loaded = true; failure = nil
             }
+            offline = false
             return response
         } catch {
-            if authentication.user?.id == userID { failure = error.localizedDescription }
+            if authentication.user?.id == userID { failure = error.localizedDescription; offline = isConnectivityError(error) }
             throw error
         }
     }
@@ -157,11 +158,15 @@ struct CreditResponse: Decodable {
     func hasVideoAccess(_ action: CreditAction) -> Bool { tier == .free && action.supportsFreeVideo && videoAccess[action.rawValue, default: 0] > 0 }
     func canAfford(_ amount: Int, action: CreditAction) -> Bool { loaded && failure == nil && (profile.credit >= amount || hasVideoAccess(action)) }
     func reserve(action: CreditAction, provider: TranslationProvider, rerun: Bool = false) async throws -> String? {
-        try await command("profile_reserve", ["operation_id": UUID().uuidString, "action": action.rawValue, "provider": provider.rawValue, "rerun": rerun]).reservation_id
+        try await command("profile_reserve", ["operation_id": UUID().uuidString.lowercased(), "action": action.rawValue, "provider": provider.rawValue, "rerun": rerun]).reservation_id
     }
     func settle(_ id: String?, success: Bool) async throws {
         guard let id else { return }
         _ = try await command("profile_settle", ["operation_id": id, "success": success])
+    }
+    func finishBackend(_ id: String?) async throws {
+        guard let id else { return }
+        _ = try await command("ai_finish", ["reservation_id": id.lowercased()])
     }
     func validateSubscription(_ jws: String) async throws { _ = try await command("profile_subscription", ["receipt": jws]) }
 }
@@ -183,7 +188,7 @@ extension MangaLibrary {
             return
         }
         guard AppConfiguration.current.providers.contains(provider) else {
-            error = L("Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent.")
+            error = L("This provider or model is disabled in app-config.json. Choose another option in Settings.")
             return
         }
         preferences.provider = provider
@@ -195,20 +200,38 @@ extension MangaLibrary {
         }
         try AppConfiguration.current.requireProvider(preferences.provider)
     }
+    var translationCreditExplanation: String {
+        L("Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free.") + "\n" +
+        (preferences.provider == .backend
+         ? L("Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded.")
+         : L("If you stop or a later page fails, pages already translated are kept and the credits are used. Credits are refunded only when no page was translated."))
+    }
     func creditCost(_ action: CreditAction) -> Int {
         credits.policy.cost(action, tier: credits.tier)
     }
     var rerunCreditCost: Int { credits.policy.rerunCost(provider: preferences.provider) }
     func requestCredits(_ action: CreditAction, cost: Int, explanation: String = "", changeProvider: Bool = false, proceed: @escaping @MainActor () -> Void) {
-        guard credits.loaded else { error = L("Could not open credit profile"); return }
-        if let failure = credits.failure { error = failure; return }
+        guard credits.loaded else {
+            error = credits.offline ? L("You're offline. Saved chapters can still be read; translating and generating need a connection.") : L("Could not open credit profile")
+            return
+        }
+        if let failure = credits.failure {
+            // A failed command blocks spending until the profile reloads; start it now
+            // so the next attempt can proceed without waiting for a relaunch.
+            error = failure
+            Task { try? await credits.load() }
+            return
+        }
         if cost == 0 { proceed(); return }
         creditRequest = CreditRequest(action: action, cost: cost, explanation: explanation, canChangeProvider: changeProvider, proceed: proceed)
     }
-    func finishCredits(_ ticket: String?, success: Bool) async {
+    func finishCredits(_ ticket: String?, success: Bool, provider: TranslationProvider = .local) async {
         // Settlement must survive cancellation of the generation/translation task.
         await Task { @MainActor in
-            do { try await credits.settle(ticket, success: success) }
+            do {
+                if provider == .backend { try await credits.finishBackend(ticket) }
+                else { try await credits.settle(ticket, success: success) }
+            }
             catch { self.error = error.localizedDescription }
         }.value
     }
@@ -217,12 +240,9 @@ extension MangaLibrary {
         do {
             try await credits.load()
             if credits.canClaimDaily { showCreditRewards = true }
-        } catch { self.error = error.localizedDescription }
-    }
-    func requestBackendTranslation(cost: Int) {
-        requestCredits(.translate, cost: cost, explanation: L("Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free."), changeProvider: true) {
-            self.error = L("Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent.")
-            self.showCreditProviderSettings = true
+        } catch {
+            // Offline is shown in the credit bar; don't raise an alert on every launch.
+            if !credits.offline { self.error = error.localizedDescription }
         }
     }
 }

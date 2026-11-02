@@ -157,7 +157,7 @@
 "Check the key, API credit and model access." = "Revisa la clave, crédito de la API y acceso al modelo.";
 "Check the provider region and workspace ID" = "Revisa la región del proveedor e ID de espacio de trabajo";
 "Checking API key…" = "Verificando API key…";
-"China (Beijing)" = "China (Beijing)";
+"China (Beijing)" = "China (Pekín)";
 "DeepL additional instructions must be at most 300 characters" = "Las instrucciones adicionales de DeepL deben tener máximo 300 caracteres";
 "DeepL does not support the selected target language" = "DeepL no admite el idioma de destino seleccionado";
 "DeepL uses translation modes instead of LLM model names. Free or Pro is detected from the key; supported languages are checked before translation. Additional instructions are limited to 300 characters." = "DeepL usa modos de traducción en lugar de nombres de modelos LLM. Se detecta si es Free o Pro mediante la clave; los idiomas compatibles se revisan antes de traducir. Las instrucciones adicionales están limitadas a 300 caracteres.";
@@ -464,3 +464,40 @@
 
 "Subscription ends (UTC)" = "Fin de la suscripción (UTC)";
 "Your profile, credits and membership are synced with your account." = "Tu perfil, créditos y membresía se sincronizan con tu cuenta.";
+"If you stop or a later page fails, pages already translated are kept and the credits are used. Credits are refunded only when no page was translated." = "Si te detienes o falla una página posterior, las páginas ya traducidas se conservan y se usan los créditos. Los créditos solo se reembolsan si no se tradujo ninguna página.";
+"HTTP is only allowed for local network addresses. Use HTTPS for other servers." = "HTTP solo se permite para direcciones de la red local. Usa HTTPS para otros servidores.";
+"Claim an available daily reward or wait until the next UTC day." = "Recoge la recompensa diaria disponible o espera al siguiente día UTC.";
+"Free image generation costs credits. Premium image generation has no credit fee. Failed or canceled generation is refunded." = "Crear imágenes en Free cuesta créditos. En Premium no cuesta créditos. Los errores y las cancelaciones se reembolsan.";
+"Your account has been deleted." = "Tu cuenta se ha eliminado.";
+"You're offline. Saved chapters can still be read; translating and generating need a connection." = "Estás sin conexión. Puedes seguir leyendo los capítulos guardados; traducir y generar requieren conexión.";
+"Offline · saved chapters only" = "Sin conexión · solo capítulos guardados";
+"Delete account" = "Eliminar cuenta";
+"Delete your account?" = "¿Eliminar tu cuenta?";
+"Your backend account, credits, membership record and sign-in links will be permanently deleted. Chapters, images and models saved on this device are kept. An App Store subscription is not canceled automatically; cancel it in your Apple Account settings." = "Tu cuenta del backend, tus créditos, el registro de membresía y los vínculos de inicio de sesión se eliminarán de forma permanente. Los capítulos, imágenes y modelos guardados en este dispositivo se conservan. La suscripción de App Store no se cancela automáticamente; cancélala en los ajustes de tu cuenta de Apple.";
+"Work was stopped because the app moved to the background. Pages and images already finished are kept. Keep the app open while translating or generating images." = "El trabajo se detuvo porque la app pasó a segundo plano. Las páginas e imágenes ya terminadas se conservan. Mantén la app abierta mientras traduces o generas imágenes.";
+"This server uses HTTP. The API token is sent unencrypted on your local network." = "Este servidor usa HTTP. El token de API se envía sin cifrar en tu red local.";
+"Verifying model" = "Verificando modelo";
+
+"Server-selected model" = "Modelo elegido por el servidor";
+"The AI service returned an invalid response. Please try again." = "El servicio de IA devolvió una respuesta no válida. Vuelve a intentarlo.";
+"The AI request is too large or invalid. Reduce segments per request or shorten the instructions." = "La solicitud de IA es demasiado grande o no válida. Reduce los segmentos por solicitud o acorta las instrucciones.";
+"The AI request is taking too long. A running request may still finish on the server." = "La solicitud de IA está tardando demasiado. Una solicitud en curso aún puede completarse en el servidor.";
+"The AI service has no available provider. Please try again later." = "No hay ningún proveedor de IA disponible. Inténtalo más tarde.";
+"The AI provider could not process this content. Please revise your request." = "El proveedor de IA no pudo procesar este contenido. Modifica la solicitud.";
+"The AI request was interrupted. Please try again." = "La solicitud de IA se interrumpió. Vuelve a intentarlo.";
+"The AI service could not complete the request. Please try again later." = "El servicio de IA no pudo completar la solicitud. Inténtalo más tarde.";
+"Preferred AI provider" = "Proveedor de IA preferido";
+"Automatic (random available provider)" = "Automático (proveedor disponible aleatorio)";
+"Currently unavailable; automatic fallback" = "No disponible ahora; alternativa automática";
+"Refresh available providers" = "Actualizar proveedores disponibles";
+"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "Los prompts se envían al servidor de forma segura. El servidor elige el modelo configurado y devuelve el resultado de IA. Si el proveedor preferido no está disponible, usa otro automáticamente.";
+"Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "La API Backend usa créditos cuando devuelve un resultado de IA, incluso si detienes el proceso o el renderizado falla después. Las solicitudes fallidas sin resultado de IA se reembolsan.";
+
+"Loading rewarded ad…" = "Cargando anuncio con recompensa…";
+"Watching rewarded ad…" = "Reproduciendo anuncio con recompensa…";
+"Updating reward…" = "Actualizando recompensa…";
+"Rewarded ads are unavailable right now. Please try again later." = "Los anuncios con recompensa no están disponibles. Inténtalo más tarde.";
+"Ad privacy choices" = "Privacidad de los anuncios";
+"AdMob test ads" = "Anuncios de prueba de AdMob";
+
+"Upgrade to Premium" = "Mejorar a Premium";

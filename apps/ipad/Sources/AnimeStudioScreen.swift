@@ -230,17 +230,25 @@ private struct AnimeImageContent: View {
     let regenerate: (String) -> Void
     @State private var removing = false
     @State private var regenerating = false
+    @State private var preview: UIImage?
     var body: some View {
         let url = library.animeDirectory.appendingPathComponent(image.filename)
-        let preview = UIImage(contentsOfFile: url.path)
-        if let preview {
-            Image(uiImage: preview).resizable().scaledToFit().accessibilityLabel(image.prompt)
+        let available = FileManager.default.fileExists(atPath: url.path)
+        if available {
+            Group {
+                // An upscaled PNG can be 4096 × 5120; show a decoded preview
+                // prepared off the main thread instead of decoding in body.
+                if let preview { Image(uiImage: preview).resizable().scaledToFit() }
+                else { ProgressView().frame(maxWidth: .infinity, minHeight: 200) }
+            }
+            .accessibilityLabel(image.prompt)
+            .task(id: image.id) { preview = await PageImageLoader.load(url, maxPixel: 2048) }
             Text(image.prompt).textSelection(.enabled)
             LabeledContent(L("Image settings"), value: "\(image.width) × \(image.height) · \(L("Steps")): \(image.steps)")
             Text("\(L("Seed")): \(image.seed)").font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
         }
         HStack(alignment: .top, spacing: 12) {
-            if preview != nil {
+            if available {
                 ShareLink(item: url) { Label(L("Share image"), systemImage: "square.and.arrow.up") }
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

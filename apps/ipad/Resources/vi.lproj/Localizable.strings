@@ -75,7 +75,7 @@
 "Local GGUF on this device" = "GGUF local trên thiết bị này";
 "Local inference failed" = "Suy luận local thất bại";
 "Local inference failed during prompt processing" = "Xử lý prompt trên model local thất bại";
-"Model" = "Model";
+"Model" = "Mô hình";
 "Model checksum verification failed" = "Mã kiểm tra toàn vẹn của model không khớp";
 "Model download failed" = "Không tải được model";
 "Model reached the output limit before completing JSON" = "Model hết giới hạn đầu ra trước khi hoàn tất JSON";
@@ -331,7 +331,7 @@
 "Larger images have more pixels and need more time and RAM. Start with 512 × 512; a larger size may not fit your device's available memory." = "Ảnh lớn có nhiều pixel hơn và cần thêm thời gian, RAM. Nên bắt đầu với 512 × 512; kích thước lớn có thể vượt RAM khả dụng của thiết bị.";
 
 // Optional local image upscaling
-"Upscale" = "Upscale";
+"Upscale" = "Phóng to ảnh";
 "No upscale" = "Không upscale";
 "Final image size" = "Kích thước ảnh cuối";
 "Upscale takes longer and uses more RAM. 4× makes each side four times larger: 16× as many pixels." = "Upscale mất thêm thời gian và RAM. 4× tăng mỗi chiều gấp bốn: số pixel gấp 16 lần.";
@@ -464,3 +464,40 @@
 
 "Subscription ends (UTC)" = "Gói đăng ký hết hạn (UTC)";
 "Your profile, credits and membership are synced with your account." = "Hồ sơ, credit và gói thành viên được đồng bộ với tài khoản của bạn.";
+"If you stop or a later page fails, pages already translated are kept and the credits are used. Credits are refunded only when no page was translated." = "Nếu bạn dừng hoặc một trang sau bị lỗi, các trang đã dịch vẫn được giữ và credit sẽ bị tính. Credit chỉ được hoàn lại khi chưa dịch được trang nào.";
+"HTTP is only allowed for local network addresses. Use HTTPS for other servers." = "HTTP chỉ được phép với địa chỉ trong mạng nội bộ. Hãy dùng HTTPS cho các máy chủ khác.";
+"Claim an available daily reward or wait until the next UTC day." = "Nhận thưởng ngày nếu còn hoặc chờ sang ngày UTC tiếp theo.";
+"Free image generation costs credits. Premium image generation has no credit fee. Failed or canceled generation is refunded." = "Free tạo ảnh tốn credit. Premium tạo ảnh không mất credit. Lỗi hoặc hủy sẽ được hoàn lại.";
+"Your account has been deleted." = "Tài khoản của bạn đã được xóa.";
+"You're offline. Saved chapters can still be read; translating and generating need a connection." = "Bạn đang ngoại tuyến. Vẫn đọc được các chương đã lưu; dịch và tạo ảnh cần kết nối mạng.";
+"Offline · saved chapters only" = "Ngoại tuyến · chỉ đọc chương đã lưu";
+"Delete account" = "Xóa tài khoản";
+"Delete your account?" = "Xóa tài khoản của bạn?";
+"Your backend account, credits, membership record and sign-in links will be permanently deleted. Chapters, images and models saved on this device are kept. An App Store subscription is not canceled automatically; cancel it in your Apple Account settings." = "Tài khoản backend, credit, thông tin gói thành viên và các liên kết đăng nhập sẽ bị xóa vĩnh viễn. Chương, ảnh và model đã lưu trên thiết bị này vẫn được giữ. Gói đăng ký App Store không tự động hủy; hãy hủy trong phần cài đặt Tài khoản Apple.";
+"Work was stopped because the app moved to the background. Pages and images already finished are kept. Keep the app open while translating or generating images." = "Công việc đã dừng vì ứng dụng chuyển xuống nền. Các trang và ảnh đã xong vẫn được giữ. Hãy để ứng dụng mở khi dịch hoặc tạo ảnh.";
+"This server uses HTTP. The API token is sent unencrypted on your local network." = "Máy chủ này dùng HTTP. API token được gửi không mã hóa trong mạng nội bộ của bạn.";
+"Verifying model" = "Đang kiểm tra model";
+
+"Server-selected model" = "Model do server chọn";
+"The AI service returned an invalid response. Please try again." = "Dịch vụ AI trả về kết quả không hợp lệ. Vui lòng thử lại.";
+"The AI request is too large or invalid. Reduce segments per request or shorten the instructions." = "Yêu cầu AI quá lớn hoặc không hợp lệ. Hãy giảm số đoạn mỗi yêu cầu hoặc rút ngắn hướng dẫn.";
+"The AI request is taking too long. A running request may still finish on the server." = "Yêu cầu AI đang mất quá nhiều thời gian. Yêu cầu đang chạy vẫn có thể hoàn tất trên server.";
+"The AI service has no available provider. Please try again later." = "Dịch vụ AI chưa có nhà cung cấp khả dụng. Vui lòng thử lại sau.";
+"The AI provider could not process this content. Please revise your request." = "Nhà cung cấp AI không thể xử lý nội dung này. Vui lòng điều chỉnh yêu cầu.";
+"The AI request was interrupted. Please try again." = "Yêu cầu AI đã bị gián đoạn. Vui lòng thử lại.";
+"The AI service could not complete the request. Please try again later." = "Dịch vụ AI chưa thể hoàn tất yêu cầu. Vui lòng thử lại sau.";
+"Preferred AI provider" = "Nhà cung cấp AI ưu tiên";
+"Automatic (random available provider)" = "Tự động (chọn ngẫu nhiên nhà cung cấp khả dụng)";
+"Currently unavailable; automatic fallback" = "Hiện không khả dụng; tự động dùng nhà cung cấp khác";
+"Refresh available providers" = "Tải lại nhà cung cấp khả dụng";
+"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "Prompt được gửi bảo mật lên server. Server chọn model đã cấu hình và trả lại kết quả AI. Nếu nhà cung cấp ưu tiên không khả dụng, server tự động dùng nhà cung cấp khác.";
+"Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "API Backend dùng credit khi AI trả về kết quả, kể cả khi bạn dừng hoặc bước dựng trang thất bại sau đó. Yêu cầu thất bại mà chưa có kết quả AI sẽ được hoàn credit.";
+
+"Loading rewarded ad…" = "Đang tải quảng cáo thưởng…";
+"Watching rewarded ad…" = "Đang xem quảng cáo thưởng…";
+"Updating reward…" = "Đang cập nhật thưởng…";
+"Rewarded ads are unavailable right now. Please try again later." = "Hiện chưa tải được quảng cáo thưởng. Vui lòng thử lại sau.";
+"Ad privacy choices" = "Tùy chọn quyền riêng tư quảng cáo";
+"AdMob test ads" = "Quảng cáo test AdMob";
+
+"Upgrade to Premium" = "Nâng cấp lên Premium";

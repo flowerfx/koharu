@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import UIKit
 
 @MainActor @Observable final class MangaLibrary {
     let disk: LibraryDisk
@@ -30,14 +31,23 @@ import Observation
             catch { return false }
         }
     }
-    var busy = false
+    var busy = false {
+        didSet { if !busy { activeJobUsesGPU = false; endBackgroundWork() } }
+    }
+    // Metal, Core ML and Vision work cannot run while the app is in the
+    // background; such jobs are stopped cooperatively when the scene leaves.
+    @ObservationIgnored var activeJobUsesGPU = false
+    @ObservationIgnored var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+    @ObservationIgnored var readPositionSaves: [UUID: Task<Void, Never>] = [:]
     var status = ""
     var progress: Double = 0
     var error: String?
     var activeTask: Task<Void, Never>?
     var modelTask: Task<Void, Never>?
     var downloadingModel = false
-    let translator = TranslationEngine()
+    let translator: TranslationEngine
+    let backendAI: BackendAI
+    let rewardedAds = RewardedAds()
     let pipeline = PagePipeline()
     let images = SourceImages()
 
@@ -45,9 +55,15 @@ import Observation
         self.disk = disk
         let authentication = NakamaAuthentication()
         backendAuthentication = authentication
-        let credits = CreditStore(authentication: authentication, policy: try! CreditConfiguration.bundled())
+        let backend = BackendAI { name, payload in try await authentication.rpcCommand(name, payload: payload) }
+        backendAI = backend
+        translator = TranslationEngine(backend: backend)
+        // KoharuPadApp validates both bundled resources before creating the
+        // library and shows a startup error instead; these are build invariants.
+        let policy = AppConfiguration.current.credit
+        let credits = CreditStore(authentication: authentication, policy: policy)
         self.credits = credits
-        subscriptions = SubscriptionStore(credits: credits, environment: try! ConfigurationTarget(bundle: .main).environment)
+        subscriptions = SubscriptionStore(credits: credits, environment: (try? ConfigurationTarget(bundle: .main).environment) ?? .production)
         do {
             chapters = try disk.chapters()
             let config = disk.root.appendingPathComponent("preferences.json")
@@ -68,22 +84,23 @@ import Observation
     func importChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool = false, onReady: @escaping @MainActor (UUID) -> Void) {
         guard !busy else { return }
         do { try requireCreditProvider() } catch { self.error = error.localizedDescription; return }
-        if preferences.provider == .backend { requestBackendTranslation(cost: creditCost(.translate)); return }
-        requestCredits(.translate, cost: creditCost(.translate), explanation: L("Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free.")) {
+        requestCredits(.translate, cost: creditCost(.translate), explanation: translationCreditExplanation) {
             self.startImportChapter(source, revalidate: revalidate, newCopy: newCopy, onReady: onReady)
         }
     }
     private func startImportChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool, onReady: @escaping @MainActor (UUID) -> Void) {
         guard !busy else { return }
-        busy = true
+        let config = preferences
+        busy = true; activeJobUsesGPU = true
         activeTask = Task {
             var translated = false
+            var renderedPages = 0
             var ticket: String?
             do {
-                ticket = try await credits.reserve(action: .translate, provider: preferences.provider, rerun: false)
+                ticket = try await credits.reserve(action: .translate, provider: config.provider, rerun: false)
                 try Task.checkCancellation()
                 let source = try source.validated()
-                var chapter = (newCopy ? nil : chapters.first { $0.sourceURL == source.url && $0.target == preferences.target }) ?? Chapter(title: source.title, sourceURL: source.url, target: preferences.target, pages: [])
+                var chapter = (newCopy ? nil : chapters.first { $0.sourceURL == source.url && $0.target == config.target }) ?? Chapter(title: source.title, sourceURL: source.url, target: config.target, pages: [])
                 var pages: [MangaPage] = []
                 for (index, url) in source.images.enumerated() {
                     try Task.checkCancellation()
@@ -96,11 +113,14 @@ import Observation
                 chapter.pages = pages
                 try update(chapter)
                 onReady(chapter.id)
-                try await translate(chapter.id, force: false)
+                try await translate(chapter.id, config: config, ticket: ticket, force: false) { renderedPages += 1 }
                 translated = true
             } catch is CancellationError { status = L("Stopped") }
             catch { processingFailed(error) }
-            await finishCredits(ticket, success: translated)
+            // A run that delivered any newly rendered page is charged; only a run
+            // that produced nothing (failed or stopped before the first page) is refunded.
+            await finishCredits(ticket, success: translated || renderedPages > 0, provider: config.provider)
+            await pipeline.releaseCachedModels()
             busy = false; activeTask = nil
         }
     }
@@ -108,23 +128,24 @@ import Observation
         guard !busy else { return }
         guard chapters.contains(where: { $0.id == id && !$0.pages.isEmpty }) else { error = L("Chapter not found"); return }
         do { try requireCreditProvider() } catch { self.error = error.localizedDescription; return }
-        if preferences.provider == .backend { requestBackendTranslation(cost: rerunCreditCost); return }
-        requestCredits(.translate, cost: rerunCreditCost, explanation: L("Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free.")) {
+        requestCredits(.translate, cost: rerunCreditCost, explanation: translationCreditExplanation) {
             self.startRun(id, force: force, page: page)
         }
     }
     private func startRun(_ id: UUID, force: Bool, page: UUID?) {
         guard !busy else { return }
-        busy = true
+        let config = preferences
+        busy = true; activeJobUsesGPU = true
         activeTask = Task {
             var translated = false
+            var renderedPages = 0
             var ticket: String?
             do {
-                ticket = try await credits.reserve(action: .translate, provider: preferences.provider, rerun: true)
+                ticket = try await credits.reserve(action: .translate, provider: config.provider, rerun: true)
                 try Task.checkCancellation()
                 var target = id
-                if let source = chapters.first(where: { $0.id == id }), source.target != preferences.target {
-                    var copy = source; copy.id = UUID(); copy.target = preferences.target; copy.created = Date()
+                if let source = chapters.first(where: { $0.id == id }), source.target != config.target {
+                    var copy = source; copy.id = UUID(); copy.target = config.target; copy.created = Date()
                     try FileManager.default.createDirectory(at: disk.chapterURL(copy.id), withIntermediateDirectories: true)
                     for i in copy.pages.indices {
                         let input = disk.pageURL(source.id, copy.pages[i].original), output = disk.pageURL(copy.id, copy.pages[i].original)
@@ -134,23 +155,28 @@ import Observation
                     }
                     try update(copy); target = copy.id
                 }
-                try await translate(target, force: force, only: page)
+                try await translate(target, config: config, ticket: ticket, force: force, only: page) { renderedPages += 1 }
                 translated = true
             }
             catch is CancellationError { status = L("Stopped") }
             catch { processingFailed(error) }
-            await finishCredits(ticket, success: translated)
+            await finishCredits(ticket, success: translated || renderedPages > 0, provider: config.provider)
+            await pipeline.releaseCachedModels()
             busy = false; activeTask = nil
         }
     }
     private func processingFailed(_ error: Error) {
+        // A job stopped for backgrounding may surface a GPU error after the
+        // cancellation; the background notice already explains it.
+        if Task.isCancelled { status = L("Stopped"); return }
         self.error = status + "\n" + error.localizedDescription
         status = L("Failed")
     }
-    private func translate(_ id: UUID, force: Bool, only: UUID? = nil) async throws {
+    private func translate(_ id: UUID, config: Preferences, ticket: String?, force: Bool, only: UUID? = nil, onPageSaved: () -> Void = {}) async throws {
         guard var chapter = chapters.first(where: { $0.id == id }) else { throw AppError.message(L("Chapter not found")) }
-        let config = preferences
-        try requireCreditProvider()
+        // Superseded renders are unreferenced once the run ends (also on failure).
+        defer { disk.pruneRendered(id) }
+        try AppConfiguration.current.requireProvider(config.provider)
         _ = try AppConfiguration.current.requireVision(config.ocrModel ?? "apple")
         if config.inpaint { _ = try AppConfiguration.current.requireVision(config.cleanupModel ?? AppConfiguration.current.defaults.inpainting, inpainting: true) }
         let batchSize = translationBatchSize
@@ -158,12 +184,16 @@ import Observation
         let catalog = config.provider == .local ? try model.flatMap { try AppConfiguration.current.catalog(for: $0) } : nil
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
         let prompt = try TranslationContract.prompts([], preferences: config).0
-        let fingerprint = digest(Data(("ipad-pipeline-3\n" + prompt).utf8) + (try encoder.encode(config)))
+        // Only settings that change the rendered page take part. Pages saved with
+        // the previous whole-preferences fingerprint remain valid.
+        let fingerprint = digest(Data(("ipad-pipeline-4\n" + prompt).utf8) + (try encoder.encode(RenderFingerprint(config))))
+        let legacyFingerprint = digest(Data(("ipad-pipeline-3\n" + prompt).utf8) + (try encoder.encode(config)))
+        func fresh(_ value: String?) -> Bool { value == fingerprint || value == legacyFingerprint }
         let ocrSignature = "vision-3:" + (config.ocrModel ?? "apple") + ":" + (config.ocrModel.flatMap { id in (AppConfiguration.current.ocr + AppConfiguration.current.inpainting).first { $0.id == id } }?.files.map(\.sha256).joined() ?? "document-2")
         for index in chapter.pages.indices {
             if let only, chapter.pages[index].id != only { continue }
             try Task.checkCancellation()
-            if !force && chapter.pages[index].fingerprint == fingerprint,
+            if !force && fresh(chapter.pages[index].fingerprint),
                chapter.pages[index].textLayoutVersion == PageTypography.version,
                let file = chapter.pages[index].rendered, FileManager.default.fileExists(atPath: disk.pageURL(id, file).path) { continue }
             status = "\(L("Translating")) \(index + 1)/\(chapter.pages.count)"
@@ -181,9 +211,12 @@ import Observation
                 page.ocrSignature = ocrSignature
             }
             let targets = page.segments.filter { !$0.edited }
-            if !targets.isEmpty && (force || rescanned || page.fingerprint != fingerprint || targets.contains(where: { $0.text == nil })) {
+            if !targets.isEmpty && (force || rescanned || !fresh(page.fingerprint) || targets.contains(where: { $0.text == nil })) {
                 status = "\(L("Translating")) \(index + 1)/\(chapter.pages.count)"
-                let texts = try await translator.translate(targets.map(\.source), config: config, model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog, batchSize: batchSize)
+                // A local GGUF needs the memory held by cached OCR/cleanup sessions.
+                if config.provider == .local { await pipeline.releaseCachedModels() }
+                let context = ticket.map { BackendAIContext(reservationID: $0, provider: config.backendProvider) }
+                let texts = try await translator.translate(targets.map(\.source), config: config, model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog, batchSize: batchSize, backendContext: context)
                 for (segment, text) in zip(targets, texts) {
                     if let i = page.segments.firstIndex(where: { $0.id == segment.id }) { page.segments[i].text = text }
                 }
@@ -222,6 +255,7 @@ import Observation
             chapter.pages[index] = page
             chapter.readPage = chapters.first { $0.id == id }?.readPage ?? chapter.readPage
             try update(chapter)
+            onPageSaved()
         }
         status = L("Completed"); progress = 1
     }
@@ -238,12 +272,14 @@ import Observation
             }
             if preferences.inpaint { await translator.unload() }
             let output = try await pipeline.render(disk.pageURL(chapterID, chapter.pages[index].original), segments: chapter.pages[index].segments, inpaint: preferences.inpaint, modelID: preferences.cleanupModel ?? AppConfiguration.current.defaults.inpainting, modelRoot: disk.modelsURL)
+            await pipeline.releaseCachedModels()
             try Task.checkCancellation()
             let file = UUID().uuidString + ".png"; try output.write(to: disk.pageURL(chapterID, file), options: .atomic)
             chapter.pages[index].rendered = file
             chapter.pages[index].textLayoutVersion = PageTypography.version
             chapter.readPage = chapters.first { $0.id == chapterID }?.readPage ?? chapter.readPage
             try update(chapter)
+            disk.pruneRendered(chapterID)
             return true
         } catch { self.error = error.localizedDescription; return false }
     }
@@ -256,6 +292,7 @@ import Observation
         do {
             let chapter = try disk.restore(id, redo: redo)
             if let index = chapters.firstIndex(where: { $0.id == id }) { chapters[index] = chapter }
+            disk.pruneRendered(id)
         } catch { self.error = error.localizedDescription }
     }
     func delete(_ ids: [UUID]) {

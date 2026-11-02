@@ -61,7 +61,7 @@ enum AnimePromptContract {
 extension MangaLibrary {
     var animePromptModel: String {
         switch preferences.provider {
-        case .backend: return L("Not connected")
+        case .backend: return L("Server-selected model")
         case .local: return models.first { $0.id == preferences.localModel }?.name ?? L("Select a model")
         case .lmStudio: return preferences.remoteModel.isEmpty ? L("Select a model") : preferences.remoteModel
         default:
@@ -79,7 +79,7 @@ extension MangaLibrary {
         }
         switch provider {
         case .backend:
-            return L("Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent.")
+            return backendAuthentication.user == nil ? L("Backend authentication was rejected. Sign in again.") : nil
         case .deepL:
             return L("DeepL translates text but cannot create or enhance anime prompts. Choose a language-model provider in Settings.")
         case .local:
@@ -130,15 +130,17 @@ extension MangaLibrary {
             try requireCreditProvider()
             let action: CreditAction = operation == .enhance ? .enhance : .generatePrompt
             animePromptSuggestion = nil
-            busy = true; progress = 0; status = L("Preparing anime prompt")
+            busy = true; activeJobUsesGPU = config.provider == .local; progress = 0; status = L("Preparing anime prompt")
             activeTask = Task {
                 var succeeded = false
                 var ticket: String?
                 do {
-                    ticket = try await credits.reserve(action: action, provider: preferences.provider)
+                    ticket = try await credits.reserve(action: action, provider: config.provider)
                     try Task.checkCancellation()
                     let data = try await translator.generateStructured(request, config: config,
-                        model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog)
+                        model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog,
+                        backendContext: ticket.map { BackendAIContext(reservationID: $0, provider: config.backendProvider) },
+                        backendTask: operation == .enhance ? .enhance : .generatePrompt)
                     await translator.unload()
                     try Task.checkCancellation()
                     let result = try AnimePromptContract.decode(data)
@@ -150,7 +152,7 @@ extension MangaLibrary {
                     if Task.isCancelled { status = L("Stopped") }
                     else { self.error = error.localizedDescription; status = L("Failed") }
                 }
-                await finishCredits(ticket, success: succeeded)
+                await finishCredits(ticket, success: succeeded, provider: config.provider)
                 busy = false; activeTask = nil
             }
         } catch { self.error = error.localizedDescription }

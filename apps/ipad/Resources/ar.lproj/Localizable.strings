@@ -464,3 +464,40 @@
 
 "Subscription ends (UTC)" = "انتهاء الاشتراك (UTC)";
 "Your profile, credits and membership are synced with your account." = "تتم مزامنة ملفك الشخصي ورصيدك وعضويتك مع حسابك.";
+"If you stop or a later page fails, pages already translated are kept and the credits are used. Credits are refunded only when no page was translated." = "إذا أوقفت الترجمة أو فشلت صفحة لاحقة، تُحفظ الصفحات المترجمة ويُخصم الرصيد. لا يُرد الرصيد إلا إذا لم تُترجم أي صفحة.";
+"HTTP is only allowed for local network addresses. Use HTTPS for other servers." = "يُسمح باستخدام HTTP فقط لعناوين الشبكة المحلية. استخدم HTTPS للخوادم الأخرى.";
+"Claim an available daily reward or wait until the next UTC day." = "احصل على المكافأة اليومية المتاحة أو انتظر اليوم التالي بتوقيت UTC.";
+"Free image generation costs credits. Premium image generation has no credit fee. Failed or canceled generation is refunded." = "إنشاء الصور في Free يتطلب رصيداً. لا يتطلب رصيداً في Premium. تُرد التكلفة عند الفشل أو الإلغاء.";
+"Your account has been deleted." = "تم حذف حسابك.";
+"You're offline. Saved chapters can still be read; translating and generating need a connection." = "أنت غير متصل. لا يزال بإمكانك قراءة الفصول المحفوظة؛ الترجمة والإنشاء يتطلبان اتصالاً.";
+"Offline · saved chapters only" = "غير متصل · الفصول المحفوظة فقط";
+"Delete account" = "حذف الحساب";
+"Delete your account?" = "هل تريد حذف حسابك؟";
+"Your backend account, credits, membership record and sign-in links will be permanently deleted. Chapters, images and models saved on this device are kept. An App Store subscription is not canceled automatically; cancel it in your Apple Account settings." = "سيتم حذف حساب الخادم والرصيد وسجل العضوية وروابط تسجيل الدخول نهائياً. تبقى الفصول والصور والنماذج المحفوظة على هذا الجهاز. لا يُلغى اشتراك App Store تلقائياً؛ ألغِه من إعدادات حساب Apple.";
+"Work was stopped because the app moved to the background. Pages and images already finished are kept. Keep the app open while translating or generating images." = "تم إيقاف العمل لأن التطبيق انتقل إلى الخلفية. تُحفظ الصفحات والصور المكتملة. أبقِ التطبيق مفتوحاً أثناء الترجمة أو إنشاء الصور.";
+"This server uses HTTP. The API token is sent unencrypted on your local network." = "يستخدم هذا الخادم HTTP. يُرسل رمز API دون تشفير عبر شبكتك المحلية.";
+"Verifying model" = "جارٍ التحقق من النموذج";
+
+"Server-selected model" = "نموذج يختاره الخادم";
+"The AI service returned an invalid response. Please try again." = "أعادت خدمة الذكاء الاصطناعي استجابة غير صالحة. يرجى المحاولة مجددًا.";
+"The AI request is too large or invalid. Reduce segments per request or shorten the instructions." = "طلب الذكاء الاصطناعي كبير جدًا أو غير صالح. قلّل المقاطع في كل طلب أو اختصر التعليمات.";
+"The AI request is taking too long. A running request may still finish on the server." = "يستغرق طلب الذكاء الاصطناعي وقتًا طويلًا. قد يكتمل الطلب الجاري على الخادم لاحقًا.";
+"The AI service has no available provider. Please try again later." = "لا يوجد مزوّد ذكاء اصطناعي متاح حاليًا. يرجى المحاولة لاحقًا.";
+"The AI provider could not process this content. Please revise your request." = "تعذّر على مزوّد الذكاء الاصطناعي معالجة هذا المحتوى. يرجى تعديل الطلب.";
+"The AI request was interrupted. Please try again." = "انقطع طلب الذكاء الاصطناعي. يرجى المحاولة مجددًا.";
+"The AI service could not complete the request. Please try again later." = "تعذّر على خدمة الذكاء الاصطناعي إكمال الطلب. يرجى المحاولة لاحقًا.";
+"Preferred AI provider" = "مزوّد الذكاء الاصطناعي المفضّل";
+"Automatic (random available provider)" = "تلقائي (اختيار مزوّد متاح عشوائيًا)";
+"Currently unavailable; automatic fallback" = "غير متاح حاليًا؛ سيتم التبديل تلقائيًا";
+"Refresh available providers" = "تحديث المزوّدين المتاحين";
+"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "تُرسل الأوصاف بأمان إلى الخادم. يختار الخادم النموذج المُعدّ ويعيد نتيجة الذكاء الاصطناعي. إذا لم يتوفر المزوّد المفضّل، يُستخدم مزوّد آخر تلقائيًا.";
+"Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "تستخدم واجهة Backend API الرصيد عند إرجاع نتيجة الذكاء الاصطناعي، حتى لو أوقفت العملية أو فشل العرض لاحقًا. تُسترد تكلفة الطلبات التي تفشل دون نتيجة.";
+
+"Loading rewarded ad…" = "جارٍ تحميل الإعلان بمكافأة…";
+"Watching rewarded ad…" = "جارٍ عرض الإعلان بمكافأة…";
+"Updating reward…" = "جارٍ تحديث المكافأة…";
+"Rewarded ads are unavailable right now. Please try again later." = "الإعلانات بمكافأة غير متاحة حاليًا. يرجى المحاولة لاحقًا.";
+"Ad privacy choices" = "خيارات خصوصية الإعلانات";
+"AdMob test ads" = "إعلانات AdMob التجريبية";
+
+"Upgrade to Premium" = "الترقية إلى Premium";

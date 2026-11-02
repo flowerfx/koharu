@@ -30,14 +30,24 @@ extension PagePipeline {
         let model = try AppConfiguration.current.requireVision(modelID, inpainting: true)
         guard model.ready(modelRoot) else { throw AppError.message(L("Download the selected model in Settings first")) }
         onProgress(.loading)
-        try model.checkMemory()
         let directory = model.directory(modelRoot)
-        let onnx = try VisionONNX()
+        let onnx = try visionRuntime()
+        let diffusionKey = directory.path + (modelID == "flux" ? "|flux" : "|sdxl")
+        if !onnx.isLoaded(directory) && cachedDiffusion?.key != diffusionKey {
+            releaseDiffusion()
+            try onnx.admit(model, at: directory)
+        }
         let session = ["lama", "aot"].contains(modelID) ? try onnx.session(directory.appendingPathComponent("model.onnx"), coreMLCache: modelID == "aot" ? directory.appendingPathComponent("coreml-" + model.files[0].sha256) : nil) : nil
         var error = [CChar](repeating: 0, count: 4096)
-        let diffusion = session == nil ? koharu_diffusion_open(directory.path, modelID == "flux" ? 1 : 0, &error, error.count) : nil
-        if session == nil && diffusion == nil { throw AppError.message(L(String(cString: error))) }
-        defer { if let diffusion { koharu_diffusion_close(diffusion) } }
+        var diffusionHandle: UnsafeMutableRawPointer?
+        if session == nil {
+            if let cachedDiffusion, cachedDiffusion.key == diffusionKey { diffusionHandle = cachedDiffusion.handle }
+            else {
+                releaseDiffusion()
+                guard let opened = koharu_diffusion_open(directory.path, modelID == "flux" ? 1 : 0, &error, error.count) else { throw AppError.message(L(String(cString: error))) }
+                cachedDiffusion = (diffusionKey, opened); diffusionHandle = opened
+            }
+        }
         let source = try VisionRaster(image)
         var result = source
         let edge = InpaintTile.edge, count = edge * edge
@@ -79,7 +89,7 @@ extension PagePipeline {
                     return rgb
                 } else {
                     var rgb = [UInt8](repeating: 0, count: count * 3)
-                    guard koharu_diffusion_run(diffusion!, pixels, mask, Int32(edge), &rgb, &error, error.count) != 0 else { throw AppError.message(L(String(cString: error))) }
+                    guard let diffusionHandle, koharu_diffusion_run(diffusionHandle, pixels, mask, Int32(edge), &rgb, &error, error.count) != 0 else { throw AppError.message(L(String(cString: error))) }
                     return rgb
                 }
             }
