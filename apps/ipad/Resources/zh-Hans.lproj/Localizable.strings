@@ -349,6 +349,17 @@
 "Could not upscale image" = "无法放大图像";
 "Invalid upscale request" = "无效的放大请求";
 
+// Generated image management
+"Delete all images" = "删除全部图像";
+"Delete all images?" = "删除全部图像？";
+"All generated images and their saved prompts will be deleted from this device. This cannot be undone." = "所有已生成图像及其保存的提示词将从此设备删除。此操作无法撤销。";
+"Regenerate image" = "重新生成图像";
+"Regenerate image?" = "重新生成图像？";
+"Use this image's saved prompt with your current generation settings and a new random seed. The existing image is kept." = "使用此图像保存的提示词、当前生成设置和新的随机种子。现有图像将保留。";
+"Delete image" = "删除图像";
+"Delete image?" = "删除图像？";
+"This image and its saved prompt will be deleted from this device. This cannot be undone." = "此图像及其保存的提示词将从此设备删除。此操作无法撤销。";
+
 /* Offline credits */
 "Backend API" = "后端 API";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "此离线版本尚未连接后端 API。请在设置中选择其他提供商。未扣除积分。";

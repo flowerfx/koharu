@@ -349,6 +349,17 @@
 "Could not upscale image" = "Could not upscale image";
 "Invalid upscale request" = "Invalid upscale request";
 
+// Generated image management
+"Delete all images" = "Delete all images";
+"Delete all images?" = "Delete all images?";
+"All generated images and their saved prompts will be deleted from this device. This cannot be undone." = "All generated images and their saved prompts will be deleted from this device. This cannot be undone.";
+"Regenerate image" = "Regenerate image";
+"Regenerate image?" = "Regenerate image?";
+"Use this image's saved prompt with your current generation settings and a new random seed. The existing image is kept." = "Use this image's saved prompt with your current generation settings and a new random seed. The existing image is kept.";
+"Delete image" = "Delete image";
+"Delete image?" = "Delete image?";
+"This image and its saved prompt will be deleted from this device. This cannot be undone." = "This image and its saved prompt will be deleted from this device. This cannot be undone.";
+
 /* Offline credits */
 "Backend API" = "Backend API";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent.";

@@ -349,6 +349,17 @@
 "Could not upscale image" = "Không thể upscale ảnh";
 "Invalid upscale request" = "Yêu cầu upscale không hợp lệ";
 
+// Generated image management
+"Delete all images" = "Xóa toàn bộ ảnh";
+"Delete all images?" = "Xóa toàn bộ ảnh?";
+"All generated images and their saved prompts will be deleted from this device. This cannot be undone." = "Tất cả ảnh đã tạo và prompt lưu kèm sẽ bị xóa khỏi thiết bị này. Không thể hoàn tác.";
+"Regenerate image" = "Tạo lại ảnh";
+"Regenerate image?" = "Tạo lại ảnh?";
+"Use this image's saved prompt with your current generation settings and a new random seed. The existing image is kept." = "Dùng prompt đã lưu của ảnh này với cài đặt tạo ảnh hiện tại và một seed ngẫu nhiên mới. Ảnh cũ vẫn được giữ.";
+"Delete image" = "Xóa ảnh";
+"Delete image?" = "Xóa ảnh?";
+"This image and its saved prompt will be deleted from this device. This cannot be undone." = "Ảnh này và prompt lưu kèm sẽ bị xóa khỏi thiết bị này. Không thể hoàn tác.";
+
 /* Offline credits */
 "Backend API" = "API backend";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "Bản offline chưa kết nối API backend. Hãy chọn provider khác trong Cài đặt. Chưa trừ credit.";

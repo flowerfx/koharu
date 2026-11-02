@@ -349,6 +349,17 @@
 "Could not upscale image" = "No se pudo ampliar la imagen";
 "Invalid upscale request" = "Solicitud de ampliación no válida";
 
+// Generated image management
+"Delete all images" = "Eliminar todas las imágenes";
+"Delete all images?" = "¿Eliminar todas las imágenes?";
+"All generated images and their saved prompts will be deleted from this device. This cannot be undone." = "Todas las imágenes generadas y sus descripciones guardadas se eliminarán de este dispositivo. No se puede deshacer.";
+"Regenerate image" = "Volver a generar imagen";
+"Regenerate image?" = "¿Volver a generar imagen?";
+"Use this image's saved prompt with your current generation settings and a new random seed. The existing image is kept." = "Usa la descripción guardada de esta imagen con los ajustes actuales y una nueva semilla aleatoria. La imagen existente se conserva.";
+"Delete image" = "Eliminar imagen";
+"Delete image?" = "¿Eliminar imagen?";
+"This image and its saved prompt will be deleted from this device. This cannot be undone." = "Esta imagen y su descripción guardada se eliminarán de este dispositivo. No se puede deshacer.";
+
 /* Offline credits */
 "Backend API" = "API del backend";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "La API del backend no está conectada en esta versión sin conexión. Elige otro proveedor en Ajustes. No se gastaron créditos.";

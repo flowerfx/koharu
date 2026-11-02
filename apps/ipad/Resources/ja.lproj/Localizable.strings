@@ -349,6 +349,17 @@
 "Could not upscale image" = "画像を拡大できませんでした";
 "Invalid upscale request" = "無効なアップスケール要求";
 
+// Generated image management
+"Delete all images" = "すべての画像を削除";
+"Delete all images?" = "すべての画像を削除しますか？";
+"All generated images and their saved prompts will be deleted from this device. This cannot be undone." = "生成したすべての画像と保存されたプロンプトをこのデバイスから削除します。元に戻せません。";
+"Regenerate image" = "画像を再生成";
+"Regenerate image?" = "画像を再生成しますか？";
+"Use this image's saved prompt with your current generation settings and a new random seed. The existing image is kept." = "この画像の保存済みプロンプトと現在の生成設定、新しいランダムシードを使います。元の画像は保持されます。";
+"Delete image" = "画像を削除";
+"Delete image?" = "画像を削除しますか？";
+"This image and its saved prompt will be deleted from this device. This cannot be undone." = "この画像と保存されたプロンプトをこのデバイスから削除します。元に戻せません。";
+
 /* Offline credits */
 "Backend API" = "バックエンドAPI";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "このオフライン版ではバックエンドAPIに未接続です。設定で別のプロバイダーを選んでください。クレジットは消費されていません。";

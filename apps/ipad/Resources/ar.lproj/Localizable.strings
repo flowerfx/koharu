@@ -349,6 +349,17 @@
 "Could not upscale image" = "تعذر تكبير الصورة";
 "Invalid upscale request" = "طلب تكبير غير صالح";
 
+// Generated image management
+"Delete all images" = "حذف كل الصور";
+"Delete all images?" = "حذف كل الصور؟";
+"All generated images and their saved prompts will be deleted from this device. This cannot be undone." = "ستُحذف كل الصور المُولَّدة وأوصافها المحفوظة من هذا الجهاز. لا يمكن التراجع عن ذلك.";
+"Regenerate image" = "إعادة توليد الصورة";
+"Regenerate image?" = "إعادة توليد الصورة؟";
+"Use this image's saved prompt with your current generation settings and a new random seed. The existing image is kept." = "استخدم وصف هذه الصورة المحفوظ مع إعدادات التوليد الحالية وبذرة عشوائية جديدة. ستبقى الصورة الحالية محفوظة.";
+"Delete image" = "حذف الصورة";
+"Delete image?" = "حذف الصورة؟";
+"This image and its saved prompt will be deleted from this device. This cannot be undone." = "ستُحذف هذه الصورة ووصفها المحفوظ من هذا الجهاز. لا يمكن التراجع عن ذلك.";
+
 /* Offline credits */
 "Backend API" = "واجهة الخادم";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "واجهة الخادم غير متصلة في هذا الإصدار المحلي. اختر مزوداً آخر في الإعدادات. لم يُستهلك أي رصيد.";

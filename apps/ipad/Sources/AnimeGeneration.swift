@@ -85,6 +85,23 @@ extension PagePipeline {
 
 extension MangaLibrary {
     var animeDirectory: URL { disk.root.appendingPathComponent("anime", isDirectory: true) }
+    func deleteAnimeImages(_ ids: Set<UUID>) {
+        guard !busy && !downloadingModel else { return }
+        let removed = animeImages.filter { ids.contains($0.id) }
+        guard !removed.isEmpty else { return }
+        do {
+            let remaining = animeImages.filter { !ids.contains($0.id) }
+            // Commit the inventory before unlinking PNGs, so a failed save
+            // cannot leave a visible record pointing at an image we deleted.
+            try disk.save(remaining, to: animeDirectory.appendingPathComponent("images.json"))
+            animeImages = remaining
+            for image in removed {
+                let file = animeDirectory.appendingPathComponent(image.filename)
+                if FileManager.default.fileExists(atPath: file.path) { try FileManager.default.removeItem(at: file) }
+            }
+            status = L("Deleted")
+        } catch { self.error = error.localizedDescription }
+    }
     func generateAnime(prompt: String, settings: AnimeGenerationSettings) {
         guard !busy && !downloadingModel else { return }
         requestCredits(.image, cost: creditCost(.image), explanation: L("Free image generation costs credits or one image video access. Premium image generation has no credit fee. Failed or canceled generation is refunded.")) {

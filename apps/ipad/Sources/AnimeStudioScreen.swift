@@ -11,6 +11,7 @@ struct AnimeStudioScreen: View {
     @State private var configurationError: String?
     @State private var removing = false
     @State private var removingUpscaler = false
+    @State private var removingAllImages = false
     @State private var generateAfterReview: String?
     private var upscalerReady: Bool { upscaler.model?.ready(library.disk.modelsURL) ?? true }
 
@@ -49,6 +50,7 @@ struct AnimeStudioScreen: View {
         let model = configuration.model
         let supported = AnimeConfiguration.deviceMemory.map { configuration.supportsDevice(memory: $0) } ?? false
         let ready = model.ready(library.disk.modelsURL)
+        let canGenerate = supported && ready && upscalerReady && !library.busy && !library.downloadingModel
         Section {
             Label(configuration.name, systemImage: "paintpalette.fill").font(.headline)
             Text(L("Create anime images locally with Metal GPU.")).foregroundStyle(.secondary)
@@ -160,17 +162,22 @@ struct AnimeStudioScreen: View {
             Button(L("Cancel"), role: .cancel) {}
         }
         if let latest = library.animeImages.first {
-            Section(L("Latest image")) { AnimeImageContent(image: latest) }
-            if library.animeImages.count > 1 {
-                Section(L("Generated images")) {
-                    ForEach(library.animeImages.dropFirst()) { image in
-                        NavigationLink {
-                            ScrollView { AnimeImageContent(image: image).padding() }
-                                .navigationTitle(L("Generated image"))
-                        } label: { Text(image.prompt).lineLimit(2) }
-                    }
-                }
+            Section(L("Latest image")) {
+                AnimeImageContent(image: latest, canGenerate: canGenerate, settingsDescription: settingsDescription, regenerate: generateImage)
             }
+            Section(L("Generated images")) {
+                ForEach(library.animeImages.dropFirst()) { image in
+                    NavigationLink {
+                        AnimeImageDetail(image: image, canGenerate: canGenerate, settingsDescription: settingsDescription, regenerate: generateImage)
+                    } label: { Text(image.prompt).lineLimit(2) }
+                }
+                Button(L("Delete all images"), systemImage: "trash", role: .destructive) { removingAllImages = true }
+                    .disabled(library.busy || library.downloadingModel)
+            }
+            .confirmationDialog(L("Delete all images?"), isPresented: $removingAllImages, titleVisibility: .visible) {
+                Button(L("Delete all images"), role: .destructive) { library.deleteAnimeImages(Set(library.animeImages.map(\.id))) }
+                Button(L("Cancel"), role: .cancel) {}
+            } message: { Text(L("All generated images and their saved prompts will be deleted from this device. This cannot be undone.")) }
         }
         Section {
             Label("GPU · Metal", systemImage: "cpu")
@@ -210,19 +217,72 @@ struct AnimeStudioScreen: View {
         do { library.generateAnime(prompt: text, settings: try AnimeGenerationSettings(steps: steps, size: imageSize, upscaler: upscaler)) }
         catch { library.error = error.localizedDescription }
     }
+    private var settingsDescription: String {
+        "\(L("Steps")): \(steps) · \(imageSize.title) · \(upscaler.title) · \(L("Final image size")): \(imageSize.dimensions.width * upscaler.scale) × \(imageSize.dimensions.height * upscaler.scale)"
+    }
 }
 
 private struct AnimeImageContent: View {
     @Environment(MangaLibrary.self) private var library
     let image: GeneratedAnimeImage
+    let canGenerate: Bool
+    let settingsDescription: String
+    let regenerate: (String) -> Void
+    @State private var removing = false
+    @State private var regenerating = false
     var body: some View {
         let url = library.animeDirectory.appendingPathComponent(image.filename)
-        if let preview = UIImage(contentsOfFile: url.path) {
+        let preview = UIImage(contentsOfFile: url.path)
+        if let preview {
             Image(uiImage: preview).resizable().scaledToFit().accessibilityLabel(image.prompt)
             Text(image.prompt).textSelection(.enabled)
             LabeledContent(L("Image settings"), value: "\(image.width) × \(image.height) · \(L("Steps")): \(image.steps)")
             Text("\(L("Seed")): \(image.seed)").font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
-            ShareLink(item: url) { Label(L("Share image"), systemImage: "square.and.arrow.up") }
+        }
+        HStack(alignment: .top, spacing: 12) {
+            if preview != nil {
+                ShareLink(item: url) { Label(L("Share image"), systemImage: "square.and.arrow.up") }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            // These actions also allow recovery/removal of a missing PNG.
+            Button(L("Delete image"), systemImage: "trash", role: .destructive) { removing = true }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .disabled(library.busy || library.downloadingModel)
+                .confirmationDialog(L("Delete image?"), isPresented: $removing, titleVisibility: .visible) {
+                    Button(L("Delete image"), role: .destructive) { library.deleteAnimeImages([image.id]) }
+                    Button(L("Cancel"), role: .cancel) {}
+                } message: { Text(L("This image and its saved prompt will be deleted from this device. This cannot be undone.")) }
+            Button("\(L("Regenerate image")) · \(library.creditCost(.image)) \(L("credits"))", systemImage: "arrow.clockwise") { regenerating = true }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .disabled(!canGenerate || library.busy || library.downloadingModel)
+                .confirmationDialog(L("Regenerate image?"), isPresented: $regenerating, titleVisibility: .visible) {
+                    Button("\(L("Regenerate image")) · \(library.creditCost(.image)) \(L("credits"))") { regenerate(image.prompt) }
+                    Button(L("Cancel"), role: .cancel) {}
+                } message: {
+                    Text(L("Use this image's saved prompt with your current generation settings and a new random seed. The existing image is kept.") + "\n\n" + settingsDescription)
+                }
+        }
+        .font(.subheadline)
+        .buttonStyle(.borderless)
+    }
+}
+
+private struct AnimeImageDetail: View {
+    @Environment(MangaLibrary.self) private var library
+    @Environment(\.dismiss) private var dismiss
+    let image: GeneratedAnimeImage
+    let canGenerate: Bool
+    let settingsDescription: String
+    let regenerate: (String) -> Void
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                AnimeImageContent(image: image, canGenerate: canGenerate, settingsDescription: settingsDescription, regenerate: regenerate)
+            }.padding()
+        }
+        .navigationTitle(L("Generated image"))
+        .onChange(of: library.animeImages.contains { $0.id == image.id }) { _, exists in
+            if !exists { dismiss() }
         }
     }
 }

@@ -349,6 +349,17 @@
 "Could not upscale image" = "이미지를 업스케일할 수 없습니다";
 "Invalid upscale request" = "잘못된 업스케일 요청";
 
+// Generated image management
+"Delete all images" = "모든 이미지 삭제";
+"Delete all images?" = "모든 이미지를 삭제할까요?";
+"All generated images and their saved prompts will be deleted from this device. This cannot be undone." = "생성된 모든 이미지와 저장된 프롬프트가 이 기기에서 삭제됩니다. 되돌릴 수 없습니다.";
+"Regenerate image" = "이미지 다시 생성";
+"Regenerate image?" = "이미지를 다시 생성할까요?";
+"Use this image's saved prompt with your current generation settings and a new random seed. The existing image is kept." = "이 이미지에 저장된 프롬프트에 현재 생성 설정과 새로운 무작위 시드를 사용합니다. 기존 이미지는 유지됩니다.";
+"Delete image" = "이미지 삭제";
+"Delete image?" = "이미지를 삭제할까요?";
+"This image and its saved prompt will be deleted from this device. This cannot be undone." = "이 이미지와 저장된 프롬프트가 이 기기에서 삭제됩니다. 되돌릴 수 없습니다.";
+
 /* Offline credits */
 "Backend API" = "백엔드 API";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "이 오프라인 버전은 백엔드 API에 연결되지 않았습니다. 설정에서 다른 제공업체를 선택하세요. 크레딧은 사용되지 않았습니다.";

@@ -374,7 +374,11 @@ struct ReaderScreen: View {
         .background(ReaderNavigationGuard().allowsHitTesting(false))
         .navigationTitle(chapter?.title ?? L("Reader"))
         .navigationBarTitleDisplayMode(.inline)
-        .task { if let chapter { index = min(chapter.readPage, max(0, chapter.pages.count - 1)) } }
+        .task {
+            if let chapter, !chapter.pages.isEmpty {
+                index = min(chapter.readPage, max(0, chapter.pages.count - 1))
+            }
+        }
         .onChange(of: index) { _, value in
             guard var chapter else { return }; chapter.readPage = value
             do { try library.update(chapter, recordUndo: false) } catch { library.error = error.localizedDescription }

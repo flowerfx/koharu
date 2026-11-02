@@ -349,6 +349,17 @@
 "Could not upscale image" = "無法放大影像";
 "Invalid upscale request" = "無效的放大要求";
 
+// Generated image management
+"Delete all images" = "刪除全部影像";
+"Delete all images?" = "刪除全部影像？";
+"All generated images and their saved prompts will be deleted from this device. This cannot be undone." = "所有已產生的影像及其儲存的提示詞將從此裝置刪除。此操作無法復原。";
+"Regenerate image" = "重新產生影像";
+"Regenerate image?" = "重新產生影像？";
+"Use this image's saved prompt with your current generation settings and a new random seed. The existing image is kept." = "使用此影像儲存的提示詞、目前產生設定和新的隨機種子。現有影像將保留。";
+"Delete image" = "刪除影像";
+"Delete image?" = "刪除影像？";
+"This image and its saved prompt will be deleted from this device. This cannot be undone." = "此影像及其儲存的提示詞將從此裝置刪除。此操作無法復原。";
+
 /* Offline credits */
 "Backend API" = "後端 API";
 "Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent." = "此離線版本尚未連接後端 API。請在設定中選擇其他供應商。未扣除點數。";
