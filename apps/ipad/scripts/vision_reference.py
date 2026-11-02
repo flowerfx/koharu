@@ -45,7 +45,8 @@ def main():
     args = parser.parse_args()
     models, out = args.models, args.out
     # Fail before generating goldens if any supplied checkpoint differs.
-    for model in json.loads((APP / "Resources/vision-models.json").read_text()):
+    config = json.loads((APP / "Resources/app-config.json").read_text())
+    for model in config["ocr"] + config["inpainting"]:
         if model["id"] not in ["lama", "aot", "manga", "baberu", "hayai"]:
             continue
         for file in model["files"]:

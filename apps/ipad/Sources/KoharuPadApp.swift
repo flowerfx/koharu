@@ -2,34 +2,93 @@ import SwiftUI
 import UIKit
 
 @main struct KoharuPadApp: App {
+    @UIApplicationDelegateAdaptor(CloudAppDelegate.self) private var cloudDelegate
     @State private var library: MangaLibrary?
-    private let startupError: String?
+    @State private var store: ConfigurationStore?
+    @State private var startupError: String?
+    @State private var starting = false
+    @Environment(\.scenePhase) private var phase
     init() {
-        do { _library = State(initialValue: MangaLibrary(disk: try LibraryDisk())); startupError = nil }
-        catch { _library = State(initialValue: nil); startupError = error.localizedDescription }
+        do { _store = State(initialValue: try ConfigurationStore.shared.get()) }
+        catch { _startupError = State(initialValue: error.localizedDescription) }
     }
     var body: some Scene {
         WindowGroup {
+            let cloud = CloudServices.shared
             Group {
-                if let library { RootScreen().environment(library).tint(.pink) }
-                else { ContentUnavailableView(L("Could not open library"), systemImage: "exclamationmark.triangle", description: Text(startupError ?? "")) }
+                if let update = cloud.update, library?.busy != true, library?.downloadingModel != true {
+                    AppUpdateScreen(update: update).tint(.pink)
+                } else if let library, let store {
+                    RootScreen(refreshConfiguration: { Task { await refreshConfiguration() } })
+                        .environment(library).tint(.pink).disabled(store.isRefreshing)
+                } else if let startupError {
+                    ContentUnavailableView(L("Could not open library"), systemImage: "exclamationmark.triangle", description: Text(startupError))
+                } else { ProgressView(L("Checking configuration…")) }
             }
             .environment(\.locale, AppLocalization.shared.locale)
             .environment(\.layoutDirection, AppLocalization.shared.isRightToLeft ? .rightToLeft : .leftToRight)
+            .task { await start() }
+            .task { await cloud.refreshUpdates() }
+            .onChange(of: phase) { _, phase in
+                if phase == .active {
+                    if library != nil { Task { await refreshConfiguration() } }
+                    Task { await cloud.refreshNotificationStatus(); await cloud.refreshUpdates() }
+                }
+            }
+        }
+    }
+    @MainActor private func start() async {
+        guard !starting, library == nil, let store else { return }
+        starting = true
+        defer { starting = false }
+        // Fetch before creating first-run preferences so remote defaults apply.
+        await store.refresh()
+        guard !Task.isCancelled else { return }
+        do {
+            let disk = try LibraryDisk()
+            if !FileManager.default.fileExists(atPath: disk.root.appendingPathComponent("preferences.json").path) {
+                UserDefaults.standard.set(true, forKey: "translationProviderSetupPending")
+            }
+            library = MangaLibrary(disk: disk)
+        } catch { startupError = error.localizedDescription }
+    }
+    @MainActor private func refreshConfiguration() async {
+        guard let library, let store else { return }
+        guard !library.busy && !library.downloadingModel else { store.refreshDeferred = true; return }
+        await store.refresh { !library.busy && !library.downloadingModel }
+    }
+
+}
+
+enum MainTab: String {
+    case library, browser, settings
+    var title: String {
+        switch self {
+        case .library: return L("Library")
+        case .browser: return L("Rawkuma")
+        case .settings: return L("Settings")
+        }
+    }
+    var symbol: String {
+        switch self {
+        case .library: return "books.vertical"
+        case .browser: return "globe"
+        case .settings: return "gear"
         }
     }
 }
-
-enum MainTab: Hashable { case library, browser, settings }
 struct RootScreen: View {
+    var refreshConfiguration: () -> Void
     @Environment(MangaLibrary.self) private var library
     @State private var browser = RawkumaBrowser()
     @State private var selection = MainTab.library
     @State private var readerPath: [UUID] = []
+    @AppStorage("translationProviderSetupPending") private var providerSetupPending = false
+    @State private var settingsProvider: TranslationProvider?
     var body: some View {
         @Bindable var library = library
         TabView(selection: $selection) {
-            Tab(L("Library"), systemImage: "books.vertical", value: .library) {
+            Tab(MainTab.library.title, systemImage: MainTab.library.symbol, value: .library) {
                 NavigationStack(path: $readerPath) {
                     LibraryScreen { url in browser.go(url); selection = .browser } browse: { selection = .browser }
                         .navigationDestination(for: UUID.self) { id in
@@ -37,7 +96,7 @@ struct RootScreen: View {
                         }
                 }
             }
-            Tab("Rawkuma", systemImage: "globe", value: .browser) {
+            Tab(MainTab.browser.title, systemImage: MainTab.browser.symbol, value: .browser) {
                 NavigationStack {
                     BrowserScreen(browser: browser) { id in
                         readerPath = [id]
@@ -45,13 +104,17 @@ struct RootScreen: View {
                     }
                 }
             }
-            Tab(L("Settings"), systemImage: "gear", value: .settings) { NavigationStack { SettingsScreen() } }
+            Tab(MainTab.settings.title, systemImage: MainTab.settings.symbol, value: .settings) {
+                NavigationStack { SettingsScreen(providerFocus: $settingsProvider) }
+            }
         }
         // UIKit's collection/tab controllers retain mirrored transforms when a
         // live language switch crosses RTL/LTR. Recreate presentation only;
         // selected tab, browser and durable reading state remain above it.
         .id(AppLocalization.shared.isRightToLeft)
         .tabViewStyle(.sidebarAdaptable)
+        .task { CloudServices.shared.trackScreen(selection.rawValue) }
+        .onChange(of: selection) { _, tab in CloudServices.shared.trackScreen(tab.rawValue) }
         .safeAreaInset(edge: .bottom) {
             if library.busy {
                 HStack {
@@ -64,8 +127,26 @@ struct RootScreen: View {
         .alert(L("Koharu"), isPresented: Binding(get: { library.error != nil }, set: { if !$0 { library.error = nil } })) {
             Button(L("OK")) { library.error = nil }
         } message: { Text(library.error ?? "") }
+        .sheet(isPresented: $providerSetupPending) {
+            ProviderSetupScreen { provider, download in
+                library.preferences.provider = provider
+                library.savePreferences()
+                settingsProvider = provider
+                selection = .settings
+                providerSetupPending = false
+                if let download { library.downloadModel(download) }
+            }
+            .interactiveDismissDisabled()
+            .presentationSizing(.page)
+        }
         .onChange(of: library.preferences) { _, _ in library.savePreferences() }
-        .onChange(of: library.busy) { _, busy in UIApplication.shared.isIdleTimerDisabled = busy }
+        .onChange(of: library.busy) { _, busy in
+            UIApplication.shared.isIdleTimerDisabled = busy
+            if !busy && (try? ConfigurationStore.shared.get().refreshDeferred) == true { refreshConfiguration() }
+        }
+        .onChange(of: library.downloadingModel) { _, downloading in
+            if !downloading && (try? ConfigurationStore.shared.get().refreshDeferred) == true { refreshConfiguration() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in
             if !library.busy { Task { await library.translator.unload() } }
         }

@@ -202,3 +202,58 @@
 "Chapters" = "章节";
 "No matching chapters" = "没有匹配的章节";
 "Try another chapter title." = "请尝试其他章节名称。";
+
+"Choose a translation provider" = "选择翻译服务提供商";
+"Apple Vision OCR is built in. AI inpainting starts off." = "已内置 Apple Vision OCR。AI 文字清除默认关闭。";
+"Continue" = "继续";
+"Download a GGUF model to translate on this device, or import one in Settings." = "下载 GGUF 模型以在此设备上翻译，或在设置中导入模型。";
+"Configure in Settings" = "前往设置进行配置";
+
+"Estimated RAM required" = "预估所需 RAM";
+"Available to this app" = "此 App 可用 RAM";
+"Estimated to fit available RAM" = "预计可在可用 RAM 内运行";
+"Exceeds this device's available RAM" = "超出此设备的可用 RAM";
+"RAM is an estimate, not a guarantee. Context length, page size and other apps affect actual usage." = "RAM 为估计值，不保证能运行。上下文长度、页面大小及其他 App 都会影响实际用量。";
+"We recommend not using models that exceed available RAM. They may fail to load or cause the app to close." = "我们不建议使用超出可用 RAM 的模型。模型可能无法加载或导致 App 关闭。";
+"Refresh RAM estimate" = "更新 RAM 估计";
+"Download size" = "下载大小";
+"Close" = "关闭";
+
+"Invalid app configuration (app-config.json)" = "App 配置无效（app-config.json）";
+"This provider or model is disabled in app-config.json. Choose another option in Settings." = "此提供商或模型已在 app-config.json 中停用。请在设置中选择其他项目。";
+"Context tokens exceed this GGUF model’s configured maximum." = "上下文 Token 数超出此 GGUF 模型配置的上限。";
+"Maximum context tokens" = "上下文 Token 上限";
+"Disabled in app configuration" = "已在 App 配置中停用";
+
+"Configuration" = "配置";
+"Environment" = "环境";
+"Checking configuration…" = "正在检查配置…";
+"Using bundled configuration" = "正在使用内置配置";
+"Using saved configuration" = "正在使用已保存的配置";
+"Configuration is up to date" = "配置已是最新";
+"Configuration updated" = "配置已更新";
+"Could not refresh configuration. Using the last valid configuration." = "无法更新配置。正在使用最近一次有效的配置。";
+"Check configuration updates" = "检查配置更新";
+"Configuration source" = "配置来源";
+"Last modified" = "最后修改";
+"ETag" = "ETag";
+
+"OCR recognizes the original text on manga pages. Apple Vision is built in; other OCR models need a download. You can change the OCR model in Settings." = "OCR 会识别漫画页面上的原文。Apple Vision 已内置，其他 OCR 模型需要下载。你可以在设置中更换 OCR 模型。";
+"AI inpainting uses a downloaded model to remove original text and restore the background. When off, translations appear on white cards. You can change this and select an inpainting model in Settings." = "AI 文字清除会使用下载的模型移除原文并修复背景。关闭时，翻译会显示在白色文字框上。你可以在设置中开启或关闭，并选择文字清除模型。";
+"Available models: %@" = "可用模型：%@";
+"On" = "开启";
+"Off" = "关闭";
+"Rawkuma" = "Rawkuma";
+
+"Update required" = "需要更新";
+"Update to version %@ to continue." = "请更新至 %@ 版本以继续。";
+"Update app" = "更新应用";
+"Check again" = "重新检查";
+"Notifications" = "通知";
+"Push notifications" = "推送通知";
+"Not requested" = "尚未请求";
+"Enable notifications" = "启用通知";
+"Open notification settings" = "打开通知设置";
+"Receive app notifications. You can change permission in iPadOS Settings." = "接收应用通知。你可以在 iPadOS「设置」中更改权限。";
+
+"Connecting…" = "正在连接…";

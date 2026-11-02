@@ -2,13 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct SettingsScreen: View {
-    struct CatalogModel: Decodable, Identifiable {
-        var name: String; var url: String; var id: String { url }
-        static var all: [Self] {
-            guard let url = Bundle.main.url(forResource: "local-models", withExtension: "json"), let data = try? Data(contentsOf: url) else { return [] }
-            return (try? JSONDecoder().decode([Self].self, from: data)) ?? []
-        }
-    }
+    @Binding var providerFocus: TranslationProvider?
     @Environment(MangaLibrary.self) private var library
     @State private var remoteModels: [String] = []
     @State private var servers: [LMStudio.Server] = []
@@ -16,10 +10,21 @@ struct SettingsScreen: View {
     @State private var token = ""
     @State private var downloadURL = ""
     @State private var importing = false
+    @State private var choosingDownload = false
     @State private var deleting: LocalModel?
+    private var selectedCatalog: GGUFDownload? {
+        guard let model = library.models.first(where: { $0.id == library.preferences.localModel }) else { return nil }
+        return try? AppConfiguration.current.catalog(for: model)
+    }
+    private var contextOptions: [Int] {
+        let limit = selectedCatalog?.maxTokens ?? 262144
+        return Array(Set(([2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, limit, library.preferences.contextSize]).filter { $0 > 0 && $0 <= limit })).sorted()
+    }
     var body: some View {
         @Bindable var library = library
         @Bindable var localization = AppLocalization.shared
+        let configuration = try! ConfigurationStore.shared.get()
+        ScrollViewReader { proxy in
         Form {
             Section(L("Interface")) {
                 Picker(L("App language"), selection: $localization.language) {
@@ -32,9 +37,20 @@ struct SettingsScreen: View {
                     ForEach(ReadingMode.allCases) { Text($0.name).tag($0) }
                 }
             }
+            Section(L("Notifications")) {
+                LabeledContent(L("Push notifications"), value: CloudServices.shared.notificationStatusText)
+                Button(L(CloudServices.shared.notificationStatus == .notDetermined ? "Enable notifications" : "Open notification settings")) {
+                    Task { await CloudServices.shared.requestNotifications() }
+                }.disabled(!CloudServices.shared.available)
+                Text(L("Receive app notifications. You can change permission in iPadOS Settings."))
+                    .font(.caption).foregroundStyle(.secondary)
+            }.task { await CloudServices.shared.refreshNotificationStatus() }
             Section(L("Translation")) {
                 Picker(L("Provider"), selection: $library.preferences.provider) {
-                    ForEach(TranslationProvider.allCases) { Text($0.name).tag($0) }
+                    if !AppConfiguration.current.providers.contains(library.preferences.provider) {
+                        Text(library.preferences.provider.name + " · " + L("Disabled in app configuration")).tag(library.preferences.provider).disabled(true)
+                    }
+                    ForEach(AppConfiguration.current.providers) { Text($0.name).tag($0) }
                 }
                 Picker(L("Target language"), selection: $library.preferences.target) {
                     ForEach(TargetLanguage.all) { Text($0.displayName).tag($0.tag) }
@@ -46,7 +62,7 @@ struct SettingsScreen: View {
                 }
                 Text(L("Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small.")).font(.caption).foregroundStyle(.secondary)
             }
-            if library.preferences.provider == .lmStudio {
+            if library.preferences.provider == .lmStudio && AppConfiguration.current.providers.contains(.lmStudio) {
                 Section("LM Studio") {
                     TextField(L("Server URL"), text: $library.preferences.server).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled().environment(\.layoutDirection, .leftToRight)
                     Text(L("Use the server root URL, without /v1. Enable LAN serving in LM Studio.")).font(.caption).foregroundStyle(.secondary)
@@ -81,25 +97,33 @@ struct SettingsScreen: View {
                             token = Credentials.read(server.url)
                         } label: { VStack(alignment: .leading) { Text(server.url); Text("\(server.models.count) \(L("models"))").font(.caption).foregroundStyle(.secondary) } }
                     }
-                }
-            } else if library.preferences.provider == .local {
+                }.id(TranslationProvider.lmStudio)
+            } else if library.preferences.provider == .local && AppConfiguration.current.providers.contains(.local) {
                 Section(L("Local AI")) {
                     Picker(L("Model"), selection: $library.preferences.localModel) {
                         Text(L("Select a model")).tag(UUID?.none)
-                        ForEach(library.models) { Text($0.name).tag(Optional($0.id)) }
+                        if let selected = library.preferences.localModel, !library.availableModels.contains(where: { $0.id == selected }) {
+                            Text(L("Disabled in app configuration")).tag(Optional(selected)).disabled(true)
+                        }
+                        ForEach(library.availableModels) { Text($0.name).tag(Optional($0.id)) }
                     }
                     Picker(L("Context tokens"), selection: $library.preferences.contextSize) {
-                        ForEach([2048, 4096, 8192, 16384], id: \.self) { Text(String($0)).tag($0) }
+                        if !contextOptions.contains(library.preferences.contextSize) {
+                            Text(String(library.preferences.contextSize)).tag(library.preferences.contextSize).disabled(true)
+                        }
+                        ForEach(contextOptions, id: \.self) { Text(String($0)).tag($0) }
                     }
-                    Text("\(L("Device RAM")): \(ByteCountFormatter.string(fromByteCount: Int64(ProcessInfo.processInfo.physicalMemory), countStyle: .memory))").font(.caption)
-                    Text(L("Choose GGUF weights that leave RAM for OCR, context and rendering. Large 27B models may not fit even on an M5 iPad.")).font(.caption).foregroundStyle(.secondary)
+                    if let selectedCatalog {
+                        Text("\(L("Maximum context tokens")): \(selectedCatalog.maxTokens)").font(.caption).foregroundStyle(.secondary)
+                    }
+                    if let model = library.models.first(where: { $0.id == library.preferences.localModel }) {
+                        GGUFMemoryInfo(bytes: model.bytes, catalog: selectedCatalog, context: library.preferences.contextSize)
+                    }
                     #if targetEnvironment(simulator)
                     Text(L("Local GGUF inference requires a physical iPad/iPhone. Use LM Studio in Simulator.")).font(.caption).foregroundStyle(.orange)
                     #endif
                     TextField(L("HTTPS GGUF download URL"), text: $downloadURL).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled().environment(\.layoutDirection, .leftToRight)
-                    Menu(L("Choose a GGUF download")) {
-                        ForEach(CatalogModel.all) { model in Button(model.name) { downloadURL = model.url } }
-                    }
+                    Button(L("Choose a GGUF download")) { choosingDownload = true }.disabled(library.downloadingModel || library.busy)
                     Button(L("Download GGUF"), systemImage: "arrow.down.circle") { library.downloadModel(downloadURL) }.disabled(downloadURL.isEmpty || library.downloadingModel || library.busy)
                     Button(L("Import GGUF from Files"), systemImage: "folder") { importing = true }.disabled(library.downloadingModel || library.busy)
                     Button(L("Unload local model")) { Task { await library.translator.unload() } }.disabled(library.busy)
@@ -110,27 +134,33 @@ struct SettingsScreen: View {
                             Button(role: .destructive) { deleting = model } label: { Image(systemName: "trash") }.disabled(library.busy || library.downloadingModel)
                         }
                     }
-                }
+                }.id(TranslationProvider.local)
             }
-            if library.preferences.provider.hosted {
+            if library.preferences.provider.hosted && AppConfiguration.current.providers.contains(library.preferences.provider) {
                 HostedProviderSettings(provider: library.preferences.provider).id(library.preferences.provider)
             }
-            if VisionModel.all.isEmpty { Text(L("Invalid vision model manifest")).foregroundStyle(.red) }
             Section(L("OCR model")) {
                 Picker(L("Model"), selection: $library.preferences.ocrModel) {
-                    Text(L("Apple Vision (built in)")).tag(String?.none)
-                    ForEach(VisionModel.all.filter { $0.kind == "ocr" }) { Text($0.name).tag(Optional($0.id)) }
+                    if !AppConfiguration.current.enabledOCR.contains(where: { $0.id == (library.preferences.ocrModel ?? "apple") }) {
+                        Text(L("Disabled in app configuration")).tag(library.preferences.ocrModel).disabled(true)
+                    }
+                    ForEach(AppConfiguration.current.enabledOCR) { Text($0.displayName).tag($0.builtIn ? String?.none : Optional($0.id)) }
                 }
                 Text(L("Apple Vision detects text regions. The selected OCR model reads each crop locally; models are downloaded separately.")).font(.caption).foregroundStyle(.secondary)
                 if let id = library.preferences.ocrModel { VisionModelDownload(modelID: id) }
             }
             Section(L("Image cleanup")) {
                 Toggle(L("AI inpainting"), isOn: $library.preferences.inpaint)
+                    .disabled(AppConfiguration.current.enabledInpainting.isEmpty && !library.preferences.inpaint)
                 if library.preferences.inpaint {
-                    Picker(L("Model"), selection: Binding(get: { library.preferences.cleanupModel ?? "lama" }, set: { library.preferences.cleanupModel = $0 })) {
-                        ForEach(VisionModel.all.filter { $0.kind == "inpaint" }) { Text($0.name).tag($0.id) }
+                    Picker(L("Model"), selection: Binding(get: { library.preferences.cleanupModel ?? AppConfiguration.current.defaults.inpainting }, set: { library.preferences.cleanupModel = $0 })) {
+                        let selected = library.preferences.cleanupModel ?? AppConfiguration.current.defaults.inpainting
+                        if !AppConfiguration.current.enabledInpainting.contains(where: { $0.id == selected }) {
+                            Text(L("Disabled in app configuration")).tag(selected).disabled(true)
+                        }
+                        ForEach(AppConfiguration.current.enabledInpainting) { Text($0.displayName).tag($0.id) }
                     }
-                    VisionModelDownload(modelID: library.preferences.cleanupModel ?? "lama")
+                    VisionModelDownload(modelID: library.preferences.cleanupModel ?? AppConfiguration.current.defaults.inpainting)
                 }
                 Text(L("Inpainting runs on this device on native-resolution crops. FLUX and RORem need more RAM and time. Without cleanup, translated text uses white speech cards.")).font(.caption).foregroundStyle(.secondary)
             }
@@ -140,20 +170,55 @@ struct SettingsScreen: View {
                     Button(L("Cancel download"), role: .cancel) { library.modelTask?.cancel() }
                 }
             }
+            Section(L("Configuration")) {
+                LabeledContent(L("Environment"), value: configuration.target.environment.rawValue + " · " + configuration.target.version)
+                Text(configuration.statusText).font(.caption).foregroundStyle(configuration.status == .failed ? Color.orange : .secondary)
+                if let etag = configuration.etag { LabeledContent(L("ETag"), value: etag).font(.caption) }
+                if let modified = configuration.modified { LabeledContent(L("Last modified")) { Text(modified, format: .dateTime).font(.caption) } }
+                Button(L("Check configuration updates")) { Task { await configuration.refresh { !library.busy && !library.downloadingModel } } }
+                    .disabled(library.busy || library.downloadingModel || configuration.isRefreshing)
+                Link(L("Configuration source"), destination: configuration.target.objectURL)
+            }
             Section(L("About")) {
                 Text("Koharu iPad \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
                 Text(L("Projects and source URLs stay on this device. Remote providers receive OCR text and translation instructions. Local mode translates on this device. API keys are stored in Keychain.")).font(.caption).foregroundStyle(.secondary)
             }
         }
         .navigationTitle(L("Settings"))
+        .task(id: providerFocus) {
+            guard let providerFocus else { return }
+            // Let Form lay out the newly selected provider before scrolling.
+            await Task.yield()
+            proxy.scrollTo(providerFocus, anchor: .top)
+            self.providerFocus = nil
+        }
         .disabled(library.busy)
         .task { token = Credentials.read(library.preferences.server) }
         .onChange(of: library.preferences.server) { _, value in token = Credentials.read(value) }
+        .onChange(of: library.preferences.localModel) { _, _ in
+            if let selectedCatalog { library.preferences.contextSize = min(library.preferences.contextSize, selectedCatalog.maxTokens) }
+        }
+        .onChange(of: library.preferences.inpaint) { _, enabled in
+            if enabled && !AppConfiguration.current.enabledInpainting.contains(where: { $0.id == library.preferences.cleanupModel }) {
+                library.preferences.cleanupModel = AppConfiguration.current.enabledInpainting.first?.id
+            }
+        }
+        .sheet(isPresented: $choosingDownload) {
+            NavigationStack {
+                GGUFDownloadScreen(selection: $downloadURL, context: library.preferences.contextSize) { address in
+                    library.downloadModel(address)
+                    choosingDownload = false
+                }
+                .toolbar { ToolbarItem(placement: .cancellationAction) { Button(L("Close")) { choosingDownload = false } } }
+            }
+            .presentationSizing(.page)
+        }
         .fileImporter(isPresented: $importing, allowedContentTypes: [UTType(filenameExtension: "gguf") ?? .data]) { result in
             switch result { case .success(let url): library.importModel(url); case .failure(let error): library.error = error.localizedDescription }
         }
         .confirmationDialog(L("Delete this downloaded model?"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
             Button(L("Delete"), role: .destructive) { if let deleting { Task { await library.removeModel(deleting) } }; deleting = nil }
+        }
         }
     }
     private func refreshModels() async {
@@ -170,9 +235,9 @@ struct VisionModelDownload: View {
     let modelID: String
     @State private var removing = false
     var body: some View {
-        if let model = VisionModel.all.first(where: { $0.id == modelID }) {
-            Text("\(ByteCountFormatter.string(fromByteCount: model.bytes, countStyle: .file)) · \(L("Estimated free RAM required")): \(model.minimumFreeMB) MB").font(.caption).foregroundStyle(.secondary)
-            if VisionModel.availableMemory < model.minimumFreeMB * 1024 * 1024 {
+        if let model = try? VisionModel.named(modelID), !model.builtIn, let ram = model.ramRequirementMB {
+            Text("\(ByteCountFormatter.string(fromByteCount: model.bytes, countStyle: .file)) · \(L("Estimated free RAM required")): \(ram) MB").font(.caption).foregroundStyle(.secondary)
+            if VisionModel.availableMemory < ram * 1024 * 1024 {
                 Label(L("Not enough available RAM"), systemImage: "memorychip").font(.caption).foregroundStyle(.orange)
             }
             if model.ready(library.disk.modelsURL) {

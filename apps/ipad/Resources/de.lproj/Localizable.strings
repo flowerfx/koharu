@@ -202,3 +202,58 @@
 "Chapters" = "Kapitel";
 "No matching chapters" = "Keine passenden Kapitel";
 "Try another chapter title." = "Versuche einen anderen Kapiteltitel.";
+
+"Choose a translation provider" = "Übersetzungsanbieter wählen";
+"Apple Vision OCR is built in. AI inpainting starts off." = "Apple Vision OCR ist integriert. KI-Inpainting ist anfangs deaktiviert.";
+"Continue" = "Weiter";
+"Download a GGUF model to translate on this device, or import one in Settings." = "Lade ein GGUF-Modell für Übersetzungen auf diesem Gerät herunter oder importiere eines in den Einstellungen.";
+"Configure in Settings" = "In den Einstellungen konfigurieren";
+
+"Estimated RAM required" = "Geschätzter RAM-Bedarf";
+"Available to this app" = "Für diese App verfügbar";
+"Estimated to fit available RAM" = "Passt voraussichtlich in den verfügbaren RAM";
+"Exceeds this device's available RAM" = "Übersteigt den verfügbaren RAM dieses Geräts";
+"RAM is an estimate, not a guarantee. Context length, page size and other apps affect actual usage." = "Der RAM-Bedarf ist eine Schätzung, keine Garantie. Kontextlänge, Seitengröße und andere Apps beeinflussen den tatsächlichen Verbrauch.";
+"We recommend not using models that exceed available RAM. They may fail to load or cause the app to close." = "Wir raten von Modellen ab, die den verfügbaren RAM überschreiten. Das Laden kann fehlschlagen oder die App kann geschlossen werden.";
+"Refresh RAM estimate" = "RAM-Schätzung aktualisieren";
+"Download size" = "Downloadgröße";
+"Close" = "Schließen";
+
+"Invalid app configuration (app-config.json)" = "Ungültige App-Konfiguration (app-config.json)";
+"This provider or model is disabled in app-config.json. Choose another option in Settings." = "Dieser Anbieter oder dieses Modell ist in app-config.json deaktiviert. Wähle eine andere Option in den Einstellungen.";
+"Context tokens exceed this GGUF model’s configured maximum." = "Die Kontext-Token überschreiten das konfigurierte Maximum dieses GGUF-Modells.";
+"Maximum context tokens" = "Maximale Kontext-Token";
+"Disabled in app configuration" = "In der App-Konfiguration deaktiviert";
+
+"Configuration" = "Konfiguration";
+"Environment" = "Umgebung";
+"Checking configuration…" = "Konfiguration wird geprüft…";
+"Using bundled configuration" = "Mitgelieferte Konfiguration wird verwendet";
+"Using saved configuration" = "Gespeicherte Konfiguration wird verwendet";
+"Configuration is up to date" = "Die Konfiguration ist aktuell";
+"Configuration updated" = "Konfiguration aktualisiert";
+"Could not refresh configuration. Using the last valid configuration." = "Die Konfiguration konnte nicht aktualisiert werden. Die letzte gültige Version wird verwendet.";
+"Check configuration updates" = "Konfigurationsupdates prüfen";
+"Configuration source" = "Konfigurationsquelle";
+"Last modified" = "Zuletzt geändert";
+"ETag" = "ETag";
+
+"OCR recognizes the original text on manga pages. Apple Vision is built in; other OCR models need a download. You can change the OCR model in Settings." = "OCR erkennt den Originaltext auf Manga-Seiten. Apple Vision ist integriert; andere OCR-Modelle müssen heruntergeladen werden. Das OCR-Modell lässt sich in den Einstellungen ändern.";
+"AI inpainting uses a downloaded model to remove original text and restore the background. When off, translations appear on white cards. You can change this and select an inpainting model in Settings." = "KI-Inpainting verwendet ein heruntergeladenes Modell, um Originaltext zu entfernen und den Hintergrund wiederherzustellen. Wenn es deaktiviert ist, erscheint die Übersetzung auf weißen Karten. Aktivierung und Modell lassen sich in den Einstellungen ändern.";
+"Available models: %@" = "Verfügbare Modelle: %@";
+"On" = "Ein";
+"Off" = "Aus";
+"Rawkuma" = "Rawkuma";
+
+"Update required" = "Update erforderlich";
+"Update to version %@ to continue." = "Zum Fortfahren auf Version %@ aktualisieren.";
+"Update app" = "App aktualisieren";
+"Check again" = "Erneut prüfen";
+"Notifications" = "Mitteilungen";
+"Push notifications" = "Push-Mitteilungen";
+"Not requested" = "Noch nicht angefragt";
+"Enable notifications" = "Mitteilungen aktivieren";
+"Open notification settings" = "Mitteilungseinstellungen öffnen";
+"Receive app notifications. You can change permission in iPadOS Settings." = "Mitteilungen der App empfangen. Die Berechtigung lässt sich in den iPadOS-Einstellungen ändern.";
+
+"Connecting…" = "Verbindung wird hergestellt…";

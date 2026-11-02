@@ -6,9 +6,104 @@ Version **0.3.9** starts with **System default** for the interface, matching the
 
 Two focused Debug checks passed on the physical iPad M5 (0.004 seconds): regional/system preference matching, unsupported/empty preference fallback, all interface-to-target/catalog mappings, initial preference persistence and preservation of a manually selected target. An isolated iPad simulator app verified first launch with `fr-CA` → French interface + `fr-FR`, and unsupported `th-TH` → English interface + `en-US`. The production library was not reset for these checks.
 
+Version **0.3.10 (build 17)** uses **Apple Vision (built in)** OCR, **AI inpainting off**, and **Local GGUF on this device** for a new installation. The first-launch dialog offers every translation provider. Local GGUF opens the model catalog; downloading uses the existing downloader and automatically selects the downloaded model. **Configure in Settings** allows later download or Files import. Other choices select that provider, open Settings, and scroll to its configuration. Unfinished setup is offered again on restart; completed setup is not repeated. Updating an existing installation preserves its saved settings and does not introduce a setup dialog.
+
+The GGUF catalog includes 11 pinned, single-file downloads: **Qwen 3.5 0.8B, 2B, 4B, 9B, 27B, 35B A3B**, and **Gemma 4 E2B, E4B, 12B, 26B A4B, 31B Instruct**, using Q4_K_M (the 26B Gemma file is Unsloth's UD-Q4_K_M). No entries are filtered or disabled by device model or RAM. Catalog rows show download size, estimated RAM at the selected context size, and whether that estimate fits the device's total RAM and current per-app memory allowance. **Refresh RAM estimate** resamples the allowance. Downloaded/imported models also show a memory estimate beside the local model selection. Oversized models remain selectable/downloadable, with a recommendation not to use them because loading may fail or iPadOS may close the app. The former 65%-of-device-RAM admission gate has been removed; actual allocation failures are reported by the native runtime.
+
+The RAM number is a conservative planning estimate, not a measured minimum or a guarantee: full weight-file bytes + 25% runtime headroom + F16 K/V at the selected context length + 768 MiB for OCR/rendering. Cache budgets come from each pinned GGUF's layer count, KV heads and key/value dimensions, following the bundled llama.cpp b12024 cache ownership: Qwen hybrid layers do not allocate full attention cache and Gemma shared-KV layers reuse existing cache. Gemma sliding layers use their per-layer head dimensions, but reserve the full selected context because the native default is `swa_full=true`. Runtime/recurrent-state overhead remains an estimate. Imported/custom GGUFs use a generic 256 KiB/token allowance because their architecture is not known to the catalog. Available memory comes from Apple's [`os_proc_available_memory`](https://developer.apple.com/documentation/os/os_proc_available_memory), rather than assuming all installed RAM belongs to the app. Simulator memory figures are not physical-device capability measurements. File sizes/revisions were verified against the publishers' Hugging Face metadata and GGUF headers; sources: [Qwen 3.5](https://unsloth.ai/docs/models/qwen3.5), [Gemma 4](https://unsloth.ai/docs/models/gemma-4).
+
+Version 0.3.10 was built/archived in Debug, exported as a development IPA and installed/launched on the physical iPad M5 (confirmed 0.3.10 / 17). A focused catalog/budget check passed there. Isolated first-launch checks covered Local model download/automatic selection, interrupted/completed setup persistence, and navigation to LM Studio and Qwen configuration. Physical UI covered positive/oversized memory estimates and an enabled download action for an oversized model; German long labels were inspected on an iPad simulator. No new OCR/inpainting/translation-quality benchmark or inference run across all 11 model entries was performed. Evidence and the detailed limits are in `Builds/iPadChecks/ProviderSetup` beside the repository checkout.
+
+Version **1.0.0 (build 20)** makes the entire provider row tappable in first-launch setup, including the space beside its name. OCR and AI inpainting summaries explain their behavior, list enabled models from the active JSON, and point to Settings for changes. All added strings are translated in the 13 locale catalogs. UI verification and screenshots are recorded in `Builds/iPadChecks/ProviderSelectionFix` beside the checkout.
+
+Version **1.0.0 (build 21)** restores the original native `TabView` with `sidebarAdaptable` navigation. iPadOS owns the floating Liquid Glass tab bar, selection dragging/animation and sidebar transition. Each tab supplies its localized name and SF Symbol; the system decides icon presentation (the regular-width top bar favors titles, while the sidebar includes icons). The custom full-width navigation row is removed. Simulator UI checks verified dragging Library → Settings → Library, tab selection, browser state and the glass sidebar. Screenshots and a transition recording are in `Builds/iPadChecks/NativeGlassNavigation` beside the checkout.
+
+## Shared JSON configuration
+
+Introduced in **0.3.11**, [`Resources/app-config.json`](Resources/app-config.json) defines the provider, GGUF, OCR and inpainting catalogs and fresh-install defaults. From **1.0.0 (build 19)** the bundled file seeds a validated local cache; S3 updates become the active source at runtime. The replaced `local-models.json` and `vision-models.json` files are removed. Both setup and Settings use the JSON order and enabled entries. The vision reference script also reads the same file.
+
+| Section / field | Meaning |
+| --- | --- |
+| `provider` | Supported native provider IDs with `enable`. IDs are case-sensitive (`local`, `lmStudio`, `openAI`, etc.); adding a new provider still requires its native implementation. |
+| `gguf` | Stable `id`, `name`, direct HTTPS `url`, download `bytes`, `maxTokens`, RAM fields and `enable`. New GGUF files can be added without adding a new catalog list in Swift, provided the bundled llama.cpp supports their architecture. |
+| `maxTokens` | Maximum total context tokens for that GGUF. The catalog displays it, Settings caps available context choices, and translation rejects requests above the configured cap. The native model's own trained context limit is checked as well. This is distinct from the per-request output budget. |
+| `ramRequirementMB` | GGUF planning budget at `ramReferenceTokens`; OCR/inpainting minimum available RAM for admission. MB means 1,048,576 bytes. RAM remains an estimate, not a guarantee. |
+| `ramReferenceTokens`, `contextBytesPerToken` | GGUF memory budgets grow/shrink from the configured reference RAM with the selected context. Changing `ramRequirementMB` changes the estimate shown in the app. |
+| `ocr`, `inpainting` | Entries include `id`, `name`, `enable`, `builtIn`, `ramRequirementMB`, source card URL, and a `files` array with every direct download URL, destination filename, byte count and SHA-256. Companion files remain mandatory. The IDs correspond to native OCR/inpainting implementations. |
+| Apple Vision | `id: "apple"`, `builtIn: true`, `files: []`, `ramRequirementMB: null`: supplied by iPadOS, with no separate download or fixed app-specified minimum. It remains available as a detector for the downloaded OCR readers even when its standalone reader choice is disabled. |
+| `defaults` | Initial provider, OCR, cleanup model, AI-inpainting switch and context tokens. Existing saved user settings are preserved. |
+
+`enable: false` hides an entry from new choices and blocks its download/inference even if a user has a saved selection or an existing catalog download. Saved disabled choices remain visible as unavailable so the user can select a replacement; they are not silently switched. Disabling the Local provider also blocks custom GGUF imports/downloads. Custom imported/direct-URL files outside the catalog remain supported when Local is enabled; model-specific catalog switches cannot identify unknown external weights. New catalog downloads persist their stable catalog ID, and existing matching source URLs are also recognized.
+
+The configuration is validated before app/library startup. Malformed JSON, unsupported native IDs, duplicates, unsafe file paths/URLs, invalid RAM/token values, or an unavailable default provider/OCR stop startup with a configuration error. If disabling the configured default provider or OCR, update the corresponding `defaults` entry to another enabled choice. All inpainting entries may be disabled when `defaults.aiInpainting` is false. No alternate hardcoded catalog or automatic repair is used. Upload the JSON to the matching S3 environment/version path to update an installed 1.0.0 app without rebuilding. The bundled file is the offline seed for a new environment/version. Saved user preferences are not overwritten when defaults change.
+
+Four focused Debug configuration checks passed on the physical iPad M5 for 0.3.11. Isolated iPad simulator variants verified provider/GGUF/OCR/inpainting enable filtering, overridden RAM and max-token values, changed first-launch defaults, and an error for invalid JSON. Archive and IPA contents were checked against the source JSON, including absence of both replaced catalogs. The signed app installed/launched on M5 with existing user data retained. Evidence is in `Builds/iPadChecks/UnifiedConfig` beside the repository checkout. No live provider/download calls or new inference benchmark was needed for this refactor.
+
+## Staging and production configuration
+
+The app derives its environment from the build setting `KOHARU_ENVIRONMENT` and its version from `CFBundleShortVersionString`. Version 1.0.0 therefore reads:
+
+- Staging: [app-config.json](https://kem-solution-public.s3.us-east-1.amazonaws.com/apps/aimangatranslator/env/staging/1.0.0/configs/app-config.json)
+- Production: [app-config.json](https://kem-solution-public.s3.us-east-1.amazonaws.com/apps/aimangatranslator/env/production/1.0.0/configs/app-config.json)
+
+| Scheme | Xcode configuration | Environment | App identifier |
+| --- | --- | --- | --- |
+| `KoharuPadStaging` run/test | `Staging` (debug) | `staging` | `com.kurubyInteractive.aimanga.staging` |
+| `KoharuPadStaging` archive | `StagingRelease` (release) | `staging` | `com.kurubyInteractive.aimanga.staging` |
+| `KoharuPadProduction` | `Production` (release profile) | `production` | `com.kurubyInteractive.aimanga` |
+| `KoharuPadSimulatorStaging` | `Staging` | `staging` | `com.kurubyInteractive.aimanga.staging` |
+| `KoharuPadSimulatorProduction` | `Production` | `production` | `com.kurubyInteractive.aimanga` |
+
+The new Bundle ID's Staging app is named **AI Manga Staging** and coexists with the existing Koharu app. They have separate libraries/preferences. Config cache paths also include environment and app version, so a staging or old-version response is never reused for production or another version. The build number is not part of the S3 path.
+
+The registered Apple Developer team is **Kuruby Inc. (`6B86Z886QA`)**. Both explicit App IDs enable In-App Purchase, Sign in with Apple (independent primary IDs), Push Notifications, Increased Memory Limit and Extended Virtual Addressing. App entitlements include Apple sign-in and APNs (`development` for a device Staging build, `production` for Production; App Store export uses production APNs for both). Keychain service names derive from each bundle ID. Existing `dev.flowerfx` installations have separate containers/access groups; changing Bundle ID creates a distinct app and does not migrate their data or credentials.
+
+App Store profiles **AIManga-Production-AppStore-2026** and **AIManga-Staging-AppStore-2026** are bound to the existing Apple Distribution certificate for Kuruby Inc., expiring **2027-04-18**. Use `ExportOptions-AppStore-Production.plist` or `ExportOptions-AppStore-Staging.plist` with the matching archive's `xcodebuild -exportArchive -exportOptionsPlist ...` command. These export locally (`destination=export`) and do not upload. App Store profiles are for App Store Connect/TestFlight, not direct device installation; Debug signing remains automatic. Downloaded profiles, certificate checks and portal screenshots are under `Builds/Signing/AIManga` beside the checkout and are installed in the local Xcode profile directory. Distribution private keys remain in the Mac Keychain. The separate APNs key is stored outside the repository.
+
+Local AI/OCR/inpainting use the existing on-device runtimes and memory entitlements; no generic AI or background-inference capability is needed by the current foreground pipeline. LM Studio uses local TCP HTTP connections and the translated `NSLocalNetworkUsageDescription`; current discovery does not use Bonjour/multicast. StoreKit product/purchase UI and Apple account sign-in/backend are not implemented by enabling these App ID capabilities.
+
+
+On cold launch, the app checks S3 before constructing a new library's initial preferences. It checks again when returning to the foreground. If translation or model downloading is active, refreshing/applying is deferred until that work finishes. **Settings → Configuration** displays the environment/version, current status, ETag, server modification time, source link and a manual update check. Network requests use timeouts of at most 15 seconds per request; unavailable networking or a missing/invalid remote object leaves the last valid local configuration active. A fresh cache uses the validated bundled seed.
+
+S3 has no automatic directory index at the `/configs/` object URL. The native client uses [ListObjectsV2](https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html) on the bucket root with `prefix=apps/aimangatranslator/env/{environment}/{version}/configs/`, handling continuation tokens. It selects only the exact `app-config.json` key. If **either** its ETag or LastModified differs from the cached validators, it downloads [GetObject](https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html) with `If-Match` for the listed ETag. Unchanged listings skip the JSON body download. The response size, ETag, modification time and existing configuration schema are validated before publication. Oversized responses and metadata changes during a download are rejected for that refresh. The app uses public read/list access; no AWS credentials are included.
+
+Cache location inside each app container:
+
+```text
+Library/Application Support/Koharu/RemoteConfiguration/{environment}/{version}/
+  active.json
+  0/app-config.json
+  0/metadata.json
+  1/app-config.json
+  1/metadata.json
+```
+
+The app writes the inactive slot and its SHA-256 metadata, then atomically switches `active.json`. The previous valid slot remains recoverable if the active slot is damaged. Invalid downloads never replace the currently active JSON. Runtime readers consume an immutable snapshot; observable publication refreshes the app's provider/model lists.
+
+Nine focused checks passed on physical iPad M5: the five remote-sync checks cover persistence, unchanged-body skipping, independent ETag/date changes, offline/invalid-JSON retention, environment/version separation, damaged-cache recovery, pagination and a metadata race; four catalog/configuration checks also passed. Native Debug clients fetched both live S3 namespaces and persisted their distinct modification times. Production runtime routing was checked with the Debug simulator binary configured for the production namespace; the production build settings were verified, but a Production release archive was not built in this verification. Staging was archived, exported and installed on M5; its live S3 cache was read back and matched the remote payload hash, ETag and server modification time. No model inference benchmark was repeated. Evidence is in `Builds/iPadChecks/RemoteConfiguration` beside the checkout.
+
+## Firebase services
+
+Version **1.0.0 (build 22)** integrates Firebase Apple SDK **13.1.1**: Analytics Core, Crashlytics, Messaging and Remote Config. Each environment has its own Spark project and Analytics property under the existing Default Account for Firebase. Gemini console assistance remains disabled. The Firebase client configuration lives in `Firebase/{environment}/GoogleService-Info.plist`. A build phase selects exactly one file and rejects a Bundle ID mismatch. Simulator apps use the corresponding registered Bundle ID too, with separate simulator Keychain entitlements. These client plists are not server credentials; the APNs private key is never bundled.
+
+| Environment | Firebase project | Firebase Apple app ID |
+| --- | --- | --- |
+| production | `kuruby-aimanga-production` | `1:160035722399:ios:9e06f57e12714ab608feaa` |
+| staging | `kuruby-aimanga-staging` | `1:389961112476:ios:6790038fe2ee2fa0c9c659` |
+
+- **Analytics:** explicitly enabled, using Analytics Core without the Identity Support product. App screen events use stable screen names; manga content, source URLs, prompts and provider credentials are not added to telemetry. IDFA collection and advertising personalization are disabled.
+- **Crashlytics:** automatic collection is off for Debug and on for release builds. The last physical-app build script uploads dSYMs for release configurations. `KoharuPadStaging` archives with `StagingRelease`, so staging TestFlight builds use the release Crashlytics behavior while retaining the staging project. Run/test stays on Debug. No deliberate crash was sent during setup; the console will populate when a reporting-enabled build sends data.
+- **Messaging:** uses Firebase Installation ID registration, an app delegate and explicit APNs token mapping with swizzling disabled. Foreground notifications present a banner, sound and badge; background receipt is acknowledged without starting a translation job. **Settings → Notifications** requests permission only when the user chooses Enable notifications, then links to the system notification settings. Private registration identifiers are not logged or shown in the UI. The approved APNs-only key **A7VL5A7WNH / AIMangaPush**, team **6B86Z886QA**, supports Sandbox & Production. It is configured in Firebase production's production slot and both development/production slots for staging. The `.p8` lives under `Builds/Signing/AIManga/Keys` outside the checkout with restricted permissions.
+- **Remote Config:** both projects have the published template in `Firebase/remote-config-template.json`. It uses the reference apps' `game_version` and `apple_store_url` keys, plus Boolean `force_update_enabled`. Current values are `1.0.0`, empty store URL and `false`, so no update is forced. The app fetches on launch/foreground and listens for real-time changes; the SDK retains activated values offline. Fetches have a 10-second timeout and normal minimum intervals of 60 seconds in staging / 1 hour in production; Check again on the update screen bypasses that local interval. Provider/model catalogs still belong to the S3 JSON configuration above.
+
+Force update requires an enabled flag, a numerically newer one-to-three-component version, and a valid HTTPS App Store URL containing a numeric app ID. Staging also accepts `https://testflight.apple.com/join/{code}`. Invalid or incomplete policies do not block use. A valid required update replaces the main UI once any active translation/download finishes; the user can open the update URL or check the policy again. Supply each environment's real store/TestFlight URL before enabling force update; no App Store Connect app listing or public store URL was created by this signing setup.
+
+The focused `AppUpdateTests` cover numeric version boundaries, malformed/disabled policies and staging-only TestFlight links. Debug unit-test hosts skip cloud initialization so they do not send test telemetry or require a Firebase network connection. The signed iPad simulator app fetched and activated all three published staging parameters, read back from the SDK's active SQLite table. All added notification/update UI strings are translated across the 13 catalogs. Evidence, client configs, portal screenshots and verification limits are under `Builds/Signing/Firebase` beside the checkout.
+
+
 ## Reading and translation
 
-1. In **Settings**, choose a translation provider and a target language: **LM Studio**, **On-device GGUF**, or one of the hosted APIs below.
+1. On a new installation, choose a provider in the setup dialog. You can later change it and the target language in **Settings**: **LM Studio**, **On-device GGUF**, or one of the hosted APIs below.
 2. For LM Studio, enter its LAN root URL, for example `http://192.168.1.20:1234`, refresh the model list and select a loaded model. The initial `localhost` address is a placeholder on iPad; use **Find server** or replace it. Already loaded models sort first. Optional authentication is stored in Keychain. **Find server** checks private IPv4 interfaces with mask `255.255.255.0`, using the selected port. It sends no saved credentials to discovered addresses and follows no redirects. Allow the local-network permission when iOS asks.
 3. For local inference, download a catalog model, enter a direct HTTPS GGUF URL, or import a GGUF from Files. Weights stay on the device. The official prebuilt llama.cpp Metal framework runs inference on physical iPads/iPhones. Start with a small model; available RAM limits model size and context. The 0.8B catalog entry is useful for a runtime check, but its translation quality can be poor.
 4. Open **Rawkuma**, navigate to a chapter, then **Translate this chapter**. Next/Prev/Home use the site's actual links. Chapter menus use a native selector populated from the site's chapter links. Empty HTMX placeholders are loaded through their same-origin chapter endpoint; fractional chapter URLs are preserved.
@@ -45,7 +140,7 @@ In **Settings → Image cleanup**, enable AI inpainting and select **LaMa Manga*
 
 ONNX OCR uses CPU; PaddleOCR and diffusion use Metal. AOT's supported operations use Core ML, with remaining operations handled by ONNX Runtime. OCR, translation and cleanup release their model allocations between stages; the app does not hold both local translation and diffusion weights on the GPU. The estimated RAM figures are admission heuristics, not a guarantee: iPadOS can reclaim/limit memory at runtime. Settings warns when current available memory is below the requirement; Run checks again and reports the selected model and available/required memory. It never substitutes another model. FLUX/RORem are much slower than LaMa and may not fit smaller iPads.
 
-Each selection has its own **Download selected model**, ready status, source link and delete action. Downloads include every companion encoder/VAE/projector needed by that model. Commit-pinned URLs, byte counts and SHA-256 checksums are in `Resources/vision-models.json`; all files must verify before the model directory is published. Stopping a download discards its staging files. Weights are separate downloads, never bundled in the IPA. Use the foreground during downloads; background resume is not implemented.
+Each selection has its own **Download selected model**, ready status, source link and delete action. Downloads include every companion encoder/VAE/projector needed by that model. Commit-pinned URLs, byte counts and SHA-256 checksums are in `Resources/app-config.json`; all files must verify before the model directory is published. Stopping a download discards its staging files. Weights are separate downloads, never bundled in the IPA. Use the foreground during downloads; background resume is not implemented.
 
 OCR signatures include the selected model and checkpoint hashes. Run rescans when they change, unless that page has manual edits; make a new copy in that case to preserve edits. Source text and translations remain separate. LM Studio receives OCR text, target language and translation instructions, without page images. Rendering is local. The iPad pipeline is separate from the desktop ML/editor pipeline; PSD export, full layer/brush editing and cross-device synchronization are not implemented.
 
@@ -98,20 +193,20 @@ python3 scripts/bootstrap.py
 
 # Simulator: UI, Apple Vision, white-card rendering and LM Studio.
 # Vision-model execution and memory admission are validated on physical hardware.
-xcodebuild -project KoharuPad.xcodeproj -scheme KoharuPadSimulator \
-  -configuration Debug -destination 'generic/platform=iOS Simulator' \
+xcodebuild -project KoharuPad.xcodeproj -scheme KoharuPadSimulatorStaging \
+  -configuration Staging -destination 'generic/platform=iOS Simulator' \
   -derivedDataPath DerivedData -clonedSourcePackagesDirPath Vendor/Packages \
   CODE_SIGNING_ALLOWED=NO build
 
 # Physical device: choose your signing team in Xcode or pass it explicitly.
-xcodebuild -project KoharuPad.xcodeproj -scheme KoharuPad \
-  -configuration Debug -destination 'generic/platform=iOS' \
+xcodebuild -project KoharuPad.xcodeproj -scheme KoharuPadStaging \
+  -configuration Staging -destination 'generic/platform=iOS' \
   -derivedDataPath DerivedDataDevice -clonedSourcePackagesDirPath Vendor/Packages \
   -archivePath build/KoharuPad.xcarchive \
   DEVELOPMENT_TEAM=YOUR_TEAM_ID -allowProvisioningUpdates archive
 ```
 
-Open the generated project in Xcode, select **KoharuPad**, a connected trusted iPad/iPhone, and your signing team. Physical devices require Developer Mode and a provisioning profile containing their UDID. Simulator unit tests use scheme **KoharuPadSimulator** on an installed iPad simulator runtime.
+Open the generated project in Xcode, select **KoharuPadStaging** (or **KoharuPadProduction** for release), a connected trusted iPad/iPhone, and your signing team. Physical devices require Developer Mode and a provisioning profile containing their UDID. Simulator unit tests use scheme **KoharuPadSimulatorStaging** on an installed iPad simulator runtime.
 
 The bootstrap pins the upstream prebuilt llama.cpp b12024 and stable-diffusion-native v0.3.0 archives and verifies their SHA-256. ONNX Runtime 1.24.2 is resolved through the official Microsoft Swift package (its binary has a package checksum). The llama archive contains iOS arm64 and macOS slices, with no simulator slice; diffusion and ONNX include simulator slices. Vendor weights/frameworks, generated Xcode projects, language JSON, icon PNG, DerivedData, archives and IPAs are ignored. Run bootstrap after updating the authoritative Rust language catalog. Localizations remain source-controlled.
 
@@ -156,6 +251,6 @@ Version 0.1.1 was signed with Kuruby and installed on a physical iPad Pro 11-inc
 
 The same production Swift LM Studio client also ran on Mac against the Windows Gemma 4 26B server and returned two valid Vietnamese translations. The former 40 MB LaMa CoreML conversion ran a synthetic input on Mac CPU; version 0.2.0 replaces it with the selectable models above. On the physical M5, one 30-page Rawkuma chapter then completed with revised OCR (193 regions), Windows LM Studio translation, the former LaMa cleanup and 30 saved rendered pages. The first page was visually checked; this is not a full editorial review of every translation or text box.
 
-Optional hardware checks are in scheme **KoharuPad**, target **KoharuPadDeviceChecks**. They skip unless you supply the fixtures in the app's Documents directory: `Qwen3.5-0.8B-Q4_K_M.gguf` and/or `OCRFixture.image`. The OCR fixture must have SHA-256 `3dade0142057ce7db8cf170dd14fba9614f755909c7facfb65ac0576dcbb7ec0`. Weights and manga fixtures are not bundled or committed. Run only the relevant check with `-only-testing:KoharuPadDeviceChecks/LocalRuntimeChecks/TEST_NAME` and a connected-device destination.
+Optional hardware checks are in scheme **KoharuPadStaging**, target **KoharuPadDeviceChecks**. They skip unless you supply the fixtures in the app's Documents directory: `Qwen3.5-0.8B-Q4_K_M.gguf` and/or `OCRFixture.image`. The OCR fixture must have SHA-256 `3dade0142057ce7db8cf170dd14fba9614f755909c7facfb65ac0576dcbb7ec0`. Weights and manga fixtures are not bundled or committed. Run only the relevant check with `-only-testing:KoharuPadDeviceChecks/LocalRuntimeChecks/TEST_NAME` and a connected-device destination.
 
 See [THIRD_PARTY.md](THIRD_PARTY.md) for runtime and downloadable model sources/licenses.

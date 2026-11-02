@@ -202,3 +202,58 @@
 "Chapters" = "Chương";
 "No matching chapters" = "Không tìm thấy chương";
 "Try another chapter title." = "Thử nhập tên chương khác.";
+
+"Choose a translation provider" = "Chọn nguồn cung cấp bản dịch";
+"Apple Vision OCR is built in. AI inpainting starts off." = "OCR Apple Vision được tích hợp sẵn. Xóa chữ bằng AI mặc định tắt.";
+"Continue" = "Tiếp tục";
+"Download a GGUF model to translate on this device, or import one in Settings." = "Tải model GGUF để dịch trên thiết bị này, hoặc nhập model trong Cài đặt.";
+"Configure in Settings" = "Cấu hình trong Cài đặt";
+
+"Estimated RAM required" = "RAM cần dùng (ước tính)";
+"Available to this app" = "RAM khả dụng cho app";
+"Estimated to fit available RAM" = "Ước tính đủ RAM khả dụng";
+"Exceeds this device's available RAM" = "Vượt RAM khả dụng của thiết bị";
+"RAM is an estimate, not a guarantee. Context length, page size and other apps affect actual usage." = "RAM là mức ước tính, không bảo đảm chạy được. Độ dài context, kích thước trang và app khác ảnh hưởng tới lượng RAM thực tế.";
+"We recommend not using models that exceed available RAM. They may fail to load or cause the app to close." = "Chúng tôi khuyên bạn không nên dùng model vượt quá RAM khả dụng. Model có thể không tải vào bộ nhớ được hoặc làm app bị đóng.";
+"Refresh RAM estimate" = "Cập nhật ước tính RAM";
+"Download size" = "Dung lượng tải";
+"Close" = "Đóng";
+
+"Invalid app configuration (app-config.json)" = "Cấu hình app-config.json không hợp lệ";
+"This provider or model is disabled in app-config.json. Choose another option in Settings." = "Provider hoặc model này đã bị tắt trong app-config.json. Hãy chọn mục khác trong Cài đặt.";
+"Context tokens exceed this GGUF model’s configured maximum." = "Số token ngữ cảnh vượt quá giới hạn được cấu hình của model GGUF này.";
+"Maximum context tokens" = "Token ngữ cảnh tối đa";
+"Disabled in app configuration" = "Đã tắt trong cấu hình app";
+
+"Configuration" = "Cấu hình";
+"Environment" = "Môi trường";
+"Checking configuration…" = "Đang kiểm tra cấu hình…";
+"Using bundled configuration" = "Đang dùng cấu hình tích hợp";
+"Using saved configuration" = "Đang dùng cấu hình đã lưu";
+"Configuration is up to date" = "Cấu hình đã mới nhất";
+"Configuration updated" = "Đã cập nhật cấu hình";
+"Could not refresh configuration. Using the last valid configuration." = "Không thể cập nhật cấu hình. Đang dùng bản hợp lệ gần nhất.";
+"Check configuration updates" = "Kiểm tra cập nhật cấu hình";
+"Configuration source" = "Nguồn cấu hình";
+"Last modified" = "Sửa đổi lần cuối";
+"ETag" = "ETag";
+
+"OCR recognizes the original text on manga pages. Apple Vision is built in; other OCR models need a download. You can change the OCR model in Settings." = "OCR nhận dạng chữ gốc trên từng trang truyện. Apple Vision được tích hợp sẵn; các model OCR khác cần tải về. Bạn có thể đổi model OCR trong Cài đặt.";
+"AI inpainting uses a downloaded model to remove original text and restore the background. When off, translations appear on white cards. You can change this and select an inpainting model in Settings." = "Xóa chữ bằng AI dùng model tải về để xóa chữ gốc và phục hồi nền ảnh. Khi tắt, bản dịch nằm trên khung nền trắng. Bạn có thể bật/tắt và chọn model xóa chữ trong Cài đặt.";
+"Available models: %@" = "Các model hiện có: %@";
+"On" = "Bật";
+"Off" = "Tắt";
+"Rawkuma" = "Rawkuma";
+
+"Update required" = "Cần cập nhật";
+"Update to version %@ to continue." = "Cập nhật lên phiên bản %@ để tiếp tục.";
+"Update app" = "Cập nhật ứng dụng";
+"Check again" = "Kiểm tra lại";
+"Notifications" = "Thông báo";
+"Push notifications" = "Thông báo đẩy";
+"Not requested" = "Chưa yêu cầu";
+"Enable notifications" = "Bật thông báo";
+"Open notification settings" = "Mở cài đặt thông báo";
+"Receive app notifications. You can change permission in iPadOS Settings." = "Nhận thông báo từ ứng dụng. Bạn có thể đổi quyền trong Cài đặt của iPadOS.";
+
+"Connecting…" = "Đang kết nối…";

@@ -6,30 +6,18 @@ struct VisionModel: Decodable, Identifiable {
     struct File: Decodable { let path: String; let url: URL; let bytes: Int64; let sha256: String }
     let id: String
     let name: String
-    let kind: String
+    let enable: Bool
+    let builtIn: Bool
     let source: URL
-    let minimumFreeMB: UInt64
+    let ramRequirementMB: UInt64?
     let files: [File]
+    var displayName: String { L(name) }
     var bytes: Int64 { files.reduce(0) { $0 + $1.bytes } }
-    static let all: [VisionModel] = {
-        guard let url = Bundle.main.url(forResource: "vision-models", withExtension: "json"),
-              let data = try? Data(contentsOf: url), let models = try? JSONDecoder().decode([VisionModel].self, from: data) else { return [] }
-        guard !models.isEmpty, Set(models.map(\.id)).count == models.count,
-              models.allSatisfy({ model in
-                  model.id.range(of: "^[a-z][a-z0-9-]*$", options: .regularExpression) != nil &&
-                  ["ocr", "inpaint"].contains(model.kind) && model.minimumFreeMB > 0 && model.minimumFreeMB < 65536 &&
-                  model.source.scheme == "https" && model.source.host == "huggingface.co" && !model.files.isEmpty &&
-                  Set(model.files.map(\.path)).count == model.files.count && model.files.allSatisfy { file in
-                      file.bytes > 0 && file.bytes < 32_000_000_000 &&
-                      file.path.range(of: "^[a-zA-Z0-9_-]+\\.[a-z0-9]+$", options: .regularExpression) != nil &&
-                      file.url.scheme == "https" && file.url.host == "huggingface.co" &&
-                      file.sha256.range(of: "^[a-f0-9]{64}$", options: .regularExpression) != nil
-                  }
-              }) else { return [] }
-        return models
-    }()
     static func named(_ id: String) throws -> VisionModel {
-        guard let model = all.first(where: { $0.id == id }) else { throw AppError.message(L("Vision model is unavailable")) }
+        let config = AppConfiguration.current
+        guard let model = (config.ocr + config.inpainting).first(where: { $0.id == id && $0.enable }) else {
+            throw AppError.message(L("This provider or model is disabled in app-config.json. Choose another option in Settings."))
+        }
         return model
     }
     func directory(_ root: URL) -> URL { root.appendingPathComponent("vision/" + id, isDirectory: true) }
@@ -47,9 +35,10 @@ struct VisionModel: Decodable, Identifiable {
         #endif
     }
     func checkMemory() throws {
+        guard let ramRequirementMB else { return }
         let available = Self.availableMemory
-        guard available >= minimumFreeMB * 1024 * 1024 else {
-            throw AppError.message("\(name): \(L("Not enough available RAM")) — \(ByteCountFormatter.string(fromByteCount: Int64(available), countStyle: .memory)) / \(L("estimated requirement")) \(minimumFreeMB) MB")
+        guard available >= ramRequirementMB * 1024 * 1024 else {
+            throw AppError.message("\(name): \(L("Not enough available RAM")) — \(ByteCountFormatter.string(fromByteCount: Int64(available), countStyle: .memory)) / \(L("estimated requirement")) \(ramRequirementMB) MB")
         }
     }
 }
@@ -62,6 +51,7 @@ extension MangaLibrary {
     }
     func downloadVisionModel(_ model: VisionModel) {
         guard !busy && !downloadingModel else { return }
+        guard !model.builtIn, (try? VisionModel.named(model.id)) != nil else { error = L("This provider or model is disabled in app-config.json. Choose another option in Settings."); return }
         downloadingModel = true
         modelTask = Task {
             defer { downloadingModel = false; modelTask = nil }

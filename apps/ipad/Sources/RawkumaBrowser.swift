@@ -171,7 +171,7 @@ struct BrowserScreen: View {
             if let error = browser.error { Text(error).font(.caption).foregroundStyle(.red).padding(6) }
             BrowserSurface(browser: browser)
         }
-        .navigationTitle("Rawkuma")
+        .navigationTitle(L("Rawkuma"))
         .navigationBarTitleDisplayMode(horizontalSizeClass == .compact ? .inline : .large)
         .task { if browser.webView.url == nil { browser.go(browser.address) } }
     }

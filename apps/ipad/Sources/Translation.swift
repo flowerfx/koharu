@@ -1,5 +1,4 @@
 import Foundation
-import os
 #if canImport(llama)
 import llama
 #endif
@@ -59,7 +58,12 @@ actor TranslationEngine {
     let local = LocalInference()
     let hosted: HostedTranslation
     init(hosted: HostedTranslation = HostedTranslation()) { self.hosted = hosted }
-    func translate(_ texts: [String], config: Preferences, model: URL?, batchSize: Int) async throws -> [String] {
+    func translate(_ texts: [String], config: Preferences, model: URL?, catalog: GGUFDownload? = nil, batchSize: Int) async throws -> [String] {
+        try AppConfiguration.current.requireProvider(config.provider)
+        if config.provider == .local, let catalog {
+            guard catalog.enable else { throw AppError.message(L("This provider or model is disabled in app-config.json. Choose another option in Settings.")) }
+            guard config.contextSize <= catalog.maxTokens else { throw AppError.message(L("Context tokens exceed this GGUF model’s configured maximum.")) }
+        }
         guard (1...100).contains(batchSize) else { throw AppError.message(L("Invalid translation request")) }
         var result: [String] = []
         // Finish OCR for a page first; a failed batch never publishes a partial page.
@@ -124,21 +128,16 @@ actor LocalInference {
     private func load(_ url: URL, size: Int) throws {
         if loaded == url && contextSize == size { return }
         unload()
-        let bytes = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-        let estimate = UInt64(bytes) + UInt64(size) * 65536 + 384 * 1024 * 1024
-        #if os(iOS)
-        let available = os_proc_available_memory()
-        #else
-        let available = ProcessInfo.processInfo.physicalMemory
-        #endif
-        guard UInt64(bytes) < ProcessInfo.processInfo.physicalMemory * 65 / 100,
-              estimate < available * 9 / 10 else {
-            throw AppError.message(L("This model leaves too little RAM for OCR, context and rendering. Choose a smaller GGUF or use LM Studio."))
-        }
+        // The catalog advises on RAM without restricting model choice.
+        // Actual model/context allocation is owned by the native runtime.
         _ = Self.backend
         var parameters = llama_model_default_params()
         parameters.n_gpu_layers = 99
         guard let model = llama_model_load_from_file(url.path, parameters) else { throw AppError.message(L("Could not load this GGUF model")) }
+        guard size > 0, size <= Int(llama_model_n_ctx_train(model)) else {
+            llama_model_free(model)
+            throw AppError.message(L("Context tokens exceed this GGUF model’s configured maximum."))
+        }
         var config = llama_context_default_params()
         config.n_ctx = UInt32(size); config.n_batch = 128; config.n_ubatch = 128
         config.n_threads = Int32(max(1, min(6, ProcessInfo.processInfo.processorCount - 2))); config.n_threads_batch = config.n_threads

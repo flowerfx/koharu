@@ -1,0 +1,26 @@
+{
+  "conditions": [],
+  "parameters": {
+    "game_version": {
+      "defaultValue": {
+        "value": "1.0.0"
+      },
+      "description": "Minimum supported AI Manga iOS app version. Increase only after the matching version is available in the App Store.",
+      "valueType": "STRING"
+    },
+    "apple_store_url": {
+      "defaultValue": {
+        "value": ""
+      },
+      "description": "HTTPS apps.apple.com URL for this environment. Leave empty until its App Store listing exists; an invalid URL never blocks app use.",
+      "valueType": "STRING"
+    },
+    "force_update_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Require updating when game_version is newer than the installed app and apple_store_url is valid. Keep false until the store release is available.",
+      "valueType": "BOOLEAN"
+    }
+  }
+}

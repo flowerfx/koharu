@@ -202,3 +202,58 @@
 "Chapters" = "Chapters";
 "No matching chapters" = "No matching chapters";
 "Try another chapter title." = "Try another chapter title.";
+
+"Choose a translation provider" = "Choose a translation provider";
+"Apple Vision OCR is built in. AI inpainting starts off." = "Apple Vision OCR is built in. AI inpainting starts off.";
+"Continue" = "Continue";
+"Download a GGUF model to translate on this device, or import one in Settings." = "Download a GGUF model to translate on this device, or import one in Settings.";
+"Configure in Settings" = "Configure in Settings";
+
+"Estimated RAM required" = "Estimated RAM required";
+"Available to this app" = "Available to this app";
+"Estimated to fit available RAM" = "Estimated to fit available RAM";
+"Exceeds this device's available RAM" = "Exceeds this device's available RAM";
+"RAM is an estimate, not a guarantee. Context length, page size and other apps affect actual usage." = "RAM is an estimate, not a guarantee. Context length, page size and other apps affect actual usage.";
+"We recommend not using models that exceed available RAM. They may fail to load or cause the app to close." = "We recommend not using models that exceed available RAM. They may fail to load or cause the app to close.";
+"Refresh RAM estimate" = "Refresh RAM estimate";
+"Download size" = "Download size";
+"Close" = "Close";
+
+"Invalid app configuration (app-config.json)" = "Invalid app configuration (app-config.json)";
+"This provider or model is disabled in app-config.json. Choose another option in Settings." = "This provider or model is disabled in app-config.json. Choose another option in Settings.";
+"Context tokens exceed this GGUF model’s configured maximum." = "Context tokens exceed this GGUF model’s configured maximum.";
+"Maximum context tokens" = "Maximum context tokens";
+"Disabled in app configuration" = "Disabled in app configuration";
+
+"Configuration" = "Configuration";
+"Environment" = "Environment";
+"Checking configuration…" = "Checking configuration…";
+"Using bundled configuration" = "Using bundled configuration";
+"Using saved configuration" = "Using saved configuration";
+"Configuration is up to date" = "Configuration is up to date";
+"Configuration updated" = "Configuration updated";
+"Could not refresh configuration. Using the last valid configuration." = "Could not refresh configuration. Using the last valid configuration.";
+"Check configuration updates" = "Check configuration updates";
+"Configuration source" = "Configuration source";
+"Last modified" = "Last modified";
+"ETag" = "ETag";
+
+"OCR recognizes the original text on manga pages. Apple Vision is built in; other OCR models need a download. You can change the OCR model in Settings." = "OCR recognizes the original text on manga pages. Apple Vision is built in; other OCR models need a download. You can change the OCR model in Settings.";
+"AI inpainting uses a downloaded model to remove original text and restore the background. When off, translations appear on white cards. You can change this and select an inpainting model in Settings." = "AI inpainting uses a downloaded model to remove original text and restore the background. When off, translations appear on white cards. You can change this and select an inpainting model in Settings.";
+"Available models: %@" = "Available models: %@";
+"On" = "On";
+"Off" = "Off";
+"Rawkuma" = "Rawkuma";
+
+"Update required" = "Update required";
+"Update to version %@ to continue." = "Update to version %@ to continue.";
+"Update app" = "Update app";
+"Check again" = "Check again";
+"Notifications" = "Notifications";
+"Push notifications" = "Push notifications";
+"Not requested" = "Not requested";
+"Enable notifications" = "Enable notifications";
+"Open notification settings" = "Open notification settings";
+"Receive app notifications. You can change permission in iPadOS Settings." = "Receive app notifications. You can change permission in iPadOS Settings.";
+
+"Connecting…" = "Connecting…";

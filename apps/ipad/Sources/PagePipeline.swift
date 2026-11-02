@@ -11,6 +11,7 @@ enum CleanupProgress: Sendable {
 actor PagePipeline {
     func recognize(_ url: URL, modelID: String? = nil, modelRoot: URL? = nil) async throws -> [TextSegment] {
         try Task.checkCancellation()
+        _ = try AppConfiguration.current.requireVision(modelID ?? "apple")
         // Document recognition exposes vertical CJK lines and their direction;
         // the legacy text request missed most speech on the same manga page.
         var request = RecognizeDocumentsRequest()
@@ -68,8 +69,9 @@ actor PagePipeline {
         }
         return segments
     }
-    func render(_ source: URL, segments: [TextSegment], inpaint: Bool, modelID: String = "lama", modelRoot: URL, onCleanupProgress: @escaping @Sendable (CleanupProgress) -> Void = { _ in }) async throws -> Data {
+    func render(_ source: URL, segments: [TextSegment], inpaint: Bool, modelID: String = AppConfiguration.current.defaults.inpainting, modelRoot: URL, onCleanupProgress: @escaping @Sendable (CleanupProgress) -> Void = { _ in }) async throws -> Data {
         try Task.checkCancellation()
+        if inpaint { _ = try AppConfiguration.current.requireVision(modelID, inpainting: true) }
         guard let image = UIImage(contentsOfFile: source.path) else { throw AppError.message(L("Could not decode source image")) }
         let size = image.size
         let boxes = segments.filter { $0.text != nil }.map { segment in

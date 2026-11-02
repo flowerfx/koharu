@@ -4,7 +4,7 @@ import OnnxRuntimeBindings
 
 // Pre/postprocessing follows the checkpoint-pinned publisher implementations:
 // Baberu onnx_infer.py; Hayai inference_onnx.py; Manga OCR's ViT/TrOCR +
-// manga_ocr postprocessor. Exact artifact revisions/hashes live in vision-models.json.
+// manga_ocr postprocessor. Exact artifact revisions/hashes live in app-config.json.
 final class VisionONNX {
     let environment: ORTEnv
     init() throws { environment = try ORTEnv(loggingLevel: .error) }

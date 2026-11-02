@@ -202,3 +202,58 @@
 "Chapters" = "챕터";
 "No matching chapters" = "일치하는 챕터 없음";
 "Try another chapter title." = "다른 챕터 제목을 입력해 보세요.";
+
+"Choose a translation provider" = "번역 제공업체 선택";
+"Apple Vision OCR is built in. AI inpainting starts off." = "Apple Vision OCR이 내장되어 있습니다. AI 인페인팅은 기본적으로 꺼져 있습니다.";
+"Continue" = "계속";
+"Download a GGUF model to translate on this device, or import one in Settings." = "이 기기에서 번역하려면 GGUF 모델을 다운로드하거나 설정에서 모델을 가져오세요.";
+"Configure in Settings" = "설정에서 구성";
+
+"Estimated RAM required" = "예상 필요 RAM";
+"Available to this app" = "이 앱에서 사용 가능";
+"Estimated to fit available RAM" = "사용 가능한 RAM으로 실행 가능할 것으로 예상됨";
+"Exceeds this device's available RAM" = "이 기기의 사용 가능한 RAM 초과";
+"RAM is an estimate, not a guarantee. Context length, page size and other apps affect actual usage." = "RAM은 추정치이며 실행을 보장하지 않습니다. 컨텍스트 길이, 페이지 크기 및 다른 앱이 실제 사용량에 영향을 줍니다.";
+"We recommend not using models that exceed available RAM. They may fail to load or cause the app to close." = "사용 가능한 RAM을 초과하는 모델은 권장하지 않습니다. 로드에 실패하거나 앱이 종료될 수 있습니다.";
+"Refresh RAM estimate" = "RAM 추정치 새로고침";
+"Download size" = "다운로드 크기";
+"Close" = "닫기";
+
+"Invalid app configuration (app-config.json)" = "앱 구성이 올바르지 않습니다 (app-config.json)";
+"This provider or model is disabled in app-config.json. Choose another option in Settings." = "이 제공업체 또는 모델은 app-config.json에서 비활성화되어 있습니다. 설정에서 다른 옵션을 선택하세요.";
+"Context tokens exceed this GGUF model’s configured maximum." = "컨텍스트 토큰 수가 이 GGUF 모델에 설정된 최대값을 초과합니다.";
+"Maximum context tokens" = "최대 컨텍스트 토큰";
+"Disabled in app configuration" = "앱 구성에서 비활성화됨";
+
+"Configuration" = "구성";
+"Environment" = "환경";
+"Checking configuration…" = "구성 확인 중…";
+"Using bundled configuration" = "내장 구성 사용 중";
+"Using saved configuration" = "저장된 구성 사용 중";
+"Configuration is up to date" = "구성이 최신 상태입니다";
+"Configuration updated" = "구성이 업데이트되었습니다";
+"Could not refresh configuration. Using the last valid configuration." = "구성을 새로고침하지 못했습니다. 마지막으로 유효한 구성을 사용합니다.";
+"Check configuration updates" = "구성 업데이트 확인";
+"Configuration source" = "구성 출처";
+"Last modified" = "마지막 수정";
+"ETag" = "ETag";
+
+"OCR recognizes the original text on manga pages. Apple Vision is built in; other OCR models need a download. You can change the OCR model in Settings." = "OCR은 만화 페이지의 원문을 인식합니다. Apple Vision은 내장되어 있으며, 다른 OCR 모델은 다운로드해야 합니다. 설정에서 OCR 모델을 변경할 수 있습니다.";
+"AI inpainting uses a downloaded model to remove original text and restore the background. When off, translations appear on white cards. You can change this and select an inpainting model in Settings." = "AI 인페인팅은 다운로드한 모델로 원문을 지우고 배경을 복원합니다. 꺼져 있으면 번역이 흰색 상자에 표시됩니다. 설정에서 켜거나 끄고 인페인팅 모델을 선택할 수 있습니다.";
+"Available models: %@" = "사용 가능한 모델: %@";
+"On" = "켜짐";
+"Off" = "꺼짐";
+"Rawkuma" = "Rawkuma";
+
+"Update required" = "업데이트 필요";
+"Update to version %@ to continue." = "계속하려면 버전 %@로 업데이트하세요.";
+"Update app" = "앱 업데이트";
+"Check again" = "다시 확인";
+"Notifications" = "알림";
+"Push notifications" = "푸시 알림";
+"Not requested" = "요청하지 않음";
+"Enable notifications" = "알림 활성화";
+"Open notification settings" = "알림 설정 열기";
+"Receive app notifications. You can change permission in iPadOS Settings." = "앱 알림을 받습니다. 권한은 iPadOS 설정에서 변경할 수 있습니다.";
+
+"Connecting…" = "연결 중…";

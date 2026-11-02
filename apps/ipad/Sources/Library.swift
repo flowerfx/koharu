@@ -15,6 +15,12 @@ import Observation
         }
     }
     var models: [LocalModel] = []
+    var availableModels: [LocalModel] {
+        models.filter { model in
+            do { _ = try AppConfiguration.current.catalog(for: model); return true }
+            catch { return false }
+        }
+    }
     var busy = false
     var status = ""
     var progress: Double = 0
@@ -99,12 +105,16 @@ import Observation
     private func translate(_ id: UUID, force: Bool, only: UUID? = nil) async throws {
         guard var chapter = chapters.first(where: { $0.id == id }) else { throw AppError.message(L("Chapter not found")) }
         let config = preferences
+        try AppConfiguration.current.requireProvider(config.provider)
+        _ = try AppConfiguration.current.requireVision(config.ocrModel ?? "apple")
+        if config.inpaint { _ = try AppConfiguration.current.requireVision(config.cleanupModel ?? AppConfiguration.current.defaults.inpainting, inpainting: true) }
         let batchSize = translationBatchSize
         let model = models.first { $0.id == config.localModel }
+        let catalog = config.provider == .local ? try model.flatMap { try AppConfiguration.current.catalog(for: $0) } : nil
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
         let prompt = try TranslationContract.prompts([], preferences: config).0
         let fingerprint = digest(Data(("ipad-pipeline-3\n" + prompt).utf8) + (try encoder.encode(config)))
-        let ocrSignature = "vision-3:" + (config.ocrModel ?? "apple") + ":" + (config.ocrModel.flatMap { id in VisionModel.all.first { $0.id == id } }?.files.map(\.sha256).joined() ?? "document-2")
+        let ocrSignature = "vision-3:" + (config.ocrModel ?? "apple") + ":" + (config.ocrModel.flatMap { id in (AppConfiguration.current.ocr + AppConfiguration.current.inpainting).first { $0.id == id } }?.files.map(\.sha256).joined() ?? "document-2")
         for index in chapter.pages.indices {
             if let only, chapter.pages[index].id != only { continue }
             try Task.checkCancellation()
@@ -128,7 +138,7 @@ import Observation
             let targets = page.segments.filter { !$0.edited }
             if !targets.isEmpty && (force || rescanned || page.fingerprint != fingerprint || targets.contains(where: { $0.text == nil })) {
                 status = "\(L("Translating")) \(index + 1)/\(chapter.pages.count)"
-                let texts = try await translator.translate(targets.map(\.source), config: config, model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, batchSize: batchSize)
+                let texts = try await translator.translate(targets.map(\.source), config: config, model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog, batchSize: batchSize)
                 for (segment, text) in zip(targets, texts) {
                     if let i = page.segments.firstIndex(where: { $0.id == segment.id }) { page.segments[i].text = text }
                 }
@@ -136,8 +146,8 @@ import Observation
             // Release the large GGUF allocation before inpainting takes the device lane.
             if config.inpaint { await translator.unload() }
             status = "\(L("Rendering page")) \(index + 1)/\(chapter.pages.count)"
-            let cleanupModel = config.cleanupModel ?? "lama"
-            let cleanupName = VisionModel.all.first { $0.id == cleanupModel }?.name ?? cleanupModel
+            let cleanupModel = config.cleanupModel ?? AppConfiguration.current.defaults.inpainting
+            let cleanupName = AppConfiguration.current.inpainting.first { $0.id == cleanupModel }?.name ?? cleanupModel
             let output: Data
             // Native inference reports into a bounded per-page stream. Cancel
             // its UI consumer before saving so an obsolete tile cannot replace
@@ -182,7 +192,7 @@ import Observation
                 }
             }
             if preferences.inpaint { await translator.unload() }
-            let output = try await pipeline.render(disk.pageURL(chapterID, chapter.pages[index].original), segments: chapter.pages[index].segments, inpaint: preferences.inpaint, modelID: preferences.cleanupModel ?? "lama", modelRoot: disk.modelsURL)
+            let output = try await pipeline.render(disk.pageURL(chapterID, chapter.pages[index].original), segments: chapter.pages[index].segments, inpaint: preferences.inpaint, modelID: preferences.cleanupModel ?? AppConfiguration.current.defaults.inpainting, modelRoot: disk.modelsURL)
             try Task.checkCancellation()
             let file = UUID().uuidString + ".png"; try output.write(to: disk.pageURL(chapterID, file), options: .atomic)
             chapter.pages[index].rendered = file

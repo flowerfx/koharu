@@ -202,3 +202,58 @@
 "Chapters" = "الفصول";
 "No matching chapters" = "لا توجد فصول مطابقة";
 "Try another chapter title." = "جرّب عنوان فصل آخر.";
+
+"Choose a translation provider" = "اختر مزوّد الترجمة";
+"Apple Vision OCR is built in. AI inpainting starts off." = "التعرّف على النصوص باستخدام Apple Vision مدمج. إزالة النص بالذكاء الاصطناعي معطّلة في البداية.";
+"Continue" = "متابعة";
+"Download a GGUF model to translate on this device, or import one in Settings." = "نزّل نموذج GGUF للترجمة على هذا الجهاز، أو استورد نموذجًا من الإعدادات.";
+"Configure in Settings" = "التهيئة في الإعدادات";
+
+"Estimated RAM required" = "ذاكرة RAM المطلوبة تقديريًا";
+"Available to this app" = "المتاح لهذا التطبيق";
+"Estimated to fit available RAM" = "يُقدّر أنه يناسب ذاكرة RAM المتاحة";
+"Exceeds this device's available RAM" = "يتجاوز ذاكرة RAM المتاحة لهذا الجهاز";
+"RAM is an estimate, not a guarantee. Context length, page size and other apps affect actual usage." = "حجم RAM تقديري وليس ضمانًا. يؤثر طول السياق وحجم الصفحة والتطبيقات الأخرى في الاستخدام الفعلي.";
+"We recommend not using models that exceed available RAM. They may fail to load or cause the app to close." = "ننصح بعدم استخدام نماذج تتجاوز RAM المتاحة. قد يفشل تحميلها أو تتسبب في إغلاق التطبيق.";
+"Refresh RAM estimate" = "تحديث تقدير RAM";
+"Download size" = "حجم التنزيل";
+"Close" = "إغلاق";
+
+"Invalid app configuration (app-config.json)" = "إعداد التطبيق غير صالح (app-config.json)";
+"This provider or model is disabled in app-config.json. Choose another option in Settings." = "هذا المزوّد أو النموذج معطّل في app-config.json. اختر خيارًا آخر في الإعدادات.";
+"Context tokens exceed this GGUF model’s configured maximum." = "يتجاوز عدد رموز السياق الحد الأقصى المضبوط لنموذج GGUF هذا.";
+"Maximum context tokens" = "الحد الأقصى لرموز السياق";
+"Disabled in app configuration" = "معطّل في إعداد التطبيق";
+
+"Configuration" = "الإعداد";
+"Environment" = "البيئة";
+"Checking configuration…" = "جارٍ التحقق من الإعداد…";
+"Using bundled configuration" = "يُستخدم الإعداد المضمّن";
+"Using saved configuration" = "يُستخدم الإعداد المحفوظ";
+"Configuration is up to date" = "الإعداد محدّث";
+"Configuration updated" = "تم تحديث الإعداد";
+"Could not refresh configuration. Using the last valid configuration." = "تعذّر تحديث الإعداد. يُستخدم آخر إصدار صالح.";
+"Check configuration updates" = "التحقق من تحديثات الإعداد";
+"Configuration source" = "مصدر الإعداد";
+"Last modified" = "آخر تعديل";
+"ETag" = "ETag";
+
+"OCR recognizes the original text on manga pages. Apple Vision is built in; other OCR models need a download. You can change the OCR model in Settings." = "يتعرّف OCR على النص الأصلي في صفحات المانغا. Apple Vision مدمج، بينما تتطلب نماذج OCR الأخرى تنزيلًا. يمكنك تغيير نموذج OCR في الإعدادات.";
+"AI inpainting uses a downloaded model to remove original text and restore the background. When off, translations appear on white cards. You can change this and select an inpainting model in Settings." = "تستخدم إزالة النص بالذكاء الاصطناعي نموذجًا منزّلًا لحذف النص الأصلي وترميم الخلفية. عند تعطيلها، تظهر الترجمة على بطاقات بيضاء. يمكنك تشغيلها أو إيقافها واختيار النموذج في الإعدادات.";
+"Available models: %@" = "النماذج المتاحة: %@";
+"On" = "مفعّل";
+"Off" = "معطّل";
+"Rawkuma" = "Rawkuma";
+
+"Update required" = "التحديث مطلوب";
+"Update to version %@ to continue." = "حدّث إلى الإصدار %@ للمتابعة.";
+"Update app" = "تحديث التطبيق";
+"Check again" = "التحقق مجددًا";
+"Notifications" = "الإشعارات";
+"Push notifications" = "الإشعارات الفورية";
+"Not requested" = "لم يُطلب بعد";
+"Enable notifications" = "تفعيل الإشعارات";
+"Open notification settings" = "فتح إعدادات الإشعارات";
+"Receive app notifications. You can change permission in iPadOS Settings." = "تلقي إشعارات التطبيق. يمكنك تغيير الإذن في إعدادات iPadOS.";
+
+"Connecting…" = "جارٍ الاتصال…";

@@ -49,23 +49,24 @@ struct HostedConfiguration: Codable, Equatable {
 }
 
 struct Preferences: Codable, Equatable {
-    var provider: TranslationProvider = .lmStudio
+    var provider = AppConfiguration.current.defaults.provider
     var server = "http://localhost:1234"
     var remoteModel = ""
     var hosted: [String: HostedConfiguration]?
     var localModel: UUID?
     var target = AppLocalization.shared.resolvedLanguage.translationTarget
     var instructions = ""
-    var contextSize = 4096
-    var inpaint = false
-    var ocrModel: String?
-    var cleanupModel: String?
+    var contextSize = AppConfiguration.current.defaults.contextTokens
+    var inpaint = AppConfiguration.current.defaults.aiInpainting
+    var ocrModel: String? = AppConfiguration.current.defaults.ocr == "apple" ? nil : AppConfiguration.current.defaults.ocr
+    var cleanupModel: String? = AppConfiguration.current.defaults.inpainting
 }
 struct LocalModel: Codable, Identifiable {
     var id: UUID
     var name: String
     var bytes: Int64
     var source: String?
+    var catalogID: String?
     var filename: String { id.uuidString + ".gguf" }
 }
 struct TextSegment: Codable, Identifiable {

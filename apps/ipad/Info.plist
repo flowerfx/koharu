@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleDisplayName</key><string>Koharu</string>
+<key>CFBundleDisplayName</key><string>$(KOHARU_DISPLAY_NAME)</string>
+<key>KoharuEnvironment</key><string>$(KOHARU_ENVIRONMENT)</string>
 <key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 <key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
 <key>CFBundleName</key><string>KoharuPad</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.3.9</string>
-<key>CFBundleVersion</key><string>16</string>
+<key>CFBundleShortVersionString</key><string>1.0.0</string>
+<key>CFBundleVersion</key><string>22</string>
+<key>FirebaseAppDelegateProxyEnabled</key><false/>
+<key>FirebaseMessagingInstallationIdEnabled</key><true/>
+<key>FirebaseCrashlyticsCollectionEnabled</key><false/>
+<key>GOOGLE_ANALYTICS_IDFA_COLLECTION_ENABLED</key><false/>
+<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS</key><false/>
+<key>UIBackgroundModes</key><array><string>remote-notification</string></array>
 <key>LSRequiresIPhoneOS</key><true/>
 <key>UILaunchScreen</key><dict/>
 <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>

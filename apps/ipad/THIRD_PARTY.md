@@ -7,11 +7,12 @@ Koharu retains the upstream [MIT OR Apache-2.0 repository licenses](../../LICENS
 - [llama.cpp b12024](https://github.com/ggml-org/llama.cpp/tree/b12024), MIT. Official prebuilt XCFramework, archive SHA-256 `b7005ad25dab07d273794afc7ac24d55aeac1b52376301907c5fb4762e42545d`. License: `Resources/llama-LICENSE.txt`.
 - [stable-diffusion-native v0.3.0](https://github.com/leehack/stable-diffusion-native/tree/v0.3.0), MIT; wraps [stable-diffusion.cpp at 0518b34374761cb82aeda5ad3c2f0686fdad2cec](https://github.com/leejet/stable-diffusion.cpp/tree/0518b34374761cb82aeda5ad3c2f0686fdad2cec), MIT. Prebuilt Apple XCFramework archive SHA-256 `3b83a0c21a00f6418890b679ea45b00c20d012da0a57fe989635b793e09f096a`. Both notices: `Resources/diffusion-LICENSE.txt`. No diffusion source tree is compiled by the app build.
 - [Microsoft ONNX Runtime Swift package 1.24.2](https://github.com/microsoft/onnxruntime-swift-package-manager/tree/1.24.2), MIT. Its official binary package checksum is `f7100a992d2a8135168c8afd831e6a58b465349101982aa58b3e11d36e600b54`. Runtime license: `Resources/onnxruntime-LICENSE.txt`.
+- [Firebase Apple SDK 13.1.1](https://github.com/firebase/firebase-ios-sdk/tree/13.1.1), Apache-2.0; Analytics Core, Crashlytics, Messaging and Remote Config via Swift Package Manager. License: `Resources/firebase-LICENSE.txt`. Transitive packages retain their upstream notices and embedded privacy manifests.
 - SwiftUI, WebKit, Vision, CoreML, Security and Metal are Apple platform frameworks.
 
 ## Optional downloadable models
 
-Weights are not bundled or committed. `Resources/vision-models.json` records exact commit-pinned URLs, byte counts and SHA-256 for every required file, including companion encoders and VAEs. These model cards and their license terms remain authoritative.
+Weights are not bundled or committed. `Resources/app-config.json` records exact commit-pinned URLs, byte counts and SHA-256 for every required file, including companion encoders and VAEs. These model cards and their license terms remain authoritative.
 
 | Choice | Artifact / provenance | Publisher license |
 |---|---|---|
@@ -26,6 +27,6 @@ Weights are not bundled or committed. `Resources/vision-models.json` records exa
 
 OCR preprocessing/decoding follows the pinned publisher's `onnx_infer.py` (Baberu), `inference_onnx.py` (Hayai), and Manga OCR's ViT/TrOCR preprocessing and Japanese postprocessor. Paddle uses the pinned GGUF chat template's exact single-user rendering. Diffusion settings follow Koharu's model implementations: four Euler/FLUX2 steps for Klein and 30 Euler/discrete steps for RORem, including their companion weights, prompts and reference-image conditioning. iPad uses native-resolution 512-pixel context tiles and composites only the mask, a deliberate difference from whole-image generation.
 
-Local text translation catalog: [unsloth/Qwen3.5-0.8B-GGUF](https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF) and [unsloth/Qwen3.5-4B-GGUF](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF), Apache-2.0 according to their cards. Pins are in `Resources/local-models.json`. Imported models have their own terms and hardware requirements.
+Local text translation catalog: [unsloth/Qwen3.5-0.8B-GGUF](https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF) and [unsloth/Qwen3.5-4B-GGUF](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF), Apache-2.0 according to their cards. Pins are in `Resources/app-config.json`. Imported models have their own terms and hardware requirements.
 
 Rawkuma is an external content source. This fork is not affiliated with the site or model publishers.

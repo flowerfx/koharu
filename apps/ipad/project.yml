@@ -1,24 +1,60 @@
 name: KoharuPad
+configs:
+  Staging: debug
+  StagingRelease: release
+  Production: release
 packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    exactVersion: 13.1.1
   ONNXRuntime:
     url: https://github.com/microsoft/onnxruntime-swift-package-manager
     exactVersion: 1.24.2
 options:
-  bundleIdPrefix: dev.flowerfx
+  defaultConfig: Staging
+  bundleIdPrefix: com.kurubyInteractive
   deploymentTarget:
     iOS: '26.0'
 settings:
   base:
     SWIFT_VERSION: '5.0'
     TARGETED_DEVICE_FAMILY: '1,2'
-    PRODUCT_BUNDLE_IDENTIFIER: dev.flowerfx.koharu.ipad
+    PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga
+    DEVELOPMENT_TEAM: 6B86Z886QA
+    KOHARU_BUNDLE_SUFFIX: ''
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  configs:
+    Staging:
+      KOHARU_BUNDLE_SUFFIX: .staging
+      KOHARU_ENVIRONMENT: staging
+      KOHARU_DISPLAY_NAME: AI Manga Staging
+      PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga.staging
+      KOHARU_APNS_ENVIRONMENT: development
+    StagingRelease:
+      KOHARU_BUNDLE_SUFFIX: .staging
+      KOHARU_ENVIRONMENT: staging
+      KOHARU_DISPLAY_NAME: AI Manga Staging
+      PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga.staging
+      KOHARU_APNS_ENVIRONMENT: production
+    Production:
+      KOHARU_ENVIRONMENT: production
+      KOHARU_DISPLAY_NAME: AI Manga
+      PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga
+      KOHARU_APNS_ENVIRONMENT: production
 targetTemplates:
   App:
     type: application
     platform: iOS
     dependencies:
+      - package: Firebase
+        product: FirebaseAnalyticsCore
+      - package: Firebase
+        product: FirebaseCrashlytics
+      - package: Firebase
+        product: FirebaseMessaging
+      - package: Firebase
+        product: FirebaseRemoteConfig
       - package: ONNXRuntime
         product: onnxruntime
       - framework: Vendor/sd-native/stable_diffusion.xcframework
@@ -36,9 +72,33 @@ targetTemplates:
         INFOPLIST_FILE: Info.plist
         SWIFT_OBJC_BRIDGING_HEADER: Sources/VisionNative.h
         CLANG_CXX_LANGUAGE_STANDARD: c++17
+    preBuildScripts:
+      - name: Select Firebase environment
+        script: |
+          set -eu
+          source_plist="$SRCROOT/Firebase/$KOHARU_ENVIRONMENT/GoogleService-Info.plist"
+          firebase_bundle=$(/usr/libexec/PlistBuddy -c 'Print BUNDLE_ID' "$source_plist")
+          if [ "$firebase_bundle" != "$PRODUCT_BUNDLE_IDENTIFIER" ]; then
+            echo "error: Firebase configuration does not match the app Bundle ID."
+            exit 1
+          fi
+          mkdir -p "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+          cp "$source_plist" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/GoogleService-Info.plist"
+        inputFiles: ['$(SRCROOT)/Firebase/$(KOHARU_ENVIRONMENT)/GoogleService-Info.plist']
+        outputFiles: ['$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist']
+        basedOnDependencyAnalysis: false
+
 targets:
   KoharuPad:
     templates: [App]
+    attributes:
+      SystemCapabilities:
+        com.apple.InAppPurchase:
+          enabled: 1
+        com.apple.Push:
+          enabled: 1
+        com.apple.SignInWithApple:
+          enabled: 1
     settings:
       base:
         FRAMEWORK_SEARCH_PATHS: '$(inherited) $(PROJECT_DIR)/Vendor/build-apple/llama.xcframework/ios-arm64'
@@ -53,11 +113,24 @@ targets:
           if [ "$CODE_SIGNING_ALLOWED" = YES ] && [ -n "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
             codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/llama.framework"
           fi
+      - name: Upload Crashlytics symbols
+        script: |
+          set -eu
+          if [ "$CONFIGURATION" = Staging ]; then exit 0; fi
+          "$SRCROOT/Vendor/Packages/checkouts/firebase-ios-sdk/Crashlytics/run"
+        inputFiles:
+          - '$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)'
+          - '$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)/Contents/Resources/DWARF/$(PRODUCT_NAME)'
+          - '$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)/Contents/Info.plist'
+          - '$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist'
+          - '$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)'
+        basedOnDependencyAnalysis: false
   KoharuPadSimulator:
     templates: [App]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: dev.flowerfx.koharu.ipad.simulator
+        PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga$(KOHARU_BUNDLE_SUFFIX)
+        CODE_SIGN_ENTITLEMENTS: KoharuPadSimulator.entitlements
   KoharuPadTests:
     type: bundle.unit-test
     platform: iOS
@@ -67,7 +140,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: dev.flowerfx.koharu.ipad.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga.tests
         TEST_HOST: '$(BUILT_PRODUCTS_DIR)/KoharuPad.app/KoharuPad'
         BUNDLE_LOADER: '$(TEST_HOST)'
   KoharuPadDeviceChecks:
@@ -81,20 +154,42 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: dev.flowerfx.koharu.ipad.devicechecks
+        PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga.devicechecks
         FRAMEWORK_SEARCH_PATHS: '$(inherited) $(PROJECT_DIR)/Vendor/build-apple/llama.xcframework/ios-arm64'
         TEST_HOST: '$(BUILT_PRODUCTS_DIR)/KoharuPad.app/KoharuPad'
         BUNDLE_LOADER: '$(TEST_HOST)'
 schemes:
-  KoharuPad:
+  KoharuPadStaging:
     build:
       targets:
         KoharuPad: all
+    run:
+      config: Staging
+    archive:
+      config: StagingRelease
     test:
+      config: Staging
       targets: [KoharuPadDeviceChecks]
-  KoharuPadSimulator:
+  KoharuPadProduction:
+    build:
+      targets:
+        KoharuPad: all
+    run:
+      config: Production
+    archive:
+      config: Production
+  KoharuPadSimulatorStaging:
     build:
       targets:
         KoharuPadSimulator: all
+    run:
+      config: Staging
     test:
+      config: Staging
       targets: [KoharuPadTests]
+  KoharuPadSimulatorProduction:
+    build:
+      targets:
+        KoharuPadSimulator: all
+    run:
+      config: Production

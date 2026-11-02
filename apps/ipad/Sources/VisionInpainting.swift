@@ -27,8 +27,8 @@ struct InpaintTile: Equatable {
 
 extension PagePipeline {
     func inpaintImage(_ image: UIImage, boxes: [CGRect], modelID: String, modelRoot: URL, onProgress: @Sendable (CleanupProgress) -> Void = { _ in }) throws -> UIImage {
-        let model = try VisionModel.named(modelID)
-        guard model.kind == "inpaint", model.ready(modelRoot) else { throw AppError.message(L("Download the selected model in Settings first")) }
+        let model = try AppConfiguration.current.requireVision(modelID, inpainting: true)
+        guard model.ready(modelRoot) else { throw AppError.message(L("Download the selected model in Settings first")) }
         onProgress(.loading)
         try model.checkMemory()
         let directory = model.directory(modelRoot)
