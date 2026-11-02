@@ -497,3 +497,10 @@
 "Claim ×%g credits with video" = "Recevoir ×%g crédits avec une vidéo";
 "Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "Regardez une vidéo pour recevoir %d crédits de plus aujourd’hui, même après avoir reçu la récompense normale.";
 "The video bonus is available again at the next daily reset." = "Le bonus vidéo sera de nouveau disponible à la prochaine réinitialisation quotidienne.";
+
+"Your daily treat is ready ✨" = "Ta petite surprise du jour est prête ✨";
+"Fresh credits are waiting for you! Pop in to claim your daily treat and keep translating and creating 💖" = "De nouveaux crédits t’attendent ! Viens chercher ta récompense quotidienne pour continuer à traduire et à créer 💖";
+"Next credit reminder" = "Prochain rappel de crédits";
+"Reminder times use your device's local time zone." = "Les heures de rappel utilisent le fuseau horaire local de votre appareil.";
+"Could not schedule the credit reminder. Please try again." = "Impossible de programmer le rappel de crédits. Veuillez réessayer.";
+"Next reward (local time)" = "Prochaine récompense (heure locale)";

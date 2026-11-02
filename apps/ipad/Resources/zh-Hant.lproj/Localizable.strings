@@ -497,3 +497,10 @@
 "Claim ×%g credits with video" = "看影片領取%g倍點數";
 "Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "觀看影片可在今天再獲得%d點數。領取一般獎勵後仍可觀看。";
 "The video bonus is available again at the next daily reset." = "影片獎勵將在下次每日重設後再次開放。";
+
+"Your daily treat is ready ✨" = "今天的小驚喜來啦 ✨";
+"Fresh credits are waiting for you! Pop in to claim your daily treat and keep translating and creating 💖" = "新點數在等你喔！快來領取每日獎勵，繼續翻譯和創作吧 💖";
+"Next credit reminder" = "下次點數提醒";
+"Reminder times use your device's local time zone." = "提醒時間依裝置的當地時區顯示。";
+"Could not schedule the credit reminder. Please try again." = "無法安排點數提醒，請再試一次。";
+"Next reward (local time)" = "下次獎勵（當地時間）";

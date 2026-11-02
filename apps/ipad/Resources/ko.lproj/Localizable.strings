@@ -497,3 +497,10 @@
 "Claim ×%g credits with video" = "동영상으로 크레딧 %g배 받기";
 "Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "동영상을 보고 오늘 %d크레딧을 더 받으세요. 일반 보상을 받은 뒤에도 가능합니다.";
 "The video bonus is available again at the next daily reset." = "다음 일일 초기화 후 동영상 보너스를 다시 받을 수 있습니다.";
+
+"Your daily treat is ready ✨" = "오늘의 작은 선물이 도착했어요 ✨";
+"Fresh credits are waiting for you! Pop in to claim your daily treat and keep translating and creating 💖" = "새 크레딧이 기다리고 있어요! 매일 보상을 받고 번역과 창작을 이어 가세요 💖";
+"Next credit reminder" = "다음 크레딧 알림";
+"Reminder times use your device's local time zone." = "알림 시간은 기기의 현지 시간대를 기준으로 표시됩니다.";
+"Could not schedule the credit reminder. Please try again." = "크레딧 알림을 예약하지 못했습니다. 다시 시도해 주세요.";
+"Next reward (local time)" = "다음 보상(현지 시간)";

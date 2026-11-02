@@ -497,3 +497,10 @@
 "Claim ×%g credits with video" = "Claim ×%g credits with video";
 "Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "Watch a video to receive %d more credits today. You can also do this after claiming the normal reward.";
 "The video bonus is available again at the next daily reset." = "The video bonus is available again at the next daily reset.";
+
+"Your daily treat is ready ✨" = "Your daily treat is ready ✨";
+"Fresh credits are waiting for you! Pop in to claim your daily treat and keep translating and creating 💖" = "Fresh credits are waiting for you! Pop in to claim your daily treat and keep translating and creating 💖";
+"Next credit reminder" = "Next credit reminder";
+"Reminder times use your device's local time zone." = "Reminder times use your device's local time zone.";
+"Could not schedule the credit reminder. Please try again." = "Could not schedule the credit reminder. Please try again.";
+"Next reward (local time)" = "Next reward (local time)";

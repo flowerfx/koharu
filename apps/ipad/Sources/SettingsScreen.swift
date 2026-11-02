@@ -42,8 +42,20 @@ struct SettingsScreen: View {
             Section(L("Notifications")) {
                 LabeledContent(L("Push notifications"), value: CloudServices.shared.notificationStatusText)
                 Button(L(CloudServices.shared.notificationStatus == .notDetermined ? "Enable notifications" : "Open notification settings")) {
-                    Task { await CloudServices.shared.requestNotifications() }
+                    Task {
+                        await CloudServices.shared.requestNotifications()
+                        if library.credits.loaded { await CloudServices.shared.scheduleCreditReminders(nextReset: library.credits.nextDaily) }
+                    }
                 }.disabled(!CloudServices.shared.available)
+                if let next = CloudServices.shared.nextCreditReminder {
+                    LabeledContent(L("Next credit reminder"), value: next.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(AppLocalization.shared.locale)))
+                        .accessibilityIdentifier("credit-reminder-next")
+                    Text(L("Reminder times use your device's local time zone."))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                if let message = CloudServices.shared.reminderMessage {
+                    Text(message).font(.caption).foregroundStyle(.orange)
+                }
                 Text(L("Receive app notifications. You can change permission in iPadOS Settings."))
                     .font(.caption).foregroundStyle(.secondary)
             }.task { await CloudServices.shared.refreshNotificationStatus() }

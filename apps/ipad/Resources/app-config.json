@@ -1,6 +1,6 @@
 {
   "defaults": {
-    "provider": "local",
+    "provider": "backend",
     "ocr": "apple",
     "inpainting": "lama",
     "aiInpainting": false,

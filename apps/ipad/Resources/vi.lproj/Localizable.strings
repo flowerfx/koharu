@@ -497,3 +497,10 @@
 "Claim ×%g credits with video" = "Xem video nhận ×%g credit";
 "Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "Xem video để nhận thêm %d credit hôm nay. Bạn vẫn có thể xem sau khi đã nhận thưởng thường.";
 "The video bonus is available again at the next daily reset." = "Thưởng video sẽ mở lại vào lần đặt lại hằng ngày tiếp theo.";
+
+"Your daily treat is ready ✨" = "Quà nhỏ mỗi ngày đã tới ✨";
+"Fresh credits are waiting for you! Pop in to claim your daily treat and keep translating and creating 💖" = "Credit mới đang đợi bạn nè! Ghé nhận thưởng để tiếp tục dịch truyện và sáng tạo nhé 💖";
+"Next credit reminder" = "Nhắc nhận credit tiếp theo";
+"Reminder times use your device's local time zone." = "Giờ nhắc được hiển thị theo múi giờ địa phương trên thiết bị.";
+"Could not schedule the credit reminder. Please try again." = "Chưa đặt được lịch nhắc nhận credit. Vui lòng thử lại.";
+"Next reward (local time)" = "Thưởng tiếp theo (giờ địa phương)";

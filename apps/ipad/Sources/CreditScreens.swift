@@ -123,7 +123,7 @@ struct CreditPanel: View {
                             Label(L("The video bonus is available again at the next daily reset."), systemImage: "checkmark.circle")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
-                        LabeledContent(L("Next reward (UTC)"), value: account.nextDaily.ISO8601Format()).font(.caption)
+                        LabeledContent(L("Next reward (local time)"), value: account.nextDaily.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(AppLocalization.shared.locale))).font(.caption)
                     }
                 }
                 Section {

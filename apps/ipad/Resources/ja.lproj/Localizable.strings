@@ -497,3 +497,10 @@
 "Claim ×%g credits with video" = "動画でクレジットを%g倍獲得";
 "Watch a video to receive %d more credits today. You can also do this after claiming the normal reward." = "動画を見ると本日さらに%dクレジットを獲得できます。通常報酬の受け取り後も利用できます。";
 "The video bonus is available again at the next daily reset." = "動画ボーナスは次のデイリーリセット後に再び利用できます。";
+
+"Your daily treat is ready ✨" = "今日のごほうびが届いたよ ✨";
+"Fresh credits are waiting for you! Pop in to claim your daily treat and keep translating and creating 💖" = "新しいクレジットが待っているよ！ごほうびを受け取って、翻訳や創作を楽しもう 💖";
+"Next credit reminder" = "次のクレジット通知";
+"Reminder times use your device's local time zone." = "通知時刻は端末の現地タイムゾーンで表示されます。";
+"Could not schedule the credit reminder. Please try again." = "クレジット通知を設定できませんでした。もう一度お試しください。";
+"Next reward (local time)" = "次の報酬（現地時間）";

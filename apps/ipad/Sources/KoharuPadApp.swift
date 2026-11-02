@@ -32,7 +32,13 @@ import UIKit
             .onChange(of: phase) { _, phase in
                 if phase == .background { library?.enterBackground() }
                 if phase == .active {
-                    if let library { Task { await library.subscriptions.refreshEntitlements(); await library.loginCredits() } }
+                    if let library {
+                        Task {
+                            await library.subscriptions.refreshEntitlements()
+                            await library.loginCredits()
+                            if library.credits.loaded { await cloud.scheduleCreditReminders(nextReset: library.credits.nextDaily) }
+                        }
+                    }
                     if library != nil { Task { await refreshConfiguration() } }
                     Task { await cloud.refreshNotificationStatus(); await cloud.refreshUpdates() }
                 }
@@ -73,6 +79,7 @@ struct AuthenticatedAppScreen: View {
     var refreshConfiguration: () -> Void
     @Environment(MangaLibrary.self) private var library
     @State private var restoring = true
+    @AppStorage("backendSignInCompleted") private var signInCompleted = false
     var body: some View {
         let account = library.backendAuthentication
         Group {
@@ -107,15 +114,21 @@ struct AuthenticatedAppScreen: View {
         }
         .task { await library.subscriptions.observeChanges() }
         .task {
-            await account.restore()
+            // Keychain survives reinstall; a new installation must still let
+            // the user choose Guest or Apple before restoring access/paywalls.
+            if signInCompleted { await account.restore() }
             restoring = false
         }
         .task(id: account.user?.id) {
             if account.user != nil { try? await library.credits.load() }
         }
         .onChange(of: account.user?.id) { _, id in
+            signInCompleted = id != nil
             library.subscriptions.resetAccount()
             library.credits.clear()
+            Task {
+                if account.user?.id == id { await CloudServices.shared.scheduleCreditReminders(nextReset: nil) }
+            }
             if id == nil {
                 library.showCreditRewards = false
                 library.creditRequest = nil
@@ -145,6 +158,11 @@ enum MainTab: String {
         }
     }
 }
+private struct CreditReminderSchedule: Equatable {
+    let nextReset: Date?
+    let language: InterfaceLanguage
+}
+
 struct RootScreen: View {
     var refreshConfiguration: () -> Void
     @Environment(MangaLibrary.self) private var library
@@ -190,11 +208,25 @@ struct RootScreen: View {
         // selected tab, browser and durable reading state remain above it.
         .id(AppLocalization.shared.isRightToLeft)
         .tabViewStyle(.sidebarAdaptable)
-        .task(id: library.credits.loaded) {
-            if library.credits.loaded { CloudServices.shared.trackScreen(selection.rawValue) }
+        .task(id: CreditReminderSchedule(nextReset: library.credits.loaded ? library.credits.nextDaily : nil, language: AppLocalization.shared.language)) {
+            guard library.credits.loaded else { return }
+            let accountID = library.credits.profile.id
+            let cloud = CloudServices.shared
+            // Keep system permission UI ahead of the subscription sheet. A
+            // previous refusal never opens Settings during automatic onboarding.
+            await cloud.requestNotifications(openSettings: false)
+            guard !Task.isCancelled, library.credits.loaded, library.credits.profile.id == accountID else { return }
+            await cloud.scheduleCreditReminders(nextReset: library.credits.nextDaily)
+            guard !Task.isCancelled, library.credits.loaded, library.credits.profile.id == accountID else { return }
+            cloud.trackScreen(selection.rawValue)
             await subscriptions.prepareLaunchOffer()
             if !library.credits.loaded { return }
             await library.loginCredits()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            if library.credits.loaded {
+                Task { await CloudServices.shared.scheduleCreditReminders(nextReset: library.credits.nextDaily) }
+            }
         }
         .sheet(isPresented: $subscriptions.showOffer, onDismiss: { subscriptions.continueWithoutSubscription() }) {
             SubscriptionOfferScreen(subscriptions: subscriptions, policy: library.credits.policy)

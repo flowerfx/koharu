@@ -15,6 +15,10 @@ import FirebaseRemoteConfig
     private(set) var update: AppUpdate?
     private(set) var notificationStatus = UNAuthorizationStatus.notDetermined
     var registrationReady = false
+    private(set) var nextCreditReminder: Date?
+    private(set) var reminderMessage: String?
+    @ObservationIgnored private var permissionTask: Task<Void, Never>?
+    @ObservationIgnored private var reminderGeneration = UUID()
     @ObservationIgnored private var config: RemoteConfig?
     @ObservationIgnored private var listener: ConfigUpdateListenerRegistration?
     private var staging: Bool { Bundle.main.object(forInfoDictionaryKey: "KoharuEnvironment") as? String == "staging" }
@@ -92,15 +96,58 @@ import FirebaseRemoteConfig
         }
     }
 
-    func requestNotifications() async {
+    func requestNotifications(openSettings: Bool = true) async {
         guard available else { return }
-        await refreshNotificationStatus()
-        if notificationStatus == .notDetermined {
-            _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
+        if let permissionTask { await permissionTask.value; return }
+        let task = Task {
             await refreshNotificationStatus()
-        } else if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
-            _ = await UIApplication.shared.open(url)
+            if notificationStatus == .notDetermined {
+                _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
+                await refreshNotificationStatus()
+            } else if openSettings, let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                _ = await UIApplication.shared.open(url)
+            }
         }
+        permissionTask = task
+        await task.value
+        permissionTask = nil
+    }
+
+    func scheduleCreditReminders(nextReset: Date?) async {
+        let generation = UUID()
+        reminderGeneration = generation
+        nextCreditReminder = nil; reminderMessage = nil
+        let center = UNUserNotificationCenter.current()
+        let pending = await center.pendingNotificationRequests()
+        guard reminderGeneration == generation else { return }
+        center.removePendingNotificationRequests(withIdentifiers: pending.map(\.identifier).filter { $0.hasPrefix(CreditReminder.prefix) })
+        guard let nextReset else {
+            let delivered = await center.deliveredNotifications()
+            guard reminderGeneration == generation else { return }
+            center.removeDeliveredNotifications(withIdentifiers: delivered.map { $0.request.identifier }.filter { $0.hasPrefix(CreditReminder.prefix) })
+            return
+        }
+        let status = await center.notificationSettings().authorizationStatus
+        guard reminderGeneration == generation, [.authorized, .provisional, .ephemeral].contains(status) else { return }
+        let requests = CreditReminder.requests(nextReset: nextReset,
+            title: L("Your daily treat is ready ✨"),
+            body: L("Fresh credits are waiting for you! Pop in to claim your daily treat and keep translating and creating 💖"),
+            namespace: generation.uuidString)
+        var added: [String] = []
+        for request in requests {
+            guard reminderGeneration == generation, !Task.isCancelled else {
+                center.removePendingNotificationRequests(withIdentifiers: added); return
+            }
+            do { try await center.add(request); added.append(request.identifier) }
+            catch {
+                if reminderGeneration == generation && !Task.isCancelled { reminderMessage = L("Could not schedule the credit reminder. Please try again.") }
+                break
+            }
+        }
+        guard reminderGeneration == generation, !Task.isCancelled else {
+            center.removePendingNotificationRequests(withIdentifiers: added); return
+        }
+        if !added.isEmpty { nextCreditReminder = (requests.first?.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate() }
     }
 
     var notificationStatusText: String {
@@ -131,12 +178,12 @@ final class CloudAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificatio
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
-        Messaging.messaging().appDidReceiveMessage(notification.request.content.userInfo)
+        if notification.request.trigger is UNPushNotificationTrigger { Messaging.messaging().appDidReceiveMessage(notification.request.content.userInfo) }
         return [.banner, .badge, .sound]
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        Messaging.messaging().appDidReceiveMessage(response.notification.request.content.userInfo)
+        if response.notification.request.trigger is UNPushNotificationTrigger { Messaging.messaging().appDidReceiveMessage(response.notification.request.content.userInfo) }
     }
 
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any],
