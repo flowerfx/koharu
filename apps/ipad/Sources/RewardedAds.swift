@@ -3,6 +3,7 @@ import Observation
 import UIKit
 import GoogleMobileAds
 import UserMessagingPlatform
+import AppTrackingTransparency
 
 @MainActor @Observable final class RewardedAds: NSObject, FullScreenContentDelegate {
     private(set) var working = false
@@ -10,6 +11,7 @@ import UserMessagingPlatform
     private(set) var privacyOptionsRequired = false
     @ObservationIgnored private var consentRequested = false
     @ObservationIgnored private var consentTask: Task<Void, Never>?
+    @ObservationIgnored private var trackingTask: Task<Void, Never>?
     @ObservationIgnored private var initialized = false
     @ObservationIgnored private var ad: RewardedAd?
     @ObservationIgnored private var earned = false
@@ -35,6 +37,25 @@ import UserMessagingPlatform
         try await ConsentForm.presentPrivacyOptionsForm(from: nil)
         privacyOptionsRequired = ConsentInformation.shared.privacyOptionsRequirementStatus == .required
     }
+    func requestTrackingPermission() async {
+        if let trackingTask { await trackingTask.value; return }
+        let task = Task {
+            await waitUntilActive()
+            guard !Task.isCancelled else { return }
+            if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+                _ = await ATTrackingManager.requestTrackingAuthorization()
+            }
+            await waitUntilActive()
+        }
+        trackingTask = task
+        await task.value
+        trackingTask = nil
+    }
+    private func waitUntilActive() async {
+        while UIApplication.shared.applicationState != .active && !Task.isCancelled {
+            for await _ in NotificationCenter.default.notifications(named: UIApplication.didBecomeActiveNotification) { break }
+        }
+    }
     func watch(purpose: String, operation: CreditOperation, credits: CreditStore) async throws -> Bool {
         guard !working else { return false }
         guard credits.loaded else { throw AppError.message(L("Could not open credit profile")) }
@@ -45,8 +66,18 @@ import UserMessagingPlatform
             await refreshConsent()
             try await ConsentForm.loadAndPresentIfRequired(from: nil)
             guard ConsentInformation.shared.canRequestAds else { throw unavailable }
+            await requestTrackingPermission()
+            try Task.checkCancellation()
+            let trackingAllowed = ATTrackingManager.trackingAuthorizationStatus == .authorized
+            MobileAds.shared.requestConfiguration.setPublisherFirstPartyIDEnabled(trackingAllowed)
+            let request = Request()
+            if !trackingAllowed {
+                let extras = Extras()
+                extras.additionalParameters = ["npa": "1"]
+                request.register(extras)
+            }
             if !initialized { _ = await MobileAds.shared.start(); initialized = true }
-            ad = try await RewardedAd.load(with: unit, request: Request())
+            ad = try await RewardedAd.load(with: unit, request: request)
             ad?.fullScreenContentDelegate = self
         } catch { throw unavailable }
         try Task.checkCancellation()

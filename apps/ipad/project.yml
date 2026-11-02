@@ -135,6 +135,11 @@ targets:
         FRAMEWORK_SEARCH_PATHS: '$(inherited) $(PROJECT_DIR)/Vendor/build-apple/llama.xcframework/ios-arm64'
         CODE_SIGN_ENTITLEMENTS: KoharuPad.entitlements
         OTHER_LDFLAGS: '$(inherited) -framework llama -lc++'
+      configs:
+        Production:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: Apple Distribution
+          PROVISIONING_PROFILE_SPECIFIER: AIManga-Production-AppStore-2026
     postBuildScripts:
       - name: Embed llama runtime
         script: |
@@ -144,6 +149,9 @@ targets:
           if [ "$CODE_SIGNING_ALLOWED" = YES ] && [ -n "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
             codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/llama.framework"
           fi
+      - name: Normalize static SDK resource framework deployment versions
+        script: python3 "$SRCROOT/scripts/normalize_sdk_frameworks.py"
+        basedOnDependencyAnalysis: false
       - name: Upload Crashlytics symbols
         script: |
           set -eu

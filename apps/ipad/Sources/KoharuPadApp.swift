@@ -141,7 +141,10 @@ struct AuthenticatedAppScreen: View {
             restoring = false
         }
         .task(id: account.user?.id) {
-            if account.user != nil { try? await library.credits.load() }
+            guard let userID = account.user?.id else { return }
+            await library.rewardedAds.requestTrackingPermission()
+            guard !Task.isCancelled, account.user?.id == userID else { return }
+            try? await library.credits.load()
         }
         .onChange(of: account.user?.id) { _, id in
             signInCompleted = id != nil
@@ -235,6 +238,8 @@ struct RootScreen: View {
             let cloud = CloudServices.shared
             // Keep system permission UI ahead of the subscription sheet. A
             // previous refusal never opens Settings during automatic onboarding.
+            await library.rewardedAds.requestTrackingPermission()
+            guard !Task.isCancelled, library.credits.loaded, library.credits.profile.id == accountID else { return }
             await cloud.requestNotifications(openSettings: false)
             guard !Task.isCancelled, library.credits.loaded, library.credits.profile.id == accountID else { return }
             await cloud.scheduleCreditReminders(nextReset: library.credits.nextDaily)

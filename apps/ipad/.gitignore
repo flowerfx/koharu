@@ -1,6 +1,7 @@
 Vendor/
 DerivedData/
 DerivedDataDevice/
+DerivedDataSimulator/
 Resources/Assets.xcassets/AppIcon.appiconset/Icon.png
 Resources/languages.json
 *.xcodeproj/

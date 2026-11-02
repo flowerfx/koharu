@@ -1,2 +1,3 @@
 "NSLocalNetworkUsageDescription" = "Koharu 會連接到您區域網路上的 LM Studio 伺服器來翻譯漫畫。";
 "NSPhotoLibraryAddUsageDescription" = "當您選擇「儲存圖像」時，會將翻譯後的漫畫頁面儲存至您的相簿。";
+"NSUserTrackingUsageDescription" = "允許廣告合作夥伴使用你的裝置識別碼來個人化獎勵廣告並衡量廣告成效。";

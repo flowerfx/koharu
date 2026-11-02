@@ -36,6 +36,8 @@ import FirebaseRemoteConfig
               let options = FirebaseOptions(contentsOfFile: path), options.bundleID == Bundle.main.bundleIdentifier else { return }
         FirebaseApp.configure(options: options)
         available = true
+        // Firebase is for app analytics, not cross-app advertising profiles.
+        Analytics.setConsent([.adStorage: .denied, .adUserData: .denied, .adPersonalization: .denied])
         Analytics.setAnalyticsCollectionEnabled(true)
         #if DEBUG
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)

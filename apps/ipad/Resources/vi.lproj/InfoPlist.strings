@@ -1,2 +1,3 @@
 "NSLocalNetworkUsageDescription" = "Koharu kết nối máy chủ LM Studio trong mạng nội bộ để dịch truyện.";
 "NSPhotoLibraryAddUsageDescription" = "Lưu trang truyện đã dịch vào thư viện ảnh khi bạn chọn Lưu hình ảnh.";
+"NSUserTrackingUsageDescription" = "Cho phép đối tác quảng cáo sử dụng mã nhận dạng thiết bị của bạn để cá nhân hóa quảng cáo nhận thưởng và đo lường hiệu quả quảng cáo.";

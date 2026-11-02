@@ -1,2 +1,3 @@
 "NSLocalNetworkUsageDescription" = "يتصل Koharu بخادم LM Studio الخاص بك على الشبكة المحلية لترجمة المانغا.";
 "NSPhotoLibraryAddUsageDescription" = "احفظ صفحة مانغا مترجمة في مكتبة الصور عند اختيار حفظ الصورة.";
+"NSUserTrackingUsageDescription" = "اسمح لشريكنا الإعلاني باستخدام معرّف جهازك لتخصيص الإعلانات بمكافأة وقياس أدائها.";
