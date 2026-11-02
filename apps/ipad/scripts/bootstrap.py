@@ -4,9 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
-import shutil
 import subprocess
-import tempfile
 import urllib.request
 
 APP = Path(__file__).resolve().parents[1]
@@ -58,9 +56,5 @@ if not languages:
 (APP / "Resources/languages.json").write_text(json.dumps([
     {"tag": tag, "name": name} for name, tag in languages
 ], indent=2, ensure_ascii=False) + "\n")
-with tempfile.TemporaryDirectory() as directory:
-    icons = Path(directory) / "koharu.iconset"
-    subprocess.run(["iconutil", "--convert", "iconset", str(REPO / "crates/koharu/icons/icon.icns"), "--output", str(icons)], check=True)
-    shutil.copyfile(icons / "icon_512x512@2x.png", APP / "Resources/Assets.xcassets/AppIcon.appiconset/Icon.png")
 subprocess.run(["xcodegen", "generate", "--spec", "project.yml"], cwd=APP, check=True)
 print(f"Generated project; {len(languages)} target languages; llama.cpp {VERSION} and diffusion {SD_VERSION} verified.")

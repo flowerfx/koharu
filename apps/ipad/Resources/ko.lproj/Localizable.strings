@@ -504,3 +504,6 @@
 "Reminder times use your device's local time zone." = "알림 시간은 기기의 현지 시간대를 기준으로 표시됩니다.";
 "Could not schedule the credit reminder. Please try again." = "크레딧 알림을 예약하지 못했습니다. 다시 시도해 주세요.";
 "Next reward (local time)" = "다음 보상(현지 시간)";
+
+"Server maintenance" = "서버 점검 중";
+"The app is temporarily closed for server maintenance. Please check again later." = "서버 점검으로 앱 이용이 일시 중단되었습니다. 잠시 후 다시 확인해 주세요.";

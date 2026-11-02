@@ -3,7 +3,7 @@ import XCTest
 
 final class NakamaProfileChecks: XCTestCase {
     @MainActor func testProfileLivesOnSharedBackend() async throws {
-        let (connection, certificate) = try NakamaConnection.bundled()
+        let (connection, certificate) = try NakamaConnection.configured(AppConfiguration.current.server.endpoint)
         let client = NakamaClient(connection: connection, certificate: certificate)
         let session = try await client.device(UUID().uuidString + UUID().uuidString)
         let account = try await client.account(session)

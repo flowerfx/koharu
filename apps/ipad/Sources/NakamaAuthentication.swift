@@ -10,6 +10,7 @@ struct NakamaConnection: Decodable {
     func validate(bundleID: String) throws {
         guard endpoint.scheme == "https", endpoint.host != nil, endpoint.user == nil, endpoint.password == nil,
               endpoint.query == nil, endpoint.fragment == nil, endpoint.path.isEmpty || endpoint.path == "/",
+              endpoint.port.map({ (1...65535).contains($0) }) ?? true,
               !server_key.isEmpty, server_key.utf8.count <= 256,
               credential_namespace.hasPrefix("nakama:"), (8...256).contains(credential_namespace.utf8.count),
               !credential_namespace.contains(where: { $0.isWhitespace || $0.isNewline }),
@@ -20,12 +21,18 @@ struct NakamaConnection: Decodable {
             throw AppError.message(L("Invalid backend connection configuration"))
         }
     }
-    static func bundled() throws -> (Self, Data) {
+    static func configured(_ endpoint: URL) throws -> (Self, Data) {
+        struct Identity: Decodable {
+            let server_key: String
+            let credential_namespace: String
+            let apple_bundle_ids: [String]
+        }
         guard let config = Bundle.main.url(forResource: "nakama-connection", withExtension: "json"),
               let cert = Bundle.main.url(forResource: "nakama-connection", withExtension: "cer") else {
             throw AppError.message(L("The authentication backend has not been configured for this build."))
         }
-        let value = try JSONDecoder().decode(Self.self, from: Data(contentsOf: config))
+        let identity = try JSONDecoder().decode(Identity.self, from: Data(contentsOf: config))
+        let value = Self(endpoint: endpoint, server_key: identity.server_key, credential_namespace: identity.credential_namespace, apple_bundle_ids: identity.apple_bundle_ids)
         try value.validate(bundleID: Bundle.main.bundleIdentifier ?? "")
         return (value, try Data(contentsOf: cert))
     }
@@ -96,6 +103,7 @@ actor NakamaClient {
         session = URLSession(configuration: config, delegate: NakamaTLS(certificate: certificate, host: connection.endpoint.host!), delegateQueue: nil)
     }
     deinit { session.invalidateAndCancel() }
+    func close() { session.invalidateAndCancel() }
     private func send(_ path: String, body: [String: Any]?, token: String? = nil, query: [URLQueryItem] = [], method: String? = nil) async throws -> Data {
         var url = URLComponents(url: connection.endpoint.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
         if !query.isEmpty { url.queryItems = query }
@@ -167,7 +175,7 @@ actor NakamaClient {
 }
 
 @MainActor @Observable final class NakamaAuthentication {
-    private let client: NakamaClient?
+    private var client: NakamaClient?
     private let credentialScope: String
     private(set) var auth: NakamaSession?
     private(set) var user: NakamaAccount.User?
@@ -181,7 +189,7 @@ actor NakamaClient {
     var message: String?
     init() {
         do {
-            let (connection, certificate) = try NakamaConnection.bundled()
+            let (connection, certificate) = try NakamaConnection.configured(AppConfiguration.current.server.endpoint)
             client = NakamaClient(connection: connection, certificate: certificate)
             endpoint = connection.endpoint.absoluteString
             // Backend identity survives a transport migration from LAN to EC2.
@@ -189,6 +197,18 @@ actor NakamaClient {
         } catch {
             client = nil; credentialScope = ""; unavailable = error.localizedDescription
         }
+    }
+    func reconfigure(endpoint: URL) async throws {
+        guard self.endpoint != endpoint.absoluteString else { return }
+        working = true
+        defer { working = false }
+        let (connection, certificate) = try NakamaConnection.configured(endpoint)
+        guard connection.credential_namespace == credentialScope else { throw NakamaFailure(status: 401) }
+        let previous = client
+        client = NakamaClient(connection: connection, certificate: certificate)
+        self.endpoint = connection.endpoint.absoluteString
+        challenge = nil; offline = false; message = nil
+        await previous?.close()
     }
     func profileCommand(_ name: String, payload: String) async throws -> CreditResponse {
         let result = try await rpcCommand(name, payload: payload)
@@ -200,15 +220,17 @@ actor NakamaClient {
         do { result = try await client.rpc(name, payload: payload, auth: auth) }
         catch let failure as NakamaFailure where failure.status == 401 {
             let refreshed = try await client.refresh(auth)
-            guard user?.id == userID else { throw NakamaFailure(status: 401) }
+            guard user?.id == userID, self.client === client else { throw NakamaFailure(status: 401) }
             try await publish(refreshed, client: client, expectedUserID: userID)
             result = try await client.rpc(name, payload: payload, auth: refreshed)
         }
-        guard user?.id == userID else { throw NakamaFailure(status: 401) }
+        guard user?.id == userID, self.client === client else { throw NakamaFailure(status: 401) }
         return result
     }
     private func publish(_ session: NakamaSession, client: NakamaClient, expectedUserID: String? = nil) async throws {
+        guard self.client === client else { throw CancellationError() }
         let account = try await client.account(session)
+        guard self.client === client else { throw CancellationError() }
         guard UUID(uuidString: account.user.id) != nil else { throw NakamaFailure(status: 0) }
         if let expectedUserID {
             guard user?.id == expectedUserID, account.user.id == expectedUserID else { throw NakamaFailure(status: 401) }

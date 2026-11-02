@@ -31,6 +31,9 @@ import UIKit
             catch { return false }
         }
     }
+    var canApplyConfiguration: Bool {
+        !busy && !downloadingModel && !credits.working && !backendAuthentication.working && !rewardedAds.working && !subscriptions.purchasing
+    }
     var busy = false {
         didSet { if !busy { activeJobUsesGPU = false; endBackgroundWork() } }
     }
@@ -55,7 +58,10 @@ import UIKit
         self.disk = disk
         let authentication = NakamaAuthentication()
         backendAuthentication = authentication
-        let backend = BackendAI { name, payload in try await authentication.rpcCommand(name, payload: payload) }
+        let backend = BackendAI { name, payload in
+            try AppConfiguration.current.requireProvider(.backend)
+            return try await authentication.rpcCommand(name, payload: payload)
+        }
         backendAI = backend
         translator = TranslationEngine(backend: backend)
         // KoharuPadApp validates both bundled resources before creating the

@@ -504,3 +504,6 @@
 "Reminder times use your device's local time zone." = "Reminder times use your device's local time zone.";
 "Could not schedule the credit reminder. Please try again." = "Could not schedule the credit reminder. Please try again.";
 "Next reward (local time)" = "Next reward (local time)";
+
+"Server maintenance" = "Server maintenance";
+"The app is temporarily closed for server maintenance. Please check again later." = "The app is temporarily closed for server maintenance. Please check again later.";

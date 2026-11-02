@@ -1,4 +1,8 @@
 {
+  "server": {
+    "active": true,
+    "endpoint": "https://54.165.230.197:443"
+  },
   "defaults": {
     "provider": "backend",
     "ocr": "apple",

@@ -200,8 +200,8 @@ struct SettingsScreen: View {
                 Text(configuration.statusText).font(.caption).foregroundStyle(configuration.status == .failed ? Color.orange : .secondary)
                 if let etag = configuration.etag { LabeledContent(L("ETag"), value: etag).font(.caption) }
                 if let modified = configuration.modified { LabeledContent(L("Last modified")) { Text(modified, format: .dateTime).font(.caption) } }
-                Button(L("Check configuration updates")) { Task { await configuration.refresh { !library.busy && !library.downloadingModel } } }
-                    .disabled(library.busy || library.downloadingModel || configuration.isRefreshing)
+                Button(L("Check configuration updates")) { Task { await configuration.refresh { library.canApplyConfiguration } } }
+                    .disabled(!library.canApplyConfiguration || configuration.isRefreshing)
                 Link(L("Configuration source"), destination: configuration.target.objectURL)
             }
             }

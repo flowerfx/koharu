@@ -2,8 +2,8 @@ import XCTest
 @testable import KoharuPad
 
 final class NakamaConnectionChecks: XCTestCase {
-    @MainActor func testBundledBackendAuthenticatesAndRestoresSession() async throws {
-        let (connection, certificate) = try NakamaConnection.bundled()
+    @MainActor func testConfiguredBackendAuthenticatesAndRestoresSession() async throws {
+        let (connection, certificate) = try NakamaConnection.configured(AppConfiguration.current.server.endpoint)
         let client = NakamaClient(connection: connection, certificate: certificate)
         // An isolated smoke identity leaves the user's Keychain session alone.
         let session = try await client.device(UUID().uuidString + UUID().uuidString)

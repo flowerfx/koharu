@@ -13,7 +13,7 @@ private actor BackendAITrace {
 }
 final class BackendAIChecks: XCTestCase {
     @MainActor func testNativeBackendTranslationAndAnimePrompt() async throws {
-        let (connection, certificate) = try NakamaConnection.bundled()
+        let (connection, certificate) = try NakamaConnection.configured(AppConfiguration.current.server.endpoint)
         let client = NakamaClient(connection: connection, certificate: certificate)
         let session = try await client.device("native-ai-check-" + UUID().uuidString)
         func profile(_ name: String, _ payload: [String: Any] = [:]) async throws -> CreditResponse {

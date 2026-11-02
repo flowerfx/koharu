@@ -504,3 +504,6 @@
 "Reminder times use your device's local time zone." = "تُعرض مواعيد التذكير حسب المنطقة الزمنية المحلية لجهازك.";
 "Could not schedule the credit reminder. Please try again." = "تعذّر جدولة تذكير الرصيد. يُرجى المحاولة مجددًا.";
 "Next reward (local time)" = "المكافأة التالية (بالتوقيت المحلي)";
+
+"Server maintenance" = "صيانة الخادم";
+"The app is temporarily closed for server maintenance. Please check again later." = "التطبيق مغلق مؤقتًا لإجراء صيانة للخادم. يُرجى التحقق مرة أخرى لاحقًا.";

@@ -1,6 +1,19 @@
 import Foundation
 
 struct AppConfiguration: Decodable {
+    struct Server: Decodable, Equatable, Sendable {
+        let active: Bool
+        let endpoint: URL
+        func validated() throws {
+            guard endpoint.scheme == "https", let host = endpoint.host, !host.isEmpty,
+                  endpoint.user == nil, endpoint.password == nil, endpoint.query == nil, endpoint.fragment == nil,
+                  endpoint.path.isEmpty || endpoint.path == "/",
+                  endpoint.port.map({ (1...65535).contains($0) }) ?? true else {
+                throw AppError.message(L("Invalid backend connection configuration"))
+            }
+        }
+    }
+    let server: Server
     struct Provider: Decodable { let id: TranslationProvider; let enable: Bool }
     struct Defaults: Decodable {
         let provider: TranslationProvider
@@ -31,7 +44,7 @@ struct AppConfiguration: Decodable {
         return bundled
     }
     private static let bundledFallback: Self? = try? decode(bundledData())
-    var providers: [TranslationProvider] { provider.filter(\.enable).map(\.id) }
+    var providers: [TranslationProvider] { provider.filter { $0.enable && (server.active || $0.id != .backend) }.map(\.id) }
     var enabledGGUF: [GGUFDownload] { gguf.filter(\.enable) }
     var enabledOCR: [VisionModel] { ocr.filter(\.enable) }
     var enabledInpainting: [VisionModel] { inpainting.filter(\.enable) }
@@ -40,12 +53,13 @@ struct AppConfiguration: Decodable {
         do {
             let config = try JSONDecoder().decode(Self.self, from: data)
             _ = try config.credit.validated()
+            try config.server.validated()
             func unique(_ ids: [String]) -> Bool { Set(ids).count == ids.count }
             func secure(_ url: URL) -> Bool { url.scheme == "https" && url.host != nil && url.user == nil && url.password == nil }
             let vision = config.ocr + config.inpainting
-            guard !config.providers.isEmpty, !config.enabledOCR.isEmpty,
+            guard !config.provider.filter(\.enable).isEmpty, !config.enabledOCR.isEmpty,
                   unique(config.provider.map { $0.id.rawValue }), unique(config.gguf.map(\.id)), unique(config.gguf.map(\.url)), unique(vision.map(\.id)),
-                  config.providers.contains(config.defaults.provider),
+                  config.provider.contains(where: { $0.enable && $0.id == config.defaults.provider }),
                   config.enabledOCR.contains(where: { $0.id == config.defaults.ocr }),
                   config.inpainting.contains(where: { $0.id == config.defaults.inpainting && (!config.defaults.aiInpainting || $0.enable) }),
                   (1024...1_048_576).contains(config.defaults.contextTokens),

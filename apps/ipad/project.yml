@@ -99,7 +99,7 @@ targetTemplates:
           from pathlib import Path
           resources = Path(os.environ['SRCROOT']) / 'Resources'
           config = json.loads((resources / 'nakama-connection.json').read_text())
-          if os.environ['PRODUCT_BUNDLE_IDENTIFIER'] not in config['apple_bundle_ids'] or not (resources / 'nakama-connection.cer').is_file():
+          if set(config) != {'server_key', 'credential_namespace', 'apple_bundle_ids'} or os.environ['PRODUCT_BUNDLE_IDENTIFIER'] not in config['apple_bundle_ids'] or not (resources / 'nakama-connection.cer').is_file():
               raise SystemExit('Missing shared authentication configuration for this Bundle ID')
           PY
         inputFiles: ['$(SRCROOT)/Resources/nakama-connection.json', '$(SRCROOT)/Resources/nakama-connection.cer']

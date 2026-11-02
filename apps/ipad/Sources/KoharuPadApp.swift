@@ -16,11 +16,13 @@ import UIKit
         WindowGroup {
             let cloud = CloudServices.shared
             Group {
-                if let update = cloud.update, library?.busy != true, library?.downloadingModel != true {
+                if let store, !store.configuration.server.active {
+                    ServerMaintenanceScreen(refreshing: starting || store.isRefreshing) { Task { await refreshConfiguration() } }
+                } else if let update = cloud.update, library?.busy != true, library?.downloadingModel != true {
                     AppUpdateScreen(update: update).tint(.pink)
                 } else if let library, let store {
                     AuthenticatedAppScreen(refreshConfiguration: { Task { await refreshConfiguration() } })
-                        .environment(library).tint(.pink)
+                        .environment(library).id(library.backendAuthentication.endpoint).tint(.pink)
                 } else if let startupError {
                     ContentUnavailableView(L("Could not open library"), systemImage: "exclamationmark.triangle", description: Text(startupError))
                 } else { ProgressView(L("Checking configuration…")) }
@@ -29,23 +31,26 @@ import UIKit
             .environment(\.layoutDirection, AppLocalization.shared.isRightToLeft ? .rightToLeft : .leftToRight)
             .task { await start() }
             .task { await cloud.refreshUpdates() }
+            .onChange(of: store?.configuration.server) { _, _ in
+                Task { await applyServerConfiguration() }
+            }
             .onChange(of: phase) { _, phase in
                 if phase == .background { library?.enterBackground() }
                 if phase == .active {
-                    if let library {
+                    if let library, store?.configuration.server.active == true {
                         Task {
                             await library.subscriptions.refreshEntitlements()
                             await library.loginCredits()
                             if library.credits.loaded { await cloud.scheduleCreditReminders(nextReset: library.credits.nextDaily) }
                         }
                     }
-                    if library != nil { Task { await refreshConfiguration() } }
+                    Task { await refreshConfiguration() }
                     Task { await cloud.refreshNotificationStatus(); await cloud.refreshUpdates() }
                 }
             }
         }
     }
-    @MainActor private func start() async {
+    @MainActor private func start(refresh: Bool = true) async {
         guard !starting, library == nil, let store else { return }
         starting = true
         defer { starting = false }
@@ -53,24 +58,40 @@ import UIKit
             // Surface a broken bundle as a startup error rather than a crash.
             let disk = try LibraryDisk()
             let firstRun = !FileManager.default.fileExists(atPath: disk.root.appendingPathComponent("preferences.json").path)
-            if firstRun {
-                // Fetch before creating first-run preferences so remote defaults apply.
-                await store.refresh()
-                guard !Task.isCancelled else { return }
-                UserDefaults.standard.set(true, forKey: "translationProviderSetupPending")
+            // The maintenance switch and endpoint are checked before account
+            // restoration on every launch, including a surviving Keychain login.
+            if refresh { await store.refresh() }
+            guard !Task.isCancelled else { return }
+            if firstRun { UserDefaults.standard.set(true, forKey: "translationProviderSetupPending") }
+            guard store.configuration.server.active else {
+                await CloudServices.shared.scheduleCreditReminders(nextReset: nil)
+                return
             }
             let opened = MangaLibrary(disk: disk)
             library = opened
             Task { await opened.rewardedAds.refreshConsent() }
-            // Later launches open the saved library immediately (also offline);
-            // the refresh runs in the background and defers while work is busy.
-            if !firstRun { Task { await refreshConfiguration() } }
         } catch { startupError = error.localizedDescription }
     }
     @MainActor private func refreshConfiguration() async {
-        guard let library, let store else { return }
-        guard !library.busy && !library.downloadingModel else { store.refreshDeferred = true; return }
-        await store.refresh { !library.busy && !library.downloadingModel }
+        guard let store, !starting else { return }
+        await store.refresh { library?.canApplyConfiguration ?? true }
+        await applyServerConfiguration()
+    }
+    @MainActor private func applyServerConfiguration() async {
+        guard let store, !starting else { return }
+        guard store.configuration.server.active else {
+            await CloudServices.shared.scheduleCreditReminders(nextReset: nil)
+            return
+        }
+        guard let library else { await start(refresh: false); return }
+        let endpoint = store.configuration.server.endpoint
+        guard library.backendAuthentication.endpoint != endpoint.absoluteString else { return }
+        guard library.canApplyConfiguration else { store.refreshDeferred = true; return }
+        library.credits.clear()
+        do {
+            try await library.backendAuthentication.reconfigure(endpoint: endpoint)
+            if library.backendAuthentication.user != nil { try await library.credits.load() }
+        } catch { library.error = error.localizedDescription }
     }
 
 }
@@ -90,7 +111,7 @@ struct AuthenticatedAppScreen: View {
                 // actions stay blocked until the profile reloads from the backend.
                 if (library.credits.loaded && library.credits.profile.id.uuidString.lowercased() == user.id.lowercased()) || library.credits.offline {
                     RootScreen(refreshConfiguration: refreshConfiguration).id(user.id)
-                } else if library.credits.working {
+                } else if library.credits.working || account.working {
                     ProgressView(L("Checking sign-in…"))
                 } else {
                     ContentUnavailableView {
@@ -284,10 +305,9 @@ struct RootScreen: View {
         .onChange(of: library.preferences) { _, _ in library.savePreferences() }
         .onChange(of: library.busy) { _, busy in
             UIApplication.shared.isIdleTimerDisabled = busy
-            if !busy && (try? ConfigurationStore.shared.get().refreshDeferred) == true { refreshConfiguration() }
         }
-        .onChange(of: library.downloadingModel) { _, downloading in
-            if !downloading && (try? ConfigurationStore.shared.get().refreshDeferred) == true { refreshConfiguration() }
+        .onChange(of: library.canApplyConfiguration) { _, canApply in
+            if canApply && (try? ConfigurationStore.shared.get().refreshDeferred) == true { refreshConfiguration() }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in
             if !library.busy { Task { await library.translator.unload(); await library.pipeline.releaseCachedModels() } }

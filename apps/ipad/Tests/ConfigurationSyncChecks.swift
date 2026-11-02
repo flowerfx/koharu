@@ -162,4 +162,36 @@ final class ConfigurationSyncChecks: XCTestCase {
         XCTAssertThrowsError(try ConfigurationListing.parse(Data("<ListBucketResult><IsTruncated>true</IsTruncated></ListBucketResult>".utf8)))
         XCTAssertThrowsError(try ConfigurationTarget(environment: .staging, version: "../production"))
     }
+    @MainActor func testServerMaintenanceAndEndpointUpdatesPersistAndBadConfigCannotOpenMaintenance() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let target = try ConfigurationTarget(environment: .production, version: "1.0.0")
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: AppConfiguration.bundledData()) as? [String: Any])
+        object["server"] = ["active": false, "endpoint": "https://192.0.2.10:8443"]
+        var payload = try JSONSerialization.data(withJSONObject: object), etag = "\"maintenance\""
+        let session = session { request in
+            request.url?.query != nil ? .init(data: self.listing(target, etag: etag, date: self.date1, size: payload.count)) : self.body(payload, etag: etag, date: self.date1)
+        }
+        defer { session.invalidateAndCancel() }
+        let client = ConfigurationClient(session: session)
+        let store = try ConfigurationStore(target: target, root: root, bundled: AppConfiguration.bundledData(), client: client)
+        await store.refresh()
+        XCTAssertFalse(store.configuration.server.active)
+        XCTAssertFalse(store.configuration.providers.contains(.backend))
+        XCTAssertEqual(store.configuration.server.endpoint.absoluteString, "https://192.0.2.10:8443")
+        let reopened = try ConfigurationStore(target: target, root: root, bundled: AppConfiguration.bundledData(), client: client)
+        XCTAssertFalse(reopened.configuration.server.active)
+        object["server"] = ["active": true, "endpoint": "http://192.0.2.11"]
+        payload = try JSONSerialization.data(withJSONObject: object); etag = "\"invalid\""
+        await reopened.refresh()
+        XCTAssertEqual(reopened.status, .failed)
+        XCTAssertFalse(reopened.configuration.server.active)
+        object["server"] = ["active": true, "endpoint": "https://192.0.2.11:9443"]
+        payload = try JSONSerialization.data(withJSONObject: object); etag = "\"online\""
+        await reopened.refresh()
+        XCTAssertTrue(reopened.configuration.server.active)
+        XCTAssertTrue(reopened.configuration.providers.contains(.backend))
+        XCTAssertEqual(reopened.configuration.server.endpoint.absoluteString, "https://192.0.2.11:9443")
+    }
+
 }
