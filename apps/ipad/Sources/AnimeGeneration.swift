@@ -87,6 +87,12 @@ extension MangaLibrary {
     var animeDirectory: URL { disk.root.appendingPathComponent("anime", isDirectory: true) }
     func generateAnime(prompt: String, settings: AnimeGenerationSettings) {
         guard !busy && !downloadingModel else { return }
+        requestCredits(.image, cost: creditCost(.image), explanation: L("Free image generation costs credits or one image video access. Premium image generation has no credit fee. Failed or canceled generation is refunded.")) {
+            self.startGenerateAnime(prompt: prompt, settings: settings)
+        }
+    }
+    private func startGenerateAnime(prompt: String, settings: AnimeGenerationSettings) {
+        guard !busy && !downloadingModel else { return }
         do {
             let prompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !prompt.isEmpty, prompt.count <= 4096 else {
@@ -107,7 +113,8 @@ extension MangaLibrary {
                                            width: settings.outputDimensions.width, height: settings.outputDimensions.height, steps: settings.steps)
             busy = true; progress = 0; status = L("Generating anime image")
             activeTask = Task {
-                defer { busy = false; activeTask = nil }
+                var succeeded = false
+                var ticket: String?
                 let reporting = Task { @MainActor in
                     while !Task.isCancelled {
                         let (step, steps, phase) = job.progress()
@@ -124,6 +131,8 @@ extension MangaLibrary {
                 }
                 defer { reporting.cancel() }
                 do {
+                    ticket = try await credits.reserve(action: .image, provider: preferences.provider)
+                    try Task.checkCancellation()
                     await translator.unload()
                     try Task.checkCancellation()
                     let png = try await withTaskCancellationHandler {
@@ -136,11 +145,14 @@ extension MangaLibrary {
                     do { try disk.save([image] + animeImages, to: animeDirectory.appendingPathComponent("images.json")) }
                     catch { try? FileManager.default.removeItem(at: destination); throw error }
                     animeImages.insert(image, at: 0)
+                    succeeded = true
                     progress = 1; status = L("Image saved")
                 } catch {
                     if Task.isCancelled { status = L("Stopped") }
                     else { self.error = error.localizedDescription; status = L("Failed") }
                 }
+                await finishCredits(ticket, success: succeeded)
+                busy = false; activeTask = nil
             }
         } catch { self.error = error.localizedDescription }
     }

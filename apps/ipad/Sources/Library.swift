@@ -3,6 +3,13 @@ import Observation
 
 @MainActor @Observable final class MangaLibrary {
     let disk: LibraryDisk
+    let credits: CreditStore
+    let subscriptions: SubscriptionStore
+    let backendAuthentication: NakamaAuthentication
+    var showCreditRewards = false
+    var creditRequest: CreditRequest?
+    var approvedCreditRequest: CreditRequest?
+    var showCreditProviderSettings = false
     var chapters: [Chapter] = []
     var preferences = Preferences()
     var readingMode = ReadingMode(rawValue: UserDefaults.standard.string(forKey: "readingMode") ?? "horizontal") ?? .horizontal {
@@ -36,6 +43,11 @@ import Observation
 
     init(disk: LibraryDisk) {
         self.disk = disk
+        let authentication = NakamaAuthentication()
+        backendAuthentication = authentication
+        let credits = CreditStore(authentication: authentication, policy: try! CreditConfiguration.bundled())
+        self.credits = credits
+        subscriptions = SubscriptionStore(credits: credits, environment: try! ConfigurationTarget(bundle: .main).environment)
         do {
             chapters = try disk.chapters()
             let config = disk.root.appendingPathComponent("preferences.json")
@@ -55,10 +67,21 @@ import Observation
     }
     func importChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool = false, onReady: @escaping @MainActor (UUID) -> Void) {
         guard !busy else { return }
+        do { try requireCreditProvider() } catch { self.error = error.localizedDescription; return }
+        if preferences.provider == .backend { requestBackendTranslation(cost: creditCost(.translate)); return }
+        requestCredits(.translate, cost: creditCost(.translate), explanation: L("Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free.")) {
+            self.startImportChapter(source, revalidate: revalidate, newCopy: newCopy, onReady: onReady)
+        }
+    }
+    private func startImportChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool, onReady: @escaping @MainActor (UUID) -> Void) {
+        guard !busy else { return }
         busy = true
         activeTask = Task {
-            defer { busy = false; activeTask = nil }
+            var translated = false
+            var ticket: String?
             do {
+                ticket = try await credits.reserve(action: .translate, provider: preferences.provider, rerun: false)
+                try Task.checkCancellation()
                 let source = try source.validated()
                 var chapter = (newCopy ? nil : chapters.first { $0.sourceURL == source.url && $0.target == preferences.target }) ?? Chapter(title: source.title, sourceURL: source.url, target: preferences.target, pages: [])
                 var pages: [MangaPage] = []
@@ -74,16 +97,31 @@ import Observation
                 try update(chapter)
                 onReady(chapter.id)
                 try await translate(chapter.id, force: false)
+                translated = true
             } catch is CancellationError { status = L("Stopped") }
             catch { processingFailed(error) }
+            await finishCredits(ticket, success: translated)
+            busy = false; activeTask = nil
         }
     }
     func run(_ id: UUID, force: Bool, page: UUID? = nil) {
         guard !busy else { return }
+        guard chapters.contains(where: { $0.id == id && !$0.pages.isEmpty }) else { error = L("Chapter not found"); return }
+        do { try requireCreditProvider() } catch { self.error = error.localizedDescription; return }
+        if preferences.provider == .backend { requestBackendTranslation(cost: rerunCreditCost); return }
+        requestCredits(.translate, cost: rerunCreditCost, explanation: L("Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free.")) {
+            self.startRun(id, force: force, page: page)
+        }
+    }
+    private func startRun(_ id: UUID, force: Bool, page: UUID?) {
+        guard !busy else { return }
         busy = true
         activeTask = Task {
-            defer { busy = false; activeTask = nil }
+            var translated = false
+            var ticket: String?
             do {
+                ticket = try await credits.reserve(action: .translate, provider: preferences.provider, rerun: true)
+                try Task.checkCancellation()
                 var target = id
                 if let source = chapters.first(where: { $0.id == id }), source.target != preferences.target {
                     var copy = source; copy.id = UUID(); copy.target = preferences.target; copy.created = Date()
@@ -97,9 +135,12 @@ import Observation
                     try update(copy); target = copy.id
                 }
                 try await translate(target, force: force, only: page)
+                translated = true
             }
             catch is CancellationError { status = L("Stopped") }
             catch { processingFailed(error) }
+            await finishCredits(ticket, success: translated)
+            busy = false; activeTask = nil
         }
     }
     private func processingFailed(_ error: Error) {
@@ -109,7 +150,7 @@ import Observation
     private func translate(_ id: UUID, force: Bool, only: UUID? = nil) async throws {
         guard var chapter = chapters.first(where: { $0.id == id }) else { throw AppError.message(L("Chapter not found")) }
         let config = preferences
-        try AppConfiguration.current.requireProvider(config.provider)
+        try requireCreditProvider()
         _ = try AppConfiguration.current.requireVision(config.ocrModel ?? "apple")
         if config.inpaint { _ = try AppConfiguration.current.requireVision(config.cleanupModel ?? AppConfiguration.current.defaults.inpainting, inpainting: true) }
         let batchSize = translationBatchSize

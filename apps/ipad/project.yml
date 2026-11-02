@@ -28,18 +28,18 @@ settings:
     Staging:
       KOHARU_BUNDLE_SUFFIX: .staging
       KOHARU_ENVIRONMENT: staging
-      KOHARU_DISPLAY_NAME: AI Manga Staging
+      KOHARU_DISPLAY_NAME: AI Anime Translator Staging
       PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga.staging
       KOHARU_APNS_ENVIRONMENT: development
     StagingRelease:
       KOHARU_BUNDLE_SUFFIX: .staging
       KOHARU_ENVIRONMENT: staging
-      KOHARU_DISPLAY_NAME: AI Manga Staging
+      KOHARU_DISPLAY_NAME: AI Anime Translator Staging
       PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga.staging
       KOHARU_APNS_ENVIRONMENT: production
     Production:
       KOHARU_ENVIRONMENT: production
-      KOHARU_DISPLAY_NAME: AI Manga
+      KOHARU_DISPLAY_NAME: AI Anime Translator
       PRODUCT_BUNDLE_IDENTIFIER: com.kurubyInteractive.aimanga
       KOHARU_APNS_ENVIRONMENT: production
 targetTemplates:
@@ -73,6 +73,19 @@ targetTemplates:
         SWIFT_OBJC_BRIDGING_HEADER: Sources/VisionNative.h
         CLANG_CXX_LANGUAGE_STANDARD: c++17
     preBuildScripts:
+      - name: Validate shared authentication backend
+        script: |
+          set -eu
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          resources = Path(os.environ['SRCROOT']) / 'Resources'
+          config = json.loads((resources / 'nakama-connection.json').read_text())
+          if os.environ['PRODUCT_BUNDLE_IDENTIFIER'] not in config['apple_bundle_ids'] or not (resources / 'nakama-connection.cer').is_file():
+              raise SystemExit('Missing shared authentication configuration for this Bundle ID')
+          PY
+        inputFiles: ['$(SRCROOT)/Resources/nakama-connection.json', '$(SRCROOT)/Resources/nakama-connection.cer']
+        basedOnDependencyAnalysis: false
       - name: Select Firebase environment
         script: |
           set -eu

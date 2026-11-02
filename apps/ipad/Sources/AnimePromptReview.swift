@@ -5,6 +5,7 @@ struct AnimePromptReview: View {
     let canGenerate: Bool
     var apply: (String, Bool) -> Void
     @State private var draft: String
+    @Environment(MangaLibrary.self) private var library
     @Environment(\.dismiss) private var dismiss
     init(suggestion: AnimePromptSuggestion, canGenerate: Bool, apply: @escaping (String, Bool) -> Void) {
         self.suggestion = suggestion; self.canGenerate = canGenerate; self.apply = apply
@@ -31,7 +32,7 @@ struct AnimePromptReview: View {
                 }
                 Section {
                     Button(L("Use prompt")) { apply(draft.trimmingCharacters(in: .whitespacesAndNewlines), false) }.disabled(!valid)
-                    Button(L("Use and generate"), systemImage: "sparkles") { apply(draft.trimmingCharacters(in: .whitespacesAndNewlines), true) }
+                    Button("\(L("Use and generate")) · \(library.creditCost(.image)) \(L("credits"))", systemImage: "sparkles") { apply(draft.trimmingCharacters(in: .whitespacesAndNewlines), true) }
                         .disabled(!valid || !canGenerate)
                     if !canGenerate { Text(L("Download Anima models on a supported device before generating images.")).font(.caption).foregroundStyle(.secondary) }
                 }

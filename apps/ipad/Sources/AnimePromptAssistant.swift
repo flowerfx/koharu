@@ -61,6 +61,7 @@ enum AnimePromptContract {
 extension MangaLibrary {
     var animePromptModel: String {
         switch preferences.provider {
+        case .backend: return L("Not connected")
         case .local: return models.first { $0.id == preferences.localModel }?.name ?? L("Select a model")
         case .lmStudio: return preferences.remoteModel.isEmpty ? L("Select a model") : preferences.remoteModel
         default:
@@ -70,10 +71,15 @@ extension MangaLibrary {
     }
     var animePromptUnavailable: String? {
         let provider = preferences.provider
+        guard credits.tier.allows(provider) else {
+            return L("This provider requires Premium. Choose Local GGUF, Backend API, OpenAI or Claude.")
+        }
         guard AppConfiguration.current.providers.contains(provider) else {
             return L("This provider or model is disabled in app-config.json. Choose another option in Settings.")
         }
         switch provider {
+        case .backend:
+            return L("Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent.")
         case .deepL:
             return L("DeepL translates text but cannot create or enhance anime prompts. Choose a language-model provider in Settings.")
         case .local:
@@ -101,6 +107,19 @@ extension MangaLibrary {
     func assistAnimePrompt(_ operation: AnimePromptOperation, prompt: String) {
         guard !busy && !downloadingModel else { return }
         do {
+            try requireCreditProvider()
+            _ = try AnimePromptContract.request(operation, prompt: prompt)
+            if let reason = animePromptUnavailable { throw AppError.message(reason) }
+        } catch { self.error = error.localizedDescription; return }
+        let action: CreditAction = operation == .enhance ? .enhance : .generatePrompt
+        requestCredits(action, cost: creditCost(action),
+                       explanation: L("Prompt assistance is charged when a valid suggestion is returned, even if you cancel its review. Image generation is charged separately.")) {
+            self.startAnimePrompt(operation, prompt: prompt)
+        }
+    }
+    private func startAnimePrompt(_ operation: AnimePromptOperation, prompt: String) {
+        guard !busy && !downloadingModel else { return }
+        do {
             if let reason = animePromptUnavailable { throw AppError.message(reason) }
             let request = try AnimePromptContract.request(operation, prompt: prompt)
             let config = preferences
@@ -108,23 +127,31 @@ extension MangaLibrary {
             let catalog: GGUFDownload?
             if let model { catalog = try AppConfiguration.current.catalog(for: model) } else { catalog = nil }
             let providerName = config.provider.name, modelName = animePromptModel
+            try requireCreditProvider()
+            let action: CreditAction = operation == .enhance ? .enhance : .generatePrompt
             animePromptSuggestion = nil
             busy = true; progress = 0; status = L("Preparing anime prompt")
             activeTask = Task {
-                defer { busy = false; activeTask = nil }
+                var succeeded = false
+                var ticket: String?
                 do {
+                    ticket = try await credits.reserve(action: action, provider: preferences.provider)
+                    try Task.checkCancellation()
                     let data = try await translator.generateStructured(request, config: config,
                         model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog)
                     await translator.unload()
                     try Task.checkCancellation()
                     let result = try AnimePromptContract.decode(data)
                     animePromptSuggestion = AnimePromptSuggestion(original: prompt, prompt: result.prompt, character: result.character, provider: providerName, model: modelName)
+                    succeeded = true
                     status = L("Review the suggested prompt")
                 } catch {
                     await translator.unload()
                     if Task.isCancelled { status = L("Stopped") }
                     else { self.error = error.localizedDescription; status = L("Failed") }
                 }
+                await finishCredits(ticket, success: succeeded)
+                busy = false; activeTask = nil
             }
         } catch { self.error = error.localizedDescription }
     }

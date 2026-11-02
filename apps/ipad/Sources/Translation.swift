@@ -125,6 +125,8 @@ actor TranslationEngine {
     func generateStructured(_ input: StructuredTextRequest, config: Preferences, model: URL?, catalog: GGUFDownload? = nil) async throws -> Data {
         try AppConfiguration.current.requireProvider(config.provider)
         switch config.provider {
+        case .backend:
+            throw AppError.message(L("Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent."))
         case .local:
             guard let model else { throw AppError.message(L("Download or import a GGUF model and select it in Settings")) }
             if let catalog {

@@ -8,6 +8,10 @@
   },
   "provider": [
     {
+      "id": "backend",
+      "enable": true
+    },
+    {
       "id": "local",
       "enable": true
     },

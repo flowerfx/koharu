@@ -57,3 +57,7 @@ test-results/
 # Local documentation output
 /packages/docs/.mintlify/
 /packages/docs/site/
+
+# Deployment-specific Nakama connection and public certificate, shared by both builds.
+/apps/ipad/Resources/nakama-connection.json
+/apps/ipad/Resources/nakama-connection.cer

@@ -29,7 +29,7 @@ struct ProviderSetupScreen: View {
                     }
                 }
                 Section(L("Provider")) {
-                    ForEach(AppConfiguration.current.providers) { option in
+                    ForEach(library.allowedProviders) { option in
                         Button { provider = option } label: {
                             HStack {
                                 Text(option.name).foregroundStyle(.primary)
@@ -57,7 +57,7 @@ struct ProviderSetupScreen: View {
                         Button(L("Continue")) {
                             if provider == .local { choosingModel = true }
                             else { complete(provider, nil) }
-                        }.disabled(!AppConfiguration.current.providers.contains(provider)).accessibilityIdentifier("setup-continue")
+                        }.disabled(!library.allowedProviders.contains(provider)).accessibilityIdentifier("setup-continue")
                     }
                 }
             }

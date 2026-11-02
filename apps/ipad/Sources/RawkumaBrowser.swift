@@ -97,6 +97,9 @@ struct BrowserScreen: View {
     @State private var revalidate = true
     @State private var newCopy = false
     var showLibrary: (UUID) -> Void
+    private var translateTitle: String {
+        "\(L("Translate this chapter")) · \(library.creditCost(.translate)) \(L("credits"))"
+    }
     var body: some View {
         VStack(spacing: 0) {
             if horizontalSizeClass == .compact {
@@ -129,7 +132,7 @@ struct BrowserScreen: View {
                         }.accessibilityLabel(L("Forward")).disabled(!browser.webView.canGoForward)
                         Button(action: translateChapter) {
                             HStack(spacing: 6) {
-                                Label(L("Translate this chapter"), systemImage: "translate")
+                                Label(translateTitle, systemImage: "translate")
                                     .lineLimit(1).minimumScaleFactor(0.75)
                                 if let chapter = browser.chapter {
                                     Text(chapter.images.count, format: .number).font(.caption.monospacedDigit())
@@ -159,7 +162,7 @@ struct BrowserScreen: View {
                     Button(L("Go")) { browser.go(browser.address) }
                 }.padding(10)
                 HStack {
-                    Button(action: translateChapter) { Label(L("Translate this chapter"), systemImage: "translate") }
+                    Button(action: translateChapter) { Label(translateTitle, systemImage: "translate") }
                     .buttonStyle(.borderedProminent).disabled(library.busy || browser.chapter == nil || browser.loading)
                     Toggle(L("Check source updates"), isOn: $revalidate).toggleStyle(.button)
                     Toggle(L("New copy"), isOn: $newCopy).toggleStyle(.button)

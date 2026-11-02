@@ -11,6 +11,7 @@ struct AnimeStudioScreen: View {
     @State private var configurationError: String?
     @State private var removing = false
     @State private var removingUpscaler = false
+    @State private var generateAfterReview: String?
     private var upscalerReady: Bool { upscaler.model?.ready(library.disk.modelsURL) ?? true }
 
     var body: some View {
@@ -26,7 +27,9 @@ struct AnimeStudioScreen: View {
             do { configuration = try AnimeConfiguration.bundled() }
             catch { configurationError = error.localizedDescription }
         }
-        .sheet(item: Binding(get: { library.animePromptSuggestion }, set: { library.animePromptSuggestion = $0 })) { suggestion in
+        .sheet(item: Binding(get: { library.animePromptSuggestion }, set: { library.animePromptSuggestion = $0 }), onDismiss: {
+            if let text = generateAfterReview { generateAfterReview = nil; generateImage(text) }
+        }) { suggestion in
             AnimePromptReview(suggestion: suggestion, canGenerate: configuration.map { config in
                 AnimeConfiguration.deviceMemory.map { config.supportsDevice(memory: $0) } == true && config.model.ready(library.disk.modelsURL) && upscalerReady
             } == true) { updated, generate in
@@ -37,7 +40,7 @@ struct AnimeStudioScreen: View {
                 }
                 prompt = updated
                 library.animePromptSuggestion = nil
-                if generate { generateImage(updated) }
+                if generate { generateAfterReview = updated }
             }
         }
     }
@@ -63,6 +66,11 @@ struct AnimeStudioScreen: View {
         }
         Section {
             LabeledContent(L("Current provider"), value: library.preferences.provider.name)
+            LabeledContent(L("Image credit cost"), value: String(library.creditCost(.image)))
+            LabeledContent(L("Enhance credit cost"), value: String(library.creditCost(.enhance)))
+            LabeledContent(L("Random prompt credit cost"), value: String(library.creditCost(.generatePrompt)))
+            Text(L("Prompt assistance is charged when a valid suggestion is returned, even if you cancel its review. Image generation is charged separately."))
+                .font(.caption).foregroundStyle(.secondary)
             LabeledContent(L("Model"), value: library.animePromptModel)
             TextEditor(text: $prompt).frame(minHeight: 110)
                 .accessibilityLabel(L("Image description"))
@@ -98,7 +106,7 @@ struct AnimeStudioScreen: View {
                 } label: { Label(L("Random character"), systemImage: "dice") }
             }
             .disabled(library.busy || library.downloadingModel || library.animePromptUnavailable != nil)
-            Button(L("Generate image"), systemImage: "sparkles") { generateImage(prompt) }
+            Button("\(L("Generate image")) · \(library.creditCost(.image)) \(L("credits"))", systemImage: "sparkles") { generateImage(prompt) }
                 .disabled(!supported || !ready || !upscalerReady || library.busy || library.downloadingModel || prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         } header: { Text(L("Image description")) } footer: {
             Text(L("Image generation stays on this device. Prompt assistance uses your selected provider."))

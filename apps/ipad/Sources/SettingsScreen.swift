@@ -26,6 +26,8 @@ struct SettingsScreen: View {
         let configuration = try! ConfigurationStore.shared.get()
         ScrollViewReader { proxy in
         Form {
+            NakamaAccountSection()
+            CreditAccountSection()
             Section(L("Interface")) {
                 Picker(L("App language"), selection: $localization.language) {
                     ForEach(InterfaceLanguage.allCases) { Text($0.name).tag($0) }
@@ -46,12 +48,20 @@ struct SettingsScreen: View {
                     .font(.caption).foregroundStyle(.secondary)
             }.task { await CloudServices.shared.refreshNotificationStatus() }
             Section(L("Translation")) {
-                Picker(L("Provider"), selection: $library.preferences.provider) {
+                Picker(L("Provider"), selection: Binding(get: { library.preferences.provider }, set: { library.selectCreditProvider($0) })) {
                     if !AppConfiguration.current.providers.contains(library.preferences.provider) {
                         Text(library.preferences.provider.name + " · " + L("Disabled in app configuration")).tag(library.preferences.provider).disabled(true)
                     }
-                    ForEach(AppConfiguration.current.providers) { Text($0.name).tag($0) }
+                    if !AppConfiguration.current.providers.contains(.backend) {
+                        Text(L("Backend API") + " · " + L("Not connected")).tag(TranslationProvider.backend).disabled(true)
+                    }
+                    ForEach(AppConfiguration.current.providers) { provider in
+                        Text(provider.name + (library.credits.tier.allows(provider) ? "" : " · " + L("Premium")))
+                            .tag(provider).disabled(!library.credits.tier.allows(provider))
+                    }
                 }
+                Text(L("Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free."))
+                    .font(.caption).foregroundStyle(.secondary)
                 Picker(L("Target language"), selection: $library.preferences.target) {
                     ForEach(TargetLanguage.all) { Text($0.displayName).tag($0.tag) }
                 }
@@ -61,6 +71,14 @@ struct SettingsScreen: View {
                         .keyboardType(.numberPad).multilineTextAlignment(.trailing).frame(width: 80)
                 }
                 Text(L("Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small.")).font(.caption).foregroundStyle(.secondary)
+            }
+            if library.preferences.provider == .backend {
+                Section(L("Backend API")) {
+                    Text(L("Backend API is not connected in this offline build. Choose another provider in Settings. No credits were spent."))
+                        .font(.callout).foregroundStyle(.orange)
+                    Text(L("Translating from Rawkuma costs credits. Reruns cost credits only with Backend API. Reading downloaded chapters is free."))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
             if library.preferences.provider == .lmStudio && AppConfiguration.current.providers.contains(.lmStudio) {
                 Section("LM Studio") {

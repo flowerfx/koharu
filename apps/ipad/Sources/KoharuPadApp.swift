@@ -19,7 +19,7 @@ import UIKit
                 if let update = cloud.update, library?.busy != true, library?.downloadingModel != true {
                     AppUpdateScreen(update: update).tint(.pink)
                 } else if let library, let store {
-                    RootScreen(refreshConfiguration: { Task { await refreshConfiguration() } })
+                    AuthenticatedAppScreen(refreshConfiguration: { Task { await refreshConfiguration() } })
                         .environment(library).tint(.pink).disabled(store.isRefreshing)
                 } else if let startupError {
                     ContentUnavailableView(L("Could not open library"), systemImage: "exclamationmark.triangle", description: Text(startupError))
@@ -31,6 +31,7 @@ import UIKit
             .task { await cloud.refreshUpdates() }
             .onChange(of: phase) { _, phase in
                 if phase == .active {
+                    if let library { Task { await library.subscriptions.refreshEntitlements(); await library.loginCredits() } }
                     if library != nil { Task { await refreshConfiguration() } }
                     Task { await cloud.refreshNotificationStatus(); await cloud.refreshUpdates() }
                 }
@@ -58,6 +59,61 @@ import UIKit
         await store.refresh { !library.busy && !library.downloadingModel }
     }
 
+}
+
+struct AuthenticatedAppScreen: View {
+    var refreshConfiguration: () -> Void
+    @Environment(MangaLibrary.self) private var library
+    @State private var restoring = true
+    var body: some View {
+        let account = library.backendAuthentication
+        Group {
+            if restoring {
+                ProgressView(L("Checking sign-in…"))
+            } else if let user = account.user {
+                if library.credits.loaded && library.credits.profile.id.uuidString.lowercased() == user.id.lowercased() {
+                    RootScreen(refreshConfiguration: refreshConfiguration).id(user.id)
+                } else if library.credits.working {
+                    ProgressView(L("Checking sign-in…"))
+                } else {
+                    ContentUnavailableView {
+                        Label(L("Could not open credit profile"), systemImage: "exclamationmark.triangle")
+                    } description: { Text(library.credits.failure ?? "") } actions: {
+                        Button(L("Try again")) { Task { try? await library.credits.load() } }
+                        Button(L("Sign out of backend")) { Task { await account.signOut() } }
+                    }
+                }
+            } else {
+                NavigationStack {
+                    Form {
+                        Section {
+                            Text(L("Sign in to access your library, translation and image generation."))
+                        }
+                        NakamaAccountSection()
+                    }
+                    .navigationTitle(L("Sign in to continue"))
+                }
+            }
+        }
+        .task { await library.subscriptions.observeChanges() }
+        .task {
+            await account.restore()
+            restoring = false
+        }
+        .task(id: account.user?.id) {
+            if account.user != nil { try? await library.credits.load() }
+        }
+        .onChange(of: account.user?.id) { _, id in
+            library.subscriptions.resetAccount()
+            library.credits.clear()
+            if id == nil {
+                library.showCreditRewards = false
+                library.creditRequest = nil
+                library.approvedCreditRequest = nil
+                library.showCreditProviderSettings = false
+            }
+        }
+    }
 }
 
 enum MainTab: String {
@@ -89,6 +145,7 @@ struct RootScreen: View {
     @State private var settingsProvider: TranslationProvider?
     var body: some View {
         @Bindable var library = library
+        @Bindable var subscriptions = library.subscriptions
         TabView(selection: $selection) {
             Tab(MainTab.library.title, systemImage: MainTab.library.symbol, value: .library) {
                 NavigationStack(path: $readerPath) {
@@ -123,9 +180,34 @@ struct RootScreen: View {
         // selected tab, browser and durable reading state remain above it.
         .id(AppLocalization.shared.isRightToLeft)
         .tabViewStyle(.sidebarAdaptable)
-        .task { CloudServices.shared.trackScreen(selection.rawValue) }
+        .task {
+            CloudServices.shared.trackScreen(selection.rawValue)
+            await subscriptions.prepareLaunchOffer()
+            await library.loginCredits()
+        }
+        .sheet(isPresented: $subscriptions.showOffer, onDismiss: { subscriptions.continueWithoutSubscription() }) {
+            SubscriptionOfferScreen(subscriptions: subscriptions, policy: library.credits.policy)
+                .presentationSizing(.page)
+        }
+        .sheet(isPresented: Binding(get: {
+            subscriptions.launchOfferFinished && !subscriptions.showOffer && !providerSetupPending && (library.showCreditRewards || library.creditRequest != nil)
+        }, set: { if !$0 { library.showCreditRewards = false; library.creditRequest = nil } }), onDismiss: {
+            let approved = library.approvedCreditRequest
+            library.approvedCreditRequest = nil
+            library.showCreditRewards = false
+            library.creditRequest = nil
+            approved?.proceed()
+        }) { CreditPanel() }
+        .onChange(of: library.showCreditProviderSettings) { _, show in
+            if show {
+                settingsProvider = library.preferences.provider
+                selection = .settings
+                library.showCreditProviderSettings = false
+            }
+        }
         .onChange(of: selection) { _, tab in CloudServices.shared.trackScreen(tab.rawValue) }
         .safeAreaInset(edge: .bottom) {
+            VStack(spacing: 0) {
             if library.busy {
                 HStack {
                     ProgressView(value: library.progress).frame(maxWidth: 180)
@@ -133,11 +215,15 @@ struct RootScreen: View {
                     Button(L("Stop"), role: .destructive) { library.activeTask?.cancel() }.buttonStyle(.bordered)
                 }.padding(10).frame(maxWidth: .infinity).background(.regularMaterial)
             }
+            CreditSummary()
+            }
         }
         .alert(L("Koharu"), isPresented: Binding(get: { library.error != nil }, set: { if !$0 { library.error = nil } })) {
             Button(L("OK")) { library.error = nil }
         } message: { Text(library.error ?? "") }
-        .sheet(isPresented: $providerSetupPending) {
+        .sheet(isPresented: Binding(get: {
+            subscriptions.launchOfferFinished && !subscriptions.showOffer && providerSetupPending
+        }, set: { providerSetupPending = $0 })) {
             ProviderSetupScreen { provider, download in
                 library.preferences.provider = provider
                 library.savePreferences()
@@ -198,7 +284,7 @@ struct LibraryScreen: View {
                     }
                     .contextMenu {
                         Button(L("Original chapter"), systemImage: "globe") { openSource(chapter.sourceURL) }
-                        Button(L("Retranslate"), systemImage: "arrow.clockwise") { library.run(chapter.id, force: true) }.disabled(library.busy)
+                        Button(library.preferences.provider == .backend ? "\(L("Retranslate")) · \(library.rerunCreditCost) \(L("credits"))" : L("Retranslate"), systemImage: "arrow.clockwise") { library.run(chapter.id, force: true) }.disabled(library.busy)
                         Divider()
                         Button(L("Delete"), systemImage: "trash", role: .destructive) { deleting = chapter }.disabled(library.busy)
                     }
@@ -242,6 +328,9 @@ struct ReaderScreen: View {
     @State private var editing = false
     @State private var clear = false
     @State private var share: URL?
+    private var rerunCreditSuffix: String {
+        library.preferences.provider == .backend ? " · \(library.rerunCreditCost) \(L("credits"))" : ""
+    }
     var chapter: Chapter? { library.chapters.first { $0.id == chapterID } }
     var body: some View {
         Group {
@@ -270,8 +359,8 @@ struct ReaderScreen: View {
                         Button(L("Original chapter"), systemImage: "globe") { openSource(chapter.sourceURL) }
                         Menu {
                             Toggle(L("Entire project"), isOn: $entireProject)
-                            Button(L("Run"), systemImage: "play") { library.run(chapterID, force: false, page: entireProject ? nil : page.id) }.disabled(library.busy)
-                            Button(L("Retranslate"), systemImage: "arrow.clockwise") { library.run(chapterID, force: true, page: entireProject ? nil : page.id) }.disabled(library.busy)
+                            Button(L("Run") + rerunCreditSuffix, systemImage: "play") { library.run(chapterID, force: false, page: entireProject ? nil : page.id) }.disabled(library.busy)
+                            Button(L("Retranslate") + rerunCreditSuffix, systemImage: "arrow.clockwise") { library.run(chapterID, force: true, page: entireProject ? nil : page.id) }.disabled(library.busy)
                             Button(L("Undo"), systemImage: "arrow.uturn.backward") { library.restore(chapterID, redo: false) }.disabled(library.busy || !FileManager.default.fileExists(atPath: library.disk.chapterURL(chapterID).appendingPathComponent("undo.json").path))
                             Button(L("Redo"), systemImage: "arrow.uturn.forward") { library.restore(chapterID, redo: true) }.disabled(library.busy || !FileManager.default.fileExists(atPath: library.disk.chapterURL(chapterID).appendingPathComponent("redo.json").path))
                             Button(L("Share page"), systemImage: "square.and.arrow.up") { share = pageURL(page) }

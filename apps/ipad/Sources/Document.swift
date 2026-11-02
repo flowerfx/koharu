@@ -23,12 +23,13 @@ struct TargetLanguage: Codable, Identifiable {
 }
 
 enum TranslationProvider: String, Codable, CaseIterable, Identifiable {
-    case lmStudio, local, openAI, anthropic, deepSeek, qwen, miniMax, gemini, grok, openRouter, deepL
+    case lmStudio, local, backend, openAI, anthropic, deepSeek, qwen, miniMax, gemini, grok, openRouter, deepL
     var id: String { rawValue }
     var name: String {
         switch self {
         case .lmStudio: return "LM Studio"
         case .local: return L("Local GGUF on this device")
+        case .backend: return L("Backend API")
         case .openAI: return "OpenAI"
         case .anthropic: return "Anthropic"
         case .deepSeek: return "DeepSeek"
@@ -40,7 +41,7 @@ enum TranslationProvider: String, Codable, CaseIterable, Identifiable {
         case .deepL: return "DeepL"
         }
     }
-    var hosted: Bool { self != .lmStudio && self != .local }
+    var hosted: Bool { self != .lmStudio && self != .local && self != .backend }
 }
 struct HostedConfiguration: Codable, Equatable {
     var model = ""
