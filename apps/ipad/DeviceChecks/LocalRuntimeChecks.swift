@@ -29,7 +29,7 @@ final class LocalRuntimeChecks: XCTestCase {
         let runtime = LocalInference()
         let started = Date()
         let data: Data
-        do { data = try await runtime.generate(model: model, context: 4096, system: system, user: user) }
+        do { data = try await runtime.generate(model: model, context: 4096, request: TranslationContract.request(system: system, user: user, count: input.count)) }
         catch { await runtime.unload(); throw error }
         await runtime.unload()
         let result = try TranslationContract.decode(data, count: input.count)
