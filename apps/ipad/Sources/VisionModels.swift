@@ -52,6 +52,22 @@ extension MangaLibrary {
     func downloadVisionModel(_ model: VisionModel) {
         guard !busy && !downloadingModel else { return }
         guard !model.builtIn, (try? VisionModel.named(model.id)) != nil else { error = L("This provider or model is disabled in app-config.json. Choose another option in Settings."); return }
+        downloadModelFiles(model)
+    }
+    func downloadAnimeModels() {
+        guard !busy && !downloadingModel else { return }
+        do {
+            let configuration = try AnimeConfiguration.bundled()
+            guard let memory = AnimeConfiguration.deviceMemory else {
+                throw AppError.message(L("Device RAM can only be checked on a physical iPad or iPhone."))
+            }
+            guard configuration.supportsDevice(memory: memory) else {
+                throw AppError.message(L("Anime Studio requires a device with at least 8 GB RAM."))
+            }
+            downloadModelFiles(configuration.model)
+        } catch { self.error = error.localizedDescription }
+    }
+    private func downloadModelFiles(_ model: VisionModel) {
         downloadingModel = true
         modelTask = Task {
             defer { downloadingModel = false; modelTask = nil }
@@ -91,8 +107,10 @@ extension MangaLibrary {
                 } else { try FileManager.default.moveItem(at: staging, to: destination) }
                 var resource = destination; var values = URLResourceValues(); values.isExcludedFromBackup = true; try resource.setResourceValues(values)
                 status = L("Model ready")
-            } catch is CancellationError { status = L("Stopped") }
-            catch { self.error = error.localizedDescription }
+            } catch {
+                if Task.isCancelled { status = L("Stopped") }
+                else { self.error = error.localizedDescription }
+            }
         }
     }
 }

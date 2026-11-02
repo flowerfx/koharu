@@ -206,20 +206,35 @@ actor HostedTranslation {
     func translate(endpoint: HostedEndpoint, key: String, model: String, system: String, user: String, count: Int, instructions: String = "") async throws -> Data {
         let key = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard (1...100).contains(count) else { throw invalidResponse }
+        if endpoint.provider == .deepL {
+            let available = try await models(endpoint: endpoint, key: key)
+            guard available.contains(where: { $0.id == model }) else { throw AppError.message(L("Validate the API key and select a supported model in Settings")) }
+            return try await deepL(endpoint, key: key, model: model, user: user, instructions: instructions, count: count)
+        }
+        let input = try TranslationContract.request(system: system, user: user, count: count)
+        let data = try await generateStructured(endpoint: endpoint, key: key, model: model, input: input)
+        _ = try TranslationContract.decode(data, count: count)
+        return data
+    }
+    func generateStructured(endpoint: HostedEndpoint, key: String, model: String, input: StructuredTextRequest) async throws -> Data {
+        let key = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard endpoint.provider != .deepL else {
+            throw AppError.message(L("DeepL translates text but cannot create or enhance anime prompts. Choose a language-model provider in Settings."))
+        }
         let available = try await models(endpoint: endpoint, key: key)
         guard available.contains(where: { $0.id == model }) else { throw AppError.message(L("Validate the API key and select a supported model in Settings")) }
-        if endpoint.provider == .deepL { return try await deepL(endpoint, key: key, model: model, user: user, instructions: instructions, count: count) }
-        let schema = TranslationContract.hostedSchema(count: count)
-        let format: [String: Any] = ["type": "json_schema", "json_schema": ["name": "translation", "strict": true, "schema": schema]]
+        let system = input.system, user = input.user
+        let schema = try input.schema(hosted: true)
+        let format: [String: Any] = ["type": "json_schema", "json_schema": ["name": input.name, "strict": true, "schema": schema]]
         let messages = [["role": "system", "content": system], ["role": "user", "content": user]]
         var path = "chat/completions"
-        let outputLimit = max(4096, TranslationContract.outputTokenLimit(count: count))
+        let outputLimit = max(4096, input.outputTokens)
         var body: [String: Any] = ["model": model, "messages": messages, "response_format": format, "max_tokens": outputLimit]
         switch endpoint.provider {
         case .openAI, .grok:
             path = "responses"
             body = ["model": model, "instructions": system, "input": user, "store": false, "max_output_tokens": 8192,
-                    "text": ["format": ["type": "json_schema", "name": "translation", "strict": true, "schema": schema]]]
+                    "text": ["format": ["type": "json_schema", "name": input.name, "strict": true, "schema": schema]]]
         case .anthropic:
             path = "messages"
             body = ["model": model, "system": system, "messages": [["role": "user", "content": user]], "max_tokens": outputLimit,
@@ -227,8 +242,8 @@ actor HostedTranslation {
         case .deepSeek:
             path = "beta/chat/completions"
             body = ["model": model, "messages": messages, "max_tokens": outputLimit, "thinking": ["type": "disabled"],
-                    "tools": [["type": "function", "function": ["name": "translation", "description": "Return the translated segments.", "strict": true, "parameters": schema]]],
-                    "tool_choice": ["type": "function", "function": ["name": "translation"]]]
+                    "tools": [["type": "function", "function": ["name": input.name, "description": "Return the requested structured output.", "strict": true, "parameters": schema]]],
+                    "tool_choice": ["type": "function", "function": ["name": input.name]]]
         case .qwen:
             // Newer Qwen 3.7/3.8 models always think; unsupported disabling flags
             // must not be sent to them. Budget includes reasoning and final text.
@@ -268,16 +283,14 @@ actor HostedTranslation {
             guard let choices = root["choices"] as? [[String: Any]], choices.count == 1, let message = choices[0]["message"] as? [String: Any] else { throw invalidResponse }
             if endpoint.provider == .deepSeek {
                 guard choices[0]["finish_reason"] as? String == "tool_calls", let calls = message["tool_calls"] as? [[String: Any]], calls.count == 1,
-                      let function = calls[0]["function"] as? [String: Any], function["name"] as? String == "translation", let answer = function["arguments"] as? String else { throw invalidResponse }
+                      let function = calls[0]["function"] as? [String: Any], function["name"] as? String == input.name, let answer = function["arguments"] as? String else { throw invalidResponse }
                 text = answer
             } else {
                 guard choices[0]["finish_reason"] as? String == "stop", let answer = message["content"] as? String else { throw invalidResponse }
                 text = answer
             }
         }
-        let data = Data(text.utf8)
-        _ = try TranslationContract.decode(data, count: count)
-        return data
+        return Data(text.utf8)
     }
     private func deepL(_ endpoint: HostedEndpoint, key: String, model: String, user: String, instructions: String, count: Int) async throws -> Data {
         let payload = try JSONDecoder().decode(TranslationPayload.self, from: Data(user.utf8))

@@ -61,11 +61,12 @@ import UIKit
 }
 
 enum MainTab: String {
-    case library, browser, settings
+    case library, browser, anime, settings
     var title: String {
         switch self {
         case .library: return L("Library")
         case .browser: return L("Rawkuma")
+        case .anime: return L("Anime Studio")
         case .settings: return L("Settings")
         }
     }
@@ -73,6 +74,7 @@ enum MainTab: String {
         switch self {
         case .library: return "books.vertical"
         case .browser: return "globe"
+        case .anime: return "paintpalette"
         case .settings: return "gear"
         }
     }
@@ -101,6 +103,14 @@ struct RootScreen: View {
                     BrowserScreen(browser: browser) { id in
                         readerPath = [id]
                         selection = .library
+                    }
+                }
+            }
+            Tab(MainTab.anime.title, systemImage: MainTab.anime.symbol, value: .anime) {
+                NavigationStack {
+                    AnimeStudioScreen {
+                        settingsProvider = library.preferences.provider
+                        selection = .settings
                     }
                 }
             }

@@ -3,6 +3,38 @@ import Foundation
 import llama
 #endif
 
+struct StructuredTextRequest: Sendable {
+    let system: String
+    let user: String
+    let name: String
+    private let strictSchema: Data
+    private let providerSchema: Data
+    let grammar: String
+    let outputTokens: Int
+    let temperature: Float?
+    let timeout: TimeInterval
+    init(system: String, user: String, name: String, schema: [String: Any], hostedSchema: [String: Any]? = nil,
+         grammar: String, outputTokens: Int, temperature: Float? = nil, timeout: TimeInterval = 180) throws {
+        guard !system.isEmpty, !user.isEmpty, !grammar.isEmpty, (1...8192).contains(outputTokens),
+              name.range(of: "^[a-z][a-z0-9_]*$", options: .regularExpression) != nil,
+              timeout.isFinite, (1...600).contains(timeout),
+              temperature == nil || (temperature!.isFinite && (0...2).contains(temperature!)) else {
+            throw AppError.message(L("Invalid structured text request"))
+        }
+        self.system = system; self.user = user; self.name = name; self.grammar = grammar
+        self.outputTokens = outputTokens; self.temperature = temperature
+        self.timeout = timeout
+        strictSchema = try JSONSerialization.data(withJSONObject: schema)
+        providerSchema = try JSONSerialization.data(withJSONObject: hostedSchema ?? schema)
+    }
+    func schema(hosted: Bool = false) throws -> [String: Any] {
+        guard let schema = try JSONSerialization.jsonObject(with: hosted ? providerSchema : strictSchema) as? [String: Any] else {
+            throw AppError.message(L("Invalid structured text request"))
+        }
+        return schema
+    }
+}
+
 struct TranslationPayload: Codable {
     struct Segment: Codable { var id: Int; var text: String }
     var source_language: String? = "ja-JP"
@@ -11,6 +43,11 @@ struct TranslationPayload: Codable {
     var segments: [Segment]
 }
 enum TranslationContract {
+    static func request(system: String, user: String, count: Int) throws -> StructuredTextRequest {
+        guard (1...100).contains(count) else { throw AppError.message(L("Invalid translation request")) }
+        return try StructuredTextRequest(system: system, user: user, name: "translation", schema: schema(count: count),
+                                         hostedSchema: hostedSchema(count: count), grammar: grammar(count: count), outputTokens: outputTokenLimit(count: count), timeout: Double(max(180, count * 6)))
+    }
     static func outputTokenLimit(count: Int) -> Int { max(2048, min(8192, count * 96)) }
     static func prompts(_ texts: [String], preferences: Preferences) throws -> (String, String) {
         guard let resource = Bundle.main.url(forResource: "translation-system", withExtension: "txt") else { throw AppError.message(L("Translation prompt resource is missing")) }
@@ -72,42 +109,59 @@ actor TranslationEngine {
             let batch = Array(texts[start..<min(start + batchSize, texts.count)])
             let (system, user) = try TranslationContract.prompts(batch, preferences: config)
             let data: Data
-            switch config.provider {
-            case .local:
-                guard let model else { throw AppError.message(L("Download or import a GGUF model and select it in Settings")) }
-                do { data = try await local.generate(model: model, context: config.contextSize, system: system, user: user) }
-                catch { await local.unload(); throw error }
-            case .lmStudio:
-                guard !config.remoteModel.isEmpty else { throw AppError.message(L("Select an LM Studio model in Settings")) }
-                let base = try LMStudio.baseURL(config.server)
-                var request = URLRequest(url: base.appendingPathComponent("v1/chat/completions"))
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                let token = Credentials.read(config.server)
-                if !token.isEmpty { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
-                request.httpBody = try JSONSerialization.data(withJSONObject: [
-                    "model": config.remoteModel, "messages": [["role": "system", "content": system], ["role": "user", "content": user]],
-                    "temperature": 0.2, "max_tokens": TranslationContract.outputTokenLimit(count: batch.count), "reasoning_effort": "none",
-                    "response_format": ["type": "json_schema", "json_schema": ["name": "translation", "strict": true, "schema": TranslationContract.schema(count: batch.count)]]
-                ])
-                let session = LMStudio.session(timeout: Double(max(180, batch.count * 6))); defer { session.invalidateAndCancel() }
-                let (responseData, response) = try await session.data(for: request)
-                guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { throw AppError.message("LM Studio HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)") }
-                guard responseData.count <= 4_194_304, let root = try JSONSerialization.jsonObject(with: responseData) as? [String: Any],
-                      let choices = root["choices"] as? [[String: Any]], let choice = choices.first,
-                      choice["finish_reason"] as? String == "stop", let message = choice["message"] as? [String: Any], let content = message["content"] as? String, !content.isEmpty else {
-                    throw AppError.message(L("LM Studio returned no final answer. Check its reasoning/content separation setting and output token limit."))
-                }
-                data = Data(content.utf8)
-            default:
+            if config.provider == .deepL {
                 let settings = config.hosted?[config.provider.rawValue] ?? HostedConfiguration()
                 let endpoint = try HostedEndpoint(provider: config.provider, configuration: settings)
-                let key = Credentials.read(endpoint.credentialAccount)
-                data = try await hosted.translate(endpoint: endpoint, key: key, model: settings.model, system: system, user: user, count: batch.count, instructions: config.instructions)
+                data = try await hosted.translate(endpoint: endpoint, key: Credentials.read(endpoint.credentialAccount), model: settings.model,
+                                                  system: system, user: user, count: batch.count, instructions: config.instructions)
+            } else {
+                data = try await generateStructured(TranslationContract.request(system: system, user: user, count: batch.count),
+                                                    config: config, model: model, catalog: catalog)
             }
             result += try TranslationContract.decode(data, count: batch.count)
         }
         return result
+    }
+    func generateStructured(_ input: StructuredTextRequest, config: Preferences, model: URL?, catalog: GGUFDownload? = nil) async throws -> Data {
+        try AppConfiguration.current.requireProvider(config.provider)
+        switch config.provider {
+        case .local:
+            guard let model else { throw AppError.message(L("Download or import a GGUF model and select it in Settings")) }
+            if let catalog {
+                guard catalog.enable else { throw AppError.message(L("This provider or model is disabled in app-config.json. Choose another option in Settings.")) }
+                guard config.contextSize <= catalog.maxTokens else { throw AppError.message(L("Context tokens exceed this GGUF model’s configured maximum.")) }
+            }
+            do { return try await local.generate(model: model, context: config.contextSize, request: input) }
+            catch { await local.unload(); throw error }
+        case .lmStudio:
+            guard !config.remoteModel.isEmpty else { throw AppError.message(L("Select an LM Studio model in Settings")) }
+            let base = try LMStudio.baseURL(config.server)
+            var request = URLRequest(url: base.appendingPathComponent("v1/chat/completions"))
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            let token = Credentials.read(config.server)
+            if !token.isEmpty { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
+            request.httpBody = try JSONSerialization.data(withJSONObject: [
+                "model": config.remoteModel, "messages": [["role": "system", "content": input.system], ["role": "user", "content": input.user]],
+                "temperature": input.temperature ?? 0.2, "max_tokens": input.outputTokens, "reasoning_effort": "none",
+                "response_format": ["type": "json_schema", "json_schema": ["name": input.name, "strict": true, "schema": input.schema()]]
+            ])
+            let session = LMStudio.session(timeout: input.timeout); defer { session.invalidateAndCancel() }
+            let (responseData, response) = try await session.data(for: request)
+            guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { throw AppError.message("LM Studio HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)") }
+            guard responseData.count <= 4_194_304, let root = try JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+                  let choices = root["choices"] as? [[String: Any]], choices.count == 1, let choice = choices.first,
+                  choice["finish_reason"] as? String == "stop", let message = choice["message"] as? [String: Any], let content = message["content"] as? String, !content.isEmpty else {
+                throw AppError.message(L("LM Studio returned no final answer. Check its reasoning/content separation setting and output token limit."))
+            }
+            return Data(content.utf8)
+        case .deepL:
+            throw AppError.message(L("DeepL translates text but cannot create or enhance anime prompts. Choose a language-model provider in Settings."))
+        default:
+            let settings = config.hosted?[config.provider.rawValue] ?? HostedConfiguration()
+            let endpoint = try HostedEndpoint(provider: config.provider, configuration: settings)
+            return try await hosted.generateStructured(endpoint: endpoint, key: Credentials.read(endpoint.credentialAccount), model: settings.model, input: input)
+        }
     }
     func unload() async { await local.unload() }
 }
@@ -144,9 +198,8 @@ actor LocalInference {
         guard let context = llama_init_from_model(model, config) else { llama_model_free(model); throw AppError.message(L("Could not allocate local model context. Reduce context size.")) }
         self.model = model; self.context = context; loaded = url; contextSize = size
     }
-    func generate(model url: URL, context size: Int, system: String, user: String) throws -> Data {
-        let countRequested = try JSONDecoder().decode(TranslationPayload.self, from: Data(user.utf8)).segments.count
-        guard (1...100).contains(countRequested) else { throw AppError.message(L("Invalid translation request")) }
+    func generate(model url: URL, context size: Int, request: StructuredTextRequest) throws -> Data {
+        let system = request.system, user = request.user
         try load(url, size: size)
         guard let model, let context, let vocab = llama_model_get_vocab(model), let template = llama_model_chat_template(model, nil) else { throw AppError.message(L("The model has no supported chat template")) }
         llama_memory_clear(llama_get_memory(context), true)
@@ -168,12 +221,17 @@ actor LocalInference {
             let code = chunk.withUnsafeMutableBufferPointer { llama_decode(context, llama_batch_get_one($0.baseAddress, Int32($0.count))) }
             guard code == 0 else { throw AppError.message(L("Local inference failed during prompt processing")) }
         }
-        guard let chain = llama_sampler_chain_init(llama_sampler_chain_default_params()), let grammar = llama_sampler_init_grammar(vocab, TranslationContract.grammar(count: countRequested), "root") else { throw AppError.message(L("Could not create structured-output sampler")) }
+        guard let chain = llama_sampler_chain_init(llama_sampler_chain_default_params()), let grammar = llama_sampler_init_grammar(vocab, request.grammar, "root") else { throw AppError.message(L("Could not create structured-output sampler")) }
         defer { llama_sampler_free(chain) }
         llama_sampler_chain_add(chain, grammar)
-        llama_sampler_chain_add(chain, llama_sampler_init_greedy())
+        if let temperature = request.temperature, temperature > 0 {
+            llama_sampler_chain_add(chain, llama_sampler_init_top_k(40))
+            llama_sampler_chain_add(chain, llama_sampler_init_top_p(0.95, 1))
+            llama_sampler_chain_add(chain, llama_sampler_init_temp(temperature))
+            llama_sampler_chain_add(chain, llama_sampler_init_dist(UInt32.random(in: 0..<UInt32.max)))
+        } else { llama_sampler_chain_add(chain, llama_sampler_init_greedy()) }
         var output = Data()
-        for _ in 0..<min(TranslationContract.outputTokenLimit(count: countRequested), size - Int(count) - 1) {
+        for _ in 0..<min(request.outputTokens, size - Int(count) - 1) {
             try Task.checkCancellation()
             let token = llama_sampler_sample(chain, context, -1)
             if llama_vocab_is_eog(vocab, token) { return output }
@@ -189,7 +247,7 @@ actor LocalInference {
         throw AppError.message(L("Model reached the output limit before completing JSON"))
     }
     #else
-    func generate(model: URL, context: Int, system: String, user: String) throws -> Data {
+    func generate(model: URL, context: Int, request: StructuredTextRequest) throws -> Data {
         throw AppError.message(L("Local GGUF inference requires a physical iPad/iPhone. Use LM Studio in Simulator."))
     }
     func unload() {}

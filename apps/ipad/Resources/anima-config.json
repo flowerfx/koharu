@@ -1,0 +1,45 @@
+{
+  "id": "anima-turbo-v1-1-q8-0",
+  "name": "Anima Turbo v1.1 \u00b7 Q8_0",
+  "minimumDeviceMemoryBytes": 8000000000,
+  "source": "https://huggingface.co/vanes430/Anima-Turbo-V1.1-GGUF",
+  "license": "https://huggingface.co/circlestone-labs/Anima/blob/f973fc41ec7545364ac9776c2440285f43ff2a30/LICENSE.md",
+  "components": [
+    {
+      "role": "diffusion",
+      "file": {
+        "path": "anima-turbo-v1.1-Q8_0.gguf",
+        "url": "https://huggingface.co/vanes430/Anima-Turbo-V1.1-GGUF/resolve/efdf070de980a52fc03027d2f6ed543cc1d87a8f/anima-turbo-v1.1-Q8_0.gguf",
+        "bytes": 2239471744,
+        "sha256": "74d6c9251f34bc4152fda460dd7befaa9cec79946c270a378fee3d33048153bd"
+      }
+    },
+    {
+      "role": "textEncoder",
+      "file": {
+        "path": "qwen_3_06b_base.safetensors",
+        "url": "https://huggingface.co/vanes430/Anima-Turbo-V1.1-GGUF/resolve/efdf070de980a52fc03027d2f6ed543cc1d87a8f/split_files/text_encoders/qwen_3_06b_base.safetensors",
+        "bytes": 1192135096,
+        "sha256": "cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba"
+      }
+    },
+    {
+      "role": "vae",
+      "file": {
+        "path": "qwen_image_vae.safetensors",
+        "url": "https://huggingface.co/vanes430/Anima-Turbo-V1.1-GGUF/resolve/efdf070de980a52fc03027d2f6ed543cc1d87a8f/split_files/vae/qwen_image_vae.safetensors",
+        "bytes": 253806246,
+        "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+      }
+    }
+  ],
+  "generation": {
+    "width": 512,
+    "height": 512,
+    "steps": 6,
+    "cfg": 1.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "backend": "metal"
+  }
+}

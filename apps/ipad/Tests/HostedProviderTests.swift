@@ -48,7 +48,8 @@ final class HostedProviderTests: XCTestCase {
             case .deepL: model = "quality_optimized"
             default: fatalError()
             }
-            let answer = output
+            var answer = output
+            var schemaName = "translation"
             let service = ProviderHTTP.setup { request in
                 XCTAssertEqual(request.url?.scheme, "https")
                 XCTAssertNil(URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "key" })
@@ -81,6 +82,7 @@ final class HostedProviderTests: XCTestCase {
                     XCTAssertTrue(path.hasSuffix("/responses")); XCTAssertEqual(body["store"] as? Bool, false)
                     let schema = try XCTUnwrap((body["text"] as? [String: Any])?["format"] as? [String: Any])
                     XCTAssertEqual(schema["type"] as? String, "json_schema"); XCTAssertEqual(schema["strict"] as? Bool, true)
+                    XCTAssertEqual(schema["name"] as? String, schemaName)
                     return .init(status: 200, body: ["status": "completed", "output": [["type": "message", "content": [["type": "output_text", "text": answer]]]]])
                 case .anthropic:
                     XCTAssertTrue(path.hasSuffix("/messages")); XCTAssertEqual((body["output_config"] as? [String: Any])?["format"] is [String: Any], true)
@@ -89,7 +91,8 @@ final class HostedProviderTests: XCTestCase {
                     XCTAssertEqual(path, "/beta/chat/completions")
                     let tools = try XCTUnwrap(body["tools"] as? [[String: Any]])
                     XCTAssertEqual((tools[0]["function"] as? [String: Any])?["strict"] as? Bool, true)
-                    return .init(status: 200, body: ["choices": [["finish_reason": "tool_calls", "message": ["tool_calls": [["function": ["name": "translation", "arguments": answer]]]]]]])
+                    XCTAssertEqual((tools[0]["function"] as? [String: Any])?["name"] as? String, schemaName)
+                    return .init(status: 200, body: ["choices": [["finish_reason": "tool_calls", "message": ["tool_calls": [["function": ["name": schemaName, "arguments": answer]]]]]]])
                 case .gemini:
                     XCTAssertTrue(path.hasSuffix(":generateContent")); XCTAssertEqual((body["generationConfig"] as? [String: Any])?["responseJsonSchema"] is [String: Any], true)
                     return .init(status: 200, body: ["candidates": [["finishReason": "STOP", "content": ["parts": [["text": answer]]]]]])
@@ -107,6 +110,16 @@ final class HostedProviderTests: XCTestCase {
             let payload = TranslationPayload(target_language: "en-GB", segments: [.init(id: 0, text: "一"), .init(id: 1, text: "二")])
             let result = try await service.translate(endpoint: endpoint, key: "test-key", model: model, system: "shared system", user: String(decoding: JSONEncoder().encode(payload), as: UTF8.self), count: 2, instructions: "Use casual speech.")
             XCTAssertEqual(try TranslationContract.decode(result, count: 2), ["one", "two"], provider.name)
+            let input = try AnimePromptContract.request(.enhance, prompt: "pink hair, white dress")
+            if provider == .deepL {
+                do { _ = try await service.generateStructured(endpoint: endpoint, key: "test-key", model: model, input: input); XCTFail("DeepL must not act as a generative provider") }
+                catch {}
+            } else {
+                schemaName = "anime_prompt"
+                answer = #"{"prompt":"An anime character with pink hair and a white dress, surrounded by flowers in gentle sunlight.","character":"Original character"}"#
+                let suggested = try await service.generateStructured(endpoint: endpoint, key: "test-key", model: model, input: input)
+                XCTAssertEqual(try AnimePromptContract.decode(suggested).character, "Original character")
+            }
         }
     }
     func testOpenRouterRequiresAuthenticatedKeyBeforePublicCatalog() async throws {

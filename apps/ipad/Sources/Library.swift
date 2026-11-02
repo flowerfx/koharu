@@ -15,6 +15,8 @@ import Observation
         }
     }
     var models: [LocalModel] = []
+    var animeImages: [GeneratedAnimeImage] = []
+    var animePromptSuggestion: AnimePromptSuggestion?
     var availableModels: [LocalModel] {
         models.filter { model in
             do { _ = try AppConfiguration.current.catalog(for: model); return true }
@@ -41,6 +43,8 @@ import Observation
             else { try disk.save(preferences, to: config) }
             let inventory = disk.root.appendingPathComponent("models.json")
             if FileManager.default.fileExists(atPath: inventory.path) { models = try disk.load([LocalModel].self, inventory) }
+            let animeInventory = animeDirectory.appendingPathComponent("images.json")
+            if FileManager.default.fileExists(atPath: animeInventory.path) { animeImages = try disk.load([GeneratedAnimeImage].self, animeInventory) }
         } catch { self.error = error.localizedDescription }
     }
     func savePreferences() { do { try disk.save(preferences, to: disk.root.appendingPathComponent("preferences.json")) } catch { self.error = error.localizedDescription } }

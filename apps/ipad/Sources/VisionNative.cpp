@@ -8,6 +8,8 @@
 #include <cstring>
 #include <algorithm>
 #include <cmath>
+#include <mutex>
+#include <atomic>
 
 static void report(char *out, size_t n, const char *message) { if (out && n) snprintf(out, n, "%s", message ? message : "Native vision error"); }
 struct DiffusionHandle { sd_ctx_t *context = nullptr; bool flux; ~DiffusionHandle() { if (context) sd_dart_exit_free(context); } };
@@ -51,6 +53,105 @@ int koharu_diffusion_run(void *opaque, const uint8_t *rgb, const uint8_t *mask, 
     memcpy(output, images[0].data, (size_t)edge * edge * 3); free_sd_images(images, count); return 1;
 }
 void koharu_diffusion_close(void *handle) { delete static_cast<DiffusionHandle *>(handle); }
+
+// A job outlives loading, generation and cooperative cancellation. The mutex
+// prevents cancellation racing context teardown; loading itself is not cancelable.
+struct AnimaJob {
+    std::mutex mutex;
+    sd_ctx_t *context = nullptr;
+    std::atomic<bool> cancelled{false};
+    std::atomic<uint64_t> sequence{0};
+    std::atomic<bool> progress_ready{false};
+    std::atomic<int> phase{0};
+};
+void *koharu_anima_job_new(void) { return new (std::nothrow) AnimaJob(); }
+void koharu_anima_job_free(void *job) { delete static_cast<AnimaJob *>(job); }
+void koharu_anima_job_cancel(void *opaque) {
+    auto *job = static_cast<AnimaJob *>(opaque);
+    if (!job) return;
+    job->cancelled = true;
+    std::lock_guard<std::mutex> lock(job->mutex);
+    if (job->context) sd_dart_cancel_generation(job->context, SD_CANCEL_ALL);
+}
+int koharu_anima_job_progress(void *opaque, int *step, int *steps) {
+    auto *job = static_cast<AnimaJob *>(opaque);
+    *step = 0; *steps = 0;
+    if (!job) return 0;
+    if (!job->progress_ready) return job->phase;
+    sd_dart_progress_t reports[64];
+    size_t count = sd_dart_progress_read(job->sequence, reports, 64, nullptr);
+    if (count) {
+        auto &last = reports[count - 1];
+        job->sequence = last.sequence;
+        *step = last.step; *steps = last.steps;
+    }
+    return job->phase;
+}
+int koharu_anima_generate(void *opaque, const char *diffusion, const char *text, const char *vae,
+                          const char *prompt, int width, int height, int steps, int64_t seed,
+                          uint8_t *output, char *error, size_t capacity) {
+    auto *job = static_cast<AnimaJob *>(opaque);
+    bool supported_size = (width == 512 && height == 512) || (width == 768 && height == 1024) ||
+                          (width == 720 && height == 1280) || (width == 1024 && height == 1024) ||
+                          (width == 1024 && height == 1280);
+    if (!job || !prompt || !*prompt || !output || !supported_size || steps < 5 || steps > 20) {
+        report(error, capacity, "Invalid anime generation request"); return 0;
+    }
+    try {
+        if (job->cancelled) return 0;
+        job->phase = 1;
+        std::string metal;
+        for (int i = 0; i < sd_dart_gpu_device_count(); ++i) {
+            sd_dart_gpu_device_memory_t device{};
+            if (sd_dart_gpu_device_memory(i, &device) == SD_DART_GPU_OK &&
+                (strncmp(device.name, "MTL", 3) == 0 || strncmp(device.name, "Metal", 5) == 0)) {
+                metal = device.name; break;
+            }
+        }
+        if (metal.empty()) { report(error, capacity, "Metal is not available on this device"); return 0; }
+        sd_dart_progress_enable();
+        job->progress_ready = false;
+        uint64_t latest = 0; sd_dart_progress_read(0, nullptr, 0, &latest); job->sequence = latest;
+        job->progress_ready = true;
+        sd_ctx_params_t context; sd_ctx_params_init(&context);
+        context.diffusion_model_path = diffusion; context.llm_path = text; context.vae_path = vae;
+        context.backend = metal.c_str(); context.params_backend = "*=cpu";
+        context.enable_mmap = true; context.n_threads = 4;
+        context.max_vram = "2.5"; context.disable_prefetch = true; context.flash_attn = true;
+        std::unique_ptr<sd_ctx_t, decltype(&sd_dart_exit_free)> runtime(sd_dart_new_sd_ctx(&context), sd_dart_exit_free);
+        if (!runtime) { sd_dart_last_error(error, capacity); if (!error[0]) report(error, capacity, "Could not load Anima model"); return 0; }
+        std::unique_lock<std::mutex> lock(job->mutex);
+        if (job->cancelled) return 0;
+        job->context = runtime.get(); lock.unlock();
+        // Clear the pointer before runtime is freed, including on exceptions.
+        struct ClearContext {
+            AnimaJob *job;
+            ~ClearContext() { std::lock_guard<std::mutex> guard(job->mutex); job->context = nullptr; }
+        } clear{job};
+        sd_img_gen_params_t params; sd_img_gen_params_init(&params);
+        params.prompt = prompt; params.negative_prompt = "";
+        params.width = width; params.height = height; params.seed = seed; params.batch_count = 1;
+        params.sample_params.sample_method = EULER_SAMPLE_METHOD;
+        params.sample_params.scheduler = SGM_UNIFORM_SCHEDULER;
+        params.sample_params.sample_steps = steps; params.sample_params.guidance.txt_cfg = 1.0f;
+        params.vae_tiling_params.enabled = true;
+        params.vae_tiling_params.tile_size_w = 256; params.vae_tiling_params.tile_size_h = 256;
+        sd_image_t *images = nullptr; int count = 0;
+        struct ImageBatch {
+            sd_image_t *&images; int &count;
+            ~ImageBatch() { if (images) free_sd_images(images, count); }
+        } batch{images, count};
+        if (job->cancelled) return 0;
+        job->phase = 2;
+        bool ok = sd_dart_generate_image(runtime.get(), &params, &images, &count);
+        bool valid = ok && !job->cancelled && count == 1 && images && images[0].data &&
+                     images[0].width == (uint32_t)width && images[0].height == (uint32_t)height && images[0].channel == 3;
+        if (valid) memcpy(output, images[0].data, (size_t)width * height * 3);
+        else { sd_dart_last_error(error, capacity); if (!error[0]) report(error, capacity, "Could not generate anime image"); }
+        if (valid) job->phase = 3;
+        return valid ? 1 : 0;
+    } catch (const std::exception &e) { report(error, capacity, e.what()); return 0; }
+}
 
 #if __has_include(<llama/mtmd.h>)
 #include <llama/llama.h>

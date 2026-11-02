@@ -115,7 +115,7 @@ actor PagePipeline {
         guard let data = rendered.pngData() else { throw AppError.message(L("Could not render translated page")) }
         return data
     }
-    private func performVisionInference<T>(_ operation: () throws -> T) throws -> T {
+    func performVisionInference<T>(_ operation: () throws -> T) throws -> T {
         do { return try autoreleasepool(invoking: operation) }
         catch {
             let message = error.localizedDescription.lowercased()
