@@ -206,6 +206,7 @@ struct RootScreen: View {
                             ReaderScreen(chapterID: id, openSource: { url in browser.go(url); selection = .browser }).id(id)
                         }
                 }
+                .modifier(MainTabLayout())
             }
             Tab(MainTab.browser.title, systemImage: MainTab.browser.symbol, value: .browser) {
                 NavigationStack {
@@ -214,6 +215,7 @@ struct RootScreen: View {
                         selection = .library
                     }
                 }
+                .modifier(MainTabLayout())
             }
             Tab(MainTab.anime.title, systemImage: MainTab.anime.symbol, value: .anime) {
                 NavigationStack {
@@ -222,9 +224,11 @@ struct RootScreen: View {
                         selection = .settings
                     }
                 }
+                .modifier(MainTabLayout())
             }
             Tab(MainTab.settings.title, systemImage: MainTab.settings.symbol, value: .settings) {
                 NavigationStack { SettingsScreen(providerFocus: $settingsProvider) }
+                    .modifier(MainTabLayout())
             }
         }
         // UIKit's collection/tab controllers retain mirrored transforms when a
@@ -232,6 +236,7 @@ struct RootScreen: View {
         // selected tab, browser and durable reading state remain above it.
         .id(AppLocalization.shared.isRightToLeft)
         .tabViewStyle(.sidebarAdaptable)
+        .tabBarMinimizeBehavior(.never)
         .task(id: CreditReminderSchedule(nextReset: library.credits.loaded ? library.credits.nextDaily : nil, language: AppLocalization.shared.language)) {
             guard library.credits.loaded else { return }
             let accountID = library.credits.profile.id
@@ -278,18 +283,6 @@ struct RootScreen: View {
             }
         }
         .onChange(of: selection) { _, tab in CloudServices.shared.trackScreen(tab.rawValue) }
-        .safeAreaInset(edge: .bottom) {
-            VStack(spacing: 0) {
-            if library.busy {
-                HStack {
-                    ProgressView(value: library.progress).frame(maxWidth: 180)
-                    Text(library.status).font(.caption)
-                    Button(L("Stop"), role: .destructive) { library.activeTask?.cancel() }.buttonStyle(.bordered)
-                }.padding(10).frame(maxWidth: .infinity).background(.regularMaterial)
-            }
-            CreditSummary()
-            }
-        }
         .alert(L("Koharu"), isPresented: Binding(get: { library.error != nil }, set: { if !$0 { library.error = nil } })) {
             Button(L("OK")) { library.error = nil }
         } message: { Text(library.error ?? "") }
@@ -317,6 +310,29 @@ struct RootScreen: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in
             if !library.busy { Task { await library.translator.unload(); await library.pipeline.releaseCachedModels() } }
         }
+    }
+}
+
+private struct MainTabLayout: ViewModifier {
+    @Environment(MangaLibrary.self) private var library
+
+    func body(content: Content) -> some View {
+        content
+            .toolbar(.visible, for: .tabBar)
+            // Each tab inherits the tab bar's safe area. An inset around the
+            // entire TabView instead covers the floating iPhone tab bar.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                VStack(spacing: 0) {
+                    if library.busy {
+                        HStack {
+                            ProgressView(value: library.progress).frame(maxWidth: 180)
+                            Text(library.status).font(.caption)
+                            Button(L("Stop"), role: .destructive) { library.activeTask?.cancel() }.buttonStyle(.bordered)
+                        }.padding(10).frame(maxWidth: .infinity).background(.regularMaterial)
+                    }
+                    CreditSummary()
+                }
+            }
     }
 }
 
