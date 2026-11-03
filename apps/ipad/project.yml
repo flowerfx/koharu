@@ -152,6 +152,9 @@ targets:
       - name: Normalize static SDK resource framework deployment versions
         script: python3 "$SRCROOT/scripts/normalize_sdk_frameworks.py"
         basedOnDependencyAnalysis: false
+      - name: Validate packaged privacy manifests
+        script: python3 "$SRCROOT/scripts/validate_privacy_manifests.py" "$TARGET_BUILD_DIR/$WRAPPER_NAME"
+        basedOnDependencyAnalysis: false
       - name: Upload Crashlytics symbols
         script: |
           set -eu
