@@ -99,7 +99,8 @@ import UIKit
         }
     }
     private func startImportChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool, onReady: @escaping @MainActor (UUID) -> Void) {
-        guard !busy else { return }
+        // Configuration may change while the credit approval sheet is open.
+        guard !busy, AppConfiguration.current.contentSafety.mode.allowsRawkuma else { return }
         let config = preferences
         busy = true; activeJobUsesGPU = true
         activeTask = Task {
