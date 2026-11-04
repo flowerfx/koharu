@@ -1,0 +1,31 @@
+Dịch các trang manga và hình ảnh anime bạn nhập vào. Đọc và sáng tạo trên iPhone và iPad.
+
+AI Anime Translator kết hợp dịch thuật dựa trên hình ảnh, thư viện đọc cá nhân và tạo ảnh anime với Anima.
+
+NHẬP HÌNH ẢNH CỦA BẠN
+Chọn trang manga, hình ảnh truyện tranh, hoặc ảnh chụp màn hình anime từ ứng dụng Tệp. Nhập hình ảnh riêng lẻ hoặc thư mục hình ảnh, giữ thứ tự trang theo tên tệp và sắp xếp thành các chương trong thư viện của bạn.
+
+DỊCH VÀ ĐỌC
+Nhận dạng hội thoại bằng OCR và dịch sang ngôn ngữ bạn chọn. Xem lại và chỉnh sửa văn bản dịch, sử dụng tùy chọn AI inpainting để phục hồi nền, và đọc với cuộn dọc hoặc lật trang ngang. Tiến trình đọc được lưu giúp bạn tiếp tục dễ dàng.
+
+TẠO ẢNH ANIME VỚI ANIMA
+Chuyển mô tả văn bản thành hình ảnh phong cách anime trên thiết bị được hỗ trợ. Điều chỉnh kích thước ảnh và số bước tạo, dùng tùy chọn phóng to ảnh, lưu kết quả vào thư viện, dùng lại prompt và chia sẻ tác phẩm.
+
+HỖ TRỢ PROMPT
+Bắt đầu với ý tưởng bằng ngôn ngữ của bạn. Tính năng làm chi tiết prompt gợi ý prompt tiếng Anh chi tiết hơn hoặc ý tưởng nhân vật để bạn lấy cảm hứng. Xem lại và chỉnh sửa trước khi dùng. Các prompt cần kiểm duyệt sẽ được Server của Kuruby xét duyệt trước khi tạo ảnh; các prompt không phù hợp phải thay đổi.
+
+CHỌN CÔNG CỤ DỊCH
+Sử dụng Kuruby Backend API tích hợp sẵn, mô hình ngôn ngữ GGUF hỗ trợ trên thiết bị hoặc nhà cung cấp AI bên ngoài được hỗ trợ. OCR và xử lý ảnh chạy trên thiết bị của bạn. Dịch trực tuyến và dịch vụ prompt yêu cầu internet và có thể có phí riêng từ nhà cung cấp.
+
+CREDIT VÀ PREMIUM
+Bạn có thể nhận credit hằng ngày để dùng cho các tác vụ dịch và sáng tạo phù hợp. Video thưởng là lựa chọn để mở khóa tác vụ được hỗ trợ khi không đủ credit. Ứng dụng có gói Premium trả phí, tự động gia hạn hằng tháng. Chi phí credit và quyền lợi phụ thuộc vào gói thành viên, nhà cung cấp và tác vụ.
+
+YÊU CẦU
+Tạo hình Anima yêu cầu iPhone hoặc iPad được hỗ trợ với ít nhất 8 GB RAM và các tệp mô hình đã tải về. Bộ nhớ khả dụng, dung lượng lưu trữ, kích thước ảnh và hiệu năng máy ảnh hưởng đến khả năng và tốc độ. Một số công cụ cần tải thêm hoặc thông tin đăng nhập nhà cung cấp. Tính năng và dịch vụ có thể thay đổi.
+
+Các bản dịch AI và nội dung tạo ra có thể có lỗi. Vui lòng xem lại trước khi sử dụng hoặc chia sẻ. Chỉ xử lý nội dung bạn sở hữu hoặc có quyền sử dụng.
+
+Đăng ký tự động gia hạn trừ khi hủy ít nhất 24 giờ trước khi kỳ hiện tại kết thúc. Khoản thanh toán được tính vào Tài khoản Apple của bạn. Quản lý hoặc hủy đăng ký trong cài đặt Tài khoản Apple.
+
+Chính sách Bảo mật: https://www.kuruby.com/privacy-policy
+Điều khoản Dịch vụ: https://www.kuruby.com/terms-of-service

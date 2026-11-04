@@ -1,0 +1,31 @@
+Translate the manga and anime images you import. Read and create on iPhone and iPad.
+
+AI Anime Translator combines image-based translation, a personal reading library, and anime image creation with Anima.
+
+IMPORT YOUR OWN IMAGES
+Select manga pages, comic images, or anime screenshots from Files. Import individual images or a folder of images, keep pages in filename order, and organize them as chapters in your library.
+
+TRANSLATE AND READ
+Recognize dialogue with OCR and translate it into your preferred language. Review and edit translated text, use optional AI inpainting to restore the background, and read with vertical scrolling or horizontal page swipes. Your saved reading progress helps you continue where you left off.
+
+CREATE ANIME WITH ANIMA
+Turn text descriptions into anime-style images on a supported device. Adjust image size and generation steps, use optional upscaling, keep results in your gallery, reuse prompts, and share your creations.
+
+PROMPT ASSISTANCE
+Start with an idea in your language. Enhance Prompt can suggest a more detailed English prompt, or generate a character idea for inspiration. Review and edit suggestions before using them. Prompts that require review are checked through Kuruby before generation; unsuitable prompts must be changed.
+
+CHOOSE YOUR TRANSLATION TOOLS
+Use the built-in Kuruby Backend API, supported on-device GGUF language models, or supported external AI providers. OCR and image processing run on your device. Online translation and prompt services require internet access and may have separate provider fees.
+
+CREDITS AND PREMIUM
+Daily credits are available for eligible translation and creative actions. Optional rewarded videos can unlock supported actions when credits are insufficient. An optional monthly auto-renewable Premium subscription is available. Credit costs and benefits depend on membership, provider, and action.
+
+REQUIREMENTS
+Anima image generation requires a supported iPhone or iPad with at least 8 GB RAM and downloaded model files. Available memory, storage, image size, and device performance affect availability and speed. Some tools require additional downloads or provider credentials. Features and service availability may vary.
+
+AI translations and generated content may contain errors. Review results before using or sharing them. Process only content you own or have permission to use.
+
+Subscriptions renew automatically unless canceled at least 24 hours before the current period ends. Payment is charged to your Apple Account. Manage or cancel subscriptions in your Apple Account settings.
+
+Privacy Policy: https://www.kuruby.com/privacy-policy
+Terms of Service: https://www.kuruby.com/terms-of-service

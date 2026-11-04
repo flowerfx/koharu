@@ -1,0 +1,31 @@
+Traduza as imagens de mangá e anime que você importar. Leia e crie no iPhone e iPad.
+
+AI Anime Translator combina tradução baseada em imagens, uma biblioteca pessoal de leitura e criação de imagens de anime com Anima.
+
+IMPORTE SUAS PRÓPRIAS IMAGENS
+Selecione páginas de mangá, imagens de quadrinhos ou capturas de tela de anime no app Arquivos. Importe imagens individuais ou uma pasta inteira, mantenha as páginas na ordem dos nomes dos arquivos e organize-as como capítulos em sua biblioteca.
+
+TRADUZA E LEIA
+Reconheça diálogos com OCR e traduza para seu idioma preferido. Revise e edite o texto traduzido, use a pintura por IA opcional para restaurar o fundo e leia com rolagem vertical ou deslizes horizontais de página. O progresso salvo permite continuar a leitura de onde parou.
+
+CRIE ANIME COM ANIMA
+Transforme descrições de texto em imagens no estilo anime em dispositivos compatíveis. Ajuste tamanho da imagem e passos de geração, use upscaling opcional, mantenha os resultados na galeria, reutilize prompts e compartilhe suas criações.
+
+ASSISTÊNCIA DE PROMPT
+Comece com uma ideia no seu idioma. Enhance Prompt pode sugerir um prompt em inglês mais detalhado ou gerar ideias de personagens para inspiração. Revise e edite as sugestões antes de usar. Prompts que exigem revisão passam pelo sistema da Kuruby antes da geração; prompts inadequados precisam ser alterados.
+
+ESCOLHA SUAS FERRAMENTAS DE TRADUÇÃO
+Use a API Kuruby Backend integrada, modelos de linguagem GGUF suportados no dispositivo, ou provedores externos de IA compatíveis. OCR e processamento de imagem funcionam no dispositivo. Serviços de tradução online e prompts exigem internet, podendo ter taxas separadas do provedor.
+
+CRÉDITOS E PREMIUM
+Créditos diários estão disponíveis para ações elegíveis de tradução e criação. Vídeos recompensados opcionais podem liberar ações quando os créditos são insuficientes. Assinatura Premium mensal opcional renovável automaticamente está disponível. Custos e benefícios de créditos dependem da associação, provedor e ação.
+
+REQUISITOS
+A geração de imagens Anima requer iPhone ou iPad compatível com pelo menos 8 GB de RAM e arquivos de modelo baixados. Memória disponível, armazenamento, tamanho da imagem e desempenho do dispositivo afetam disponibilidade e velocidade. Algumas ferramentas exigem downloads adicionais ou credenciais do provedor. Recursos e disponibilidade de serviço podem variar.
+
+Traduções por IA e conteúdo gerado podem conter erros. Revise os resultados antes de usar ou compartilhar. Processe apenas conteúdos que você possui ou tem permissão para usar.
+
+Assinaturas renovam automaticamente a menos que canceladas pelo menos 24 horas antes do fim do período atual. Pagamento é cobrado na sua conta Apple. Gerencie ou cancele assinaturas nas configurações da sua conta Apple.
+
+Política de Privacidade: https://www.kuruby.com/privacy-policy
+Termos de Serviço: https://www.kuruby.com/terms-of-service
