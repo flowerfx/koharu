@@ -1,3 +1,3 @@
-"NSLocalNetworkUsageDescription" = "Koharuはローカルネットワーク上のLM Studioサーバーに接続してマンガを翻訳します。";
+"NSLocalNetworkUsageDescription" = "AI Mangaはローカルネットワーク上のLM Studioサーバーに接続してマンガを翻訳します。";
 "NSPhotoLibraryAddUsageDescription" = "「画像を保存」を選択すると、翻訳されたマンガのページがフォトライブラリに保存されます。";
 "NSUserTrackingUsageDescription" = "広告パートナーが端末の識別子を使用して、リワード広告をパーソナライズし、広告の効果を測定することを許可します。";

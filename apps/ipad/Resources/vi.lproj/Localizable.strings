@@ -66,7 +66,6 @@
 "Invalid source image" = "Ảnh nguồn không hợp lệ";
 "Invalid translation request" = "Yêu cầu dịch không hợp lệ";
 "Invalid vision model manifest" = "Danh mục model hình ảnh không hợp lệ";
-"Koharu" = "Koharu";
 "LM Studio model list is unavailable" = "Không lấy được danh sách model LM Studio";
 "LM Studio returned no final answer. Check its reasoning/content separation setting and output token limit." = "LM Studio không trả câu trả lời cuối. Kiểm tra tùy chọn tách reasoning/content và giới hạn token đầu ra.";
 "Library" = "Thư viện";
@@ -173,7 +172,6 @@
 "Prefer quality, with speed fallback" = "Ưu tiên chất lượng, dùng chế độ nhanh khi cần";
 "Prioritize quality" = "Ưu tiên chất lượng";
 "Prioritize speed" = "Ưu tiên tốc độ";
-"Projects and source URLs stay on this device. Remote providers receive OCR text and translation instructions. Local mode translates on this device. API keys are stored in Keychain." = "Dự án và URL nguồn nằm trên thiết bị này. Nhà cung cấp từ xa chỉ nhận văn bản OCR và chỉ dẫn dịch. Chế độ Local sẽ dịch ngay trên thiết bị. API key được lưu trong Keychain.";
 "Remove saved API key" = "Xóa API key đã lưu";
 "The provider returned an invalid or incomplete response" = "Nhà cung cấp trả về phản hồi không hợp lệ hoặc không đầy đủ";
 "United States (Virginia)" = "Hoa Kỳ (Virginia)";
@@ -504,9 +502,6 @@
 "Server maintenance" = "Server đang bảo trì";
 "The app is temporarily closed for server maintenance. Please check again later." = "Ứng dụng đang tạm đóng để bảo trì server. Bạn quay lại kiểm tra sau nhé.";
 
-"Allow safety checks" = "Cho phép kiểm tra an toàn";
-"Checking content safety…" = "Đang kiểm tra an toàn nội dung…";
-"Content safety" = "An toàn nội dung";
 "Email" = "Email";
 "Email sign-in failed. Check your email and password." = "Đăng nhập bằng email thất bại. Vui lòng kiểm tra email và mật khẩu.";
 "Enter a valid email address and password." = "Nhập địa chỉ email và mật khẩu hợp lệ.";
@@ -518,8 +513,6 @@
 "Sign in with email" = "Đăng nhập bằng email";
 "Use the email and password for your existing account." = "Sử dụng email và mật khẩu của tài khoản hiện có.";
 
-"Allow prompt safety checks before using prompt assistance or generating images." = "Hãy cho phép kiểm tra an toàn prompt trước khi dùng tính năng hỗ trợ prompt hoặc tạo ảnh.";
-"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "Backend kiểm tra an toàn hiện không khả dụng. Chưa thể hỗ trợ prompt hoặc tạo ảnh. Bạn thử lại sau nhé.";
 "Chapter imported" = "Đã nhập chương";
 "Chapter title (optional)" = "Tiêu đề chương (tùy chọn)";
 "Checking manga genres…" = "Đang kiểm tra thể loại manga…";
@@ -532,14 +525,39 @@
 "Import images or folder" = "Nhập ảnh hoặc thư mục";
 "Import manga" = "Nhập manga";
 "Importing manga…" = "Đang nhập manga…";
-"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "Ở chế độ half-safe và full-safe, prompt được kiểm tra qua Server của Kuruby và cần kết nối internet. Trang truyện và ảnh đã tạo vẫn nằm trên thiết bị.";
-"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "Ở chế độ half-safe và full-safe, prompt tạo ảnh được gửi qua Server của Kuruby tới OpenAI để kiểm tra nội dung tình dục. Tính năng này cần internet. Trang truyện và ảnh đã tạo không được gửi đi để kiểm tra.";
 "Inappropriate content" = "Nội dung không phù hợp";
-"Mode" = "Chế độ";
-"Prompt safety checks" = "Kiểm tra an toàn prompt";
 "Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma là trang web bên ngoài. Có thể chứa nội dung người lớn hoặc tình dục.";
-"The safety mode is managed by app configuration." = "Chế độ an toàn được quản lý bởi cấu hình ứng dụng.";
 "This manga has blocked genres and cannot be translated:" = "Manga này có thể loại bị chặn và không thể dịch:";
-"This prompt contains sexual content. Change it before generating an image." = "Prompt này chứa nội dung tình dục. Hãy chỉnh lại trước khi tạo ảnh.";
 "Translation is blocked for these genres:" = "Việc dịch bị chặn cho các thể loại này:";
-"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "Bạn có thể từ chối. Tính năng hỗ trợ prompt và tạo ảnh sẽ bị chặn khi chế độ hiện tại yêu cầu kiểm tra prompt.";
+
+"AI Manga" = "AI Manga";
+"Allow Kuruby to review your prompt before using prompt assistance or generating images." = "Hãy cho phép hệ thống Kuruby kiểm duyệt prompt trước khi hỗ trợ prompt hoặc tạo ảnh.";
+"Allow prompt review" = "Cho phép kiểm duyệt prompt";
+"Anima Turbo is a derivative of Anima. The upstream Anima weights use the CircleStone Labs Non-Commercial License v1.2; the conversion repository's license does not replace the base model's terms." = "Anima Turbo được phát triển từ Anima. Trọng số Anima gốc áp dụng CircleStone Labs Non-Commercial License v1.2; giấy phép của kho chuyển đổi không thay thế điều khoản của model gốc.";
+"Anime Studio generates images on this device with Anima and can upscale them with Real-ESRGAN. Downloaded model weights have their own licenses, separate from the app's source-code license." = "Xưởng anime tạo ảnh ngay trên thiết bị bằng Anima và có thể phóng to ảnh bằng Real-ESRGAN. Các model tải về có giấy phép riêng, độc lập với giấy phép mã nguồn ứng dụng.";
+"Apple Vision is an Apple platform framework. Optional OCR weights are downloaded separately under their publishers' terms." = "Apple Vision là khung nền tảng của Apple. Trọng số OCR tùy chọn được tải riêng theo điều khoản của nhà phát hành.";
+"Built using Koharu open-source components by Mayo Takanashi and contributors, licensed under MIT or Apache 2.0. The interface and processing workflows have been rebuilt natively for iOS and iPadOS." = "Ứng dụng sử dụng các thành phần mã nguồn mở Koharu của Mayo Takanashi và các tác giả đóng góp, theo giấy phép MIT hoặc Apache 2.0. Giao diện và luồng xử lý được xây dựng lại theo kiến trúc native dành cho iOS/iPadOS.";
+"Content and prompts that require review are sent through Kuruby Server to check compliance with the platform's content requirements." = "Nội dung và prompt cần kiểm duyệt được gửi qua Server của Kuruby để kiểm tra theo quy định nội dung của nền tảng.";
+"Could not load the bundled license." = "Không thể tải giấy phép đi kèm.";
+"Credits and licenses" = "Ghi nhận và giấy phép";
+"For this review, prompt text is sent through Kuruby Server to OpenAI. Internet access is required. Manga pages and generated images are not sent for this review." = "Để kiểm duyệt, văn bản prompt được gửi qua Server của Kuruby tới OpenAI và cần kết nối internet. Trang truyện và ảnh đã tạo không được gửi đi để kiểm duyệt.";
+"Image generation and upscaling" = "Tạo ảnh và phóng to ảnh";
+"Inpainting models" = "Model inpainting";
+"Inpainting removes source text and reconstructs its background on this device using LaMa, AOT GAN, FLUX.2 Klein or RORem. When disabled, the app uses white speech cards before rendering translated text." = "Inpainting xóa chữ gốc và khôi phục nền ngay trên thiết bị bằng LaMa, AOT GAN, FLUX.2 Klein hoặc RORem. Khi tắt, ứng dụng dùng khung nền trắng để hiển thị bản dịch.";
+"Kuruby Server manages account sign-in, credits and membership status. With Backend API selected, it chooses the AI provider and model, processes translation and prompt-assistant requests, and provides content review." = "Server của Kuruby quản lý đăng nhập, credit và trạng thái gói thành viên. Khi dùng API backend, server chọn nhà cung cấp và model AI, xử lý yêu cầu dịch, hỗ trợ prompt và kiểm duyệt nội dung.";
+"Kuruby reviews your prompt before creating an image. If it meets the platform's content requirements, you can continue. Otherwise, please use a different prompt." = "Prompt của bạn sẽ được kiểm duyệt thông qua hệ thống Kuruby trước khi tạo ảnh. Nếu đạt yêu cầu của nền tảng, bạn có thể tạo ảnh; nếu không, hãy dùng prompt khác.";
+"Kuruby's content review service is unavailable. Please try again before using prompt assistance or generating images." = "Dịch vụ kiểm duyệt của Kuruby hiện không khả dụng. Bạn thử lại sau để tiếp tục hỗ trợ prompt hoặc tạo ảnh.";
+"LaMa Manga and FLUX.2 Klein publish Apache 2.0 terms. AOT GAN's canonical weights use MIT; its ONNX conversion repository does not declare a separate license. RORem combines Apache 2.0 components with an SDXL inpainting base under CreativeML Open RAIL++-M." = "LaMa Manga và FLUX.2 Klein được phát hành theo điều khoản Apache 2.0. Trọng số chuẩn của AOT GAN dùng MIT; kho chuyển đổi ONNX không công bố giấy phép riêng. RORem kết hợp các thành phần Apache 2.0 với nền inpainting SDXL dưới CreativeML Open RAIL++-M.";
+"Local translation models" = "Model dịch trên thiết bị";
+"Native runtimes" = "Thư viện native";
+"OCR detects text and recognizes the original dialogue on this device. Apple Vision is built in; Manga OCR, Baberu OCR, Hayai OCR and PaddleOCR are optional model downloads." = "OCR phát hiện vùng chữ và nhận dạng lời thoại gốc ngay trên thiết bị. Apple Vision được tích hợp sẵn; Manga OCR, Baberu OCR, Hayai OCR và PaddleOCR là các model tải thêm.";
+"OCR models" = "Mô hình OCR";
+"Projects, manga pages and generated images are stored on this device. Translation providers receive extracted text and translation instructions. API keys are stored in Keychain." = "Dự án, trang manga và hình ảnh tạo ra được lưu trên thiết bị này. Nhà cung cấp dịch thuật nhận văn bản trích xuất và hướng dẫn dịch. Khóa API được lưu trong Keychain.";
+"Prompt review" = "Kiểm duyệt prompt";
+"Qwen 3.5 and Gemma 4 catalog models publish Apache 2.0 terms. Follow each model's source card for the downloaded revision and any companion-component terms. Imported models have their own licenses." = "Các model Qwen 3.5 và Gemma 4 trong danh mục được phát hành theo Apache 2.0. Xem trang nguồn của từng model để biết điều khoản cho phiên bản tải về và các thành phần đi kèm. Model tự nhập có giấy phép riêng.";
+"Reviewing prompt…" = "Đang kiểm duyệt prompt…";
+"Source code" = "Mã nguồn";
+"Source code, models and licenses" = "Mã nguồn, mô hình và giấy phép";
+"Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "Giấy phép mã nguồn không cấp quyền bổ sung cho trọng số mô hình. Giấy phép của mỗi nhà xuất bản mô hình, thông báo bản quyền và điều kiện sử dụng vẫn được áp dụng.";
+"This prompt contains restricted content. Please change it before generating an image." = "Prompt này có nội dung bị hạn chế. Hãy thay đổi lại trước khi tạo ảnh.";
+"You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "Bạn có thể từ chối. Tính năng hỗ trợ prompt và tạo ảnh sẽ hoạt động sau khi bạn đồng ý cho kiểm duyệt prompt.";

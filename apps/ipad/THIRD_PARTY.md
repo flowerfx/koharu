@@ -27,11 +27,15 @@ Weights are not bundled or committed. `Resources/app-config.json` records exact 
 
 OCR preprocessing/decoding follows the pinned publisher's `onnx_infer.py` (Baberu), `inference_onnx.py` (Hayai), and Manga OCR's ViT/TrOCR preprocessing and Japanese postprocessor. Paddle uses the pinned GGUF chat template's exact single-user rendering. Diffusion settings follow Koharu's model implementations: four Euler/FLUX2 steps for Klein and 30 Euler/discrete steps for RORem, including their companion weights, prompts and reference-image conditioning. iPad uses native-resolution 512-pixel context tiles and composites only the mask, a deliberate difference from whole-image generation.
 
-Local text translation catalog: [unsloth/Qwen3.5-0.8B-GGUF](https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF) and [unsloth/Qwen3.5-4B-GGUF](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF), Apache-2.0 according to their cards. Pins are in `Resources/app-config.json`. Imported models have their own terms and hardware requirements.
+Local text translation catalog: Qwen 3.5 and Gemma 4 GGUF conversions, Apache-2.0 according to their publisher cards and [Google's Gemma 4 license](https://ai.google.dev/gemma/apache_2). Exact repositories, revisions and weights are in `Resources/app-config.json`. Imported models have their own terms and hardware requirements.
 
 Rawkuma is an external content source. This fork is not affiliated with the site or model publishers.
 
-## Optional Anime Studio upscalers
+## Optional Anime Studio generation and upscaling models
+
+Anima Turbo is derived from [CircleStone Labs Anima](https://huggingface.co/circlestone-labs/Anima). The upstream weights use [CircleStone Labs Non-Commercial License v1.2](https://huggingface.co/circlestone-labs/Anima/blob/f973fc41ec7545364ac9776c2440285f43ff2a30/LICENSE.md); a conversion repository's license does not replace those terms. The Qwen3-0.6B-Base text encoder and Qwen-Image VAE publish Apache-2.0 terms. `Resources/anima-config.json` pins these components and links the upstream Anima license. The app's MIT/Apache source-code licenses do not grant additional rights to model weights.
+
+Settings → About links the repository's bundled MIT and Apache license texts, bundled native-runtime notices, and the optional models' source cards and license terms.
 
 Real-ESRGAN by Xintao Wang and contributors, BSD-3-Clause: [source and license](https://github.com/xinntao/Real-ESRGAN), [model zoo](https://github.com/xinntao/Real-ESRGAN/blob/master/docs/model_zoo.md). Weights are downloaded separately, never bundled. Copyright (c) 2021 Xintao Wang.
 

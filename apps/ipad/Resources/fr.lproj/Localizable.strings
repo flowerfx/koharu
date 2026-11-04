@@ -66,7 +66,6 @@
 "Invalid source image" = "Image source invalide";
 "Invalid translation request" = "Requête de traduction invalide";
 "Invalid vision model manifest" = "Manifeste du modèle Vision invalide";
-"Koharu" = "Koharu";
 "LM Studio model list is unavailable" = "La liste des modèles LM Studio est indisponible";
 "LM Studio returned no final answer. Check its reasoning/content separation setting and output token limit." = "LM Studio n'a pas renvoyé de réponse finale. Vérifiez le réglage de séparation raisonnement/contenu et la limite de tokens.";
 "Library" = "Bibliothèque";
@@ -173,7 +172,6 @@
 "Prefer quality, with speed fallback" = "Privilégier la qualité, avec repli sur la vitesse";
 "Prioritize quality" = "Prioriser la qualité";
 "Prioritize speed" = "Prioriser la vitesse";
-"Projects and source URLs stay on this device. Remote providers receive OCR text and translation instructions. Local mode translates on this device. API keys are stored in Keychain." = "Les projets et URLs sources restent sur cet appareil. Les fournisseurs distants reçoivent le texte OCR et les instructions de traduction. Le mode local traduit sur cet appareil. Les clés API sont stockées dans Keychain.";
 "Remove saved API key" = "Supprimer la clé API enregistrée";
 "The provider returned an invalid or incomplete response" = "Le fournisseur a renvoyé une réponse invalide ou incomplète";
 "United States (Virginia)" = "États-Unis (Virginie)";
@@ -504,9 +502,6 @@
 "Server maintenance" = "Maintenance du serveur";
 "The app is temporarily closed for server maintenance. Please check again later." = "L’application est temporairement fermée pour la maintenance du serveur. Revenez vérifier un peu plus tard.";
 
-"Allow safety checks" = "Autoriser les vérifications de sécurité";
-"Checking content safety…" = "Vérification de la sécurité du contenu…";
-"Content safety" = "Sécurité du contenu";
 "Email" = "E-mail";
 "Email sign-in failed. Check your email and password." = "Connexion par e-mail échouée. Vérifiez votre e-mail et mot de passe.";
 "Enter a valid email address and password." = "Entrez une adresse e-mail et un mot de passe valides.";
@@ -518,8 +513,6 @@
 "Sign in with email" = "Connexion par e-mail";
 "Use the email and password for your existing account." = "Utilisez l’e-mail et le mot de passe de votre compte existant.";
 
-"Allow prompt safety checks before using prompt assistance or generating images." = "Autoriser les contrôles de sécurité des invites avant d'utiliser l'assistance ou de générer des images.";
-"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "Les contrôles de sécurité du backend sont indisponibles. L'assistance et la génération d'images sont bloquées. Veuillez réessayer plus tard.";
 "Chapter imported" = "Chapitre importé";
 "Chapter title (optional)" = "Titre du chapitre (facultatif)";
 "Checking manga genres…" = "Vérification des genres de manga…";
@@ -532,14 +525,39 @@
 "Import images or folder" = "Importer images ou dossier";
 "Import manga" = "Importer manga";
 "Importing manga…" = "Importation du manga…";
-"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "En mode semi-sécurisé et sécurisé, les contrôles de sécurité des invites utilisent le Server de Kuruby et nécessitent une connexion internet. Les pages de manga et images générées restent sur cet appareil.";
-"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "En modes semi-sécurisé et sécurisé, vos invites d’image sont envoyées via le Server de Kuruby à OpenAI pour vérification de contenu sexuel. La connexion internet est requise. Vos pages de manga et images générées ne sont pas envoyées pour ces contrôles.";
 "Inappropriate content" = "Contenu inapproprié";
-"Mode" = "Mode";
-"Prompt safety checks" = "Contrôles de sécurité des invites";
 "Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma est un site externe. Il peut contenir du contenu mature ou sexuel.";
-"The safety mode is managed by app configuration." = "Le mode sécurité est géré par la configuration de l’app.";
 "This manga has blocked genres and cannot be translated:" = "Ce manga contient des genres bloqués et ne peut pas être traduit :";
-"This prompt contains sexual content. Change it before generating an image." = "Cette invite contient du contenu sexuel. Modifiez-la avant de générer une image.";
 "Translation is blocked for these genres:" = "La traduction est bloquée pour ces genres :";
-"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "Vous pouvez refuser. L'assistance et la génération d'images resteront bloquées tant que les contrôles des invites sont nécessaires.";
+
+"AI Manga" = "AI Manga";
+"Allow Kuruby to review your prompt before using prompt assistance or generating images." = "Autorisez Kuruby à examiner votre prompt avant d'utiliser l'assistance ou de générer des images.";
+"Allow prompt review" = "Autoriser la relecture du prompt";
+"Anima Turbo is a derivative of Anima. The upstream Anima weights use the CircleStone Labs Non-Commercial License v1.2; the conversion repository's license does not replace the base model's terms." = "Anima Turbo est une dérivation d'Anima. Les poids Anima initiaux utilisent la licence CircleStone Labs Non-Commercial v1.2 ; la licence du dépôt de conversion ne remplace pas les conditions du modèle de base.";
+"Anime Studio generates images on this device with Anima and can upscale them with Real-ESRGAN. Downloaded model weights have their own licenses, separate from the app's source-code license." = "Anime Studio génère des images sur cet appareil avec Anima et peut les améliorer avec Real-ESRGAN. Les poids des modèles téléchargés ont leurs propres licences, distinctes de celle du code source de l'app.";
+"Apple Vision is an Apple platform framework. Optional OCR weights are downloaded separately under their publishers' terms." = "Apple Vision est un framework de la plateforme Apple. Les poids OCR optionnels sont téléchargés séparément selon les conditions de leurs éditeurs.";
+"Built using Koharu open-source components by Mayo Takanashi and contributors, licensed under MIT or Apache 2.0. The interface and processing workflows have been rebuilt natively for iOS and iPadOS." = "Construit avec les composants open-source Koharu de Mayo Takanashi et contributeurs, sous licence MIT ou Apache 2.0. L'interface et les flux de traitement ont été reconstruits nativement pour iOS et iPadOS.";
+"Content and prompts that require review are sent through Kuruby Server to check compliance with the platform's content requirements." = "Les contenus et prompts nécessitant une relecture sont envoyés via Kuruby Server pour vérifier leur conformité aux exigences de la plateforme.";
+"Could not load the bundled license." = "Impossible de charger la licence incluse.";
+"Credits and licenses" = "Crédits et licences";
+"For this review, prompt text is sent through Kuruby Server to OpenAI. Internet access is required. Manga pages and generated images are not sent for this review." = "Pour cette relecture, le texte du prompt est envoyé via Kuruby Server à OpenAI. Un accès Internet est nécessaire. Les pages de manga et les images générées ne sont pas envoyées.";
+"Image generation and upscaling" = "Génération et amélioration d'images";
+"Inpainting models" = "Modèles d'inpainting";
+"Inpainting removes source text and reconstructs its background on this device using LaMa, AOT GAN, FLUX.2 Klein or RORem. When disabled, the app uses white speech cards before rendering translated text." = "L'inpainting supprime le texte source et reconstruit l'arrière-plan sur cet appareil avec LaMa, AOT GAN, FLUX.2 Klein ou RORem. Désactivé, l'app affiche des cartes blanches avant le texte traduit.";
+"Kuruby Server manages account sign-in, credits and membership status. With Backend API selected, it chooses the AI provider and model, processes translation and prompt-assistant requests, and provides content review." = "Kuruby Server gère la connexion, les crédits et le statut d'abonnement. En mode Backend API, il choisit le fournisseur AI et modèle, traite les traductions et demandes d'assistance, et effectue la relecture des contenus.";
+"Kuruby reviews your prompt before creating an image. If it meets the platform's content requirements, you can continue. Otherwise, please use a different prompt." = "Kuruby examine votre prompt avant la création d'image. S'il respecte les règles de la plateforme, vous pouvez continuer. Sinon, veuillez changer de prompt.";
+"Kuruby's content review service is unavailable. Please try again before using prompt assistance or generating images." = "Le service de relecture de contenu Kuruby est indisponible. Veuillez réessayer avant d’utiliser l’assistance ou de générer des images.";
+"LaMa Manga and FLUX.2 Klein publish Apache 2.0 terms. AOT GAN's canonical weights use MIT; its ONNX conversion repository does not declare a separate license. RORem combines Apache 2.0 components with an SDXL inpainting base under CreativeML Open RAIL++-M." = "LaMa Manga et FLUX.2 Klein sont sous licence Apache 2.0. Les poids canoniques d’AOT GAN sont MIT ; son dépôt de conversion ONNX ne déclare pas de licence distincte. RORem combine des composants Apache 2.0 avec une base SDXL en inpainting sous CreativeML Open RAIL++-M.";
+"Local translation models" = "Modèles de traduction locaux";
+"Native runtimes" = "Environnements d'exécution natifs";
+"OCR detects text and recognizes the original dialogue on this device. Apple Vision is built in; Manga OCR, Baberu OCR, Hayai OCR and PaddleOCR are optional model downloads." = "L’OCR détecte le texte et reconnaît les dialogues originaux sur cet appareil. Apple Vision est intégré ; Manga OCR, Baberu OCR, Hayai OCR et PaddleOCR sont des téléchargements optionnels.";
+"OCR models" = "Modèles OCR";
+"Projects, manga pages and generated images are stored on this device. Translation providers receive extracted text and translation instructions. API keys are stored in Keychain." = "Les projets, pages de manga et images générées sont stockés sur cet appareil. Les fournisseurs de traduction reçoivent le texte extrait et les instructions. Les clés API sont sauvegardées dans le Trousseau.";
+"Prompt review" = "Relecture du prompt";
+"Qwen 3.5 and Gemma 4 catalog models publish Apache 2.0 terms. Follow each model's source card for the downloaded revision and any companion-component terms. Imported models have their own licenses." = "Les modèles catalogués Qwen 3.5 et Gemma 4 sont sous licence Apache 2.0. Consultez la fiche source de chaque modèle pour la version téléchargée et les conditions des composants. Les modèles importés ont leur propre licence.";
+"Reviewing prompt…" = "Relecture du prompt…";
+"Source code" = "Code source";
+"Source code, models and licenses" = "Code source, modèles et licences";
+"Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "Les licences du code source n’accordent pas de droits supplémentaires sur les poids de modèles. Chaque licence éditeur, avis de droits et conditions restent valables.";
+"This prompt contains restricted content. Please change it before generating an image." = "Ce prompt contient du contenu restreint. Veuillez le modifier avant de générer une image.";
+"You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "Vous pouvez refuser. L’assistance et la génération d’image reprennent après autorisation de relecture.";

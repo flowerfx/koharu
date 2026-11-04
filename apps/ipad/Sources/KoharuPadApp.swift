@@ -291,7 +291,7 @@ struct RootScreen: View {
             }
         }
         .onChange(of: selection) { _, tab in CloudServices.shared.trackScreen(tab.rawValue) }
-        .alert(L("Koharu"), isPresented: Binding(get: { library.error != nil }, set: { if !$0 { library.error = nil } })) {
+        .alert(L("AI Manga"), isPresented: Binding(get: { library.error != nil }, set: { if !$0 { library.error = nil } })) {
             Button(L("OK")) { library.error = nil }
         } message: { Text(library.error ?? "") }
         .sheet(isPresented: Binding(get: {

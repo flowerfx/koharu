@@ -66,7 +66,6 @@
 "Invalid source image" = "الصورة الأصلية غير صالحة";
 "Invalid translation request" = "طلب الترجمة غير صالح";
 "Invalid vision model manifest" = "بيانات نموذج الرؤية غير صالحة";
-"Koharu" = "Koharu";
 "LM Studio model list is unavailable" = "قائمة نماذج LM Studio غير متوفرة";
 "LM Studio returned no final answer. Check its reasoning/content separation setting and output token limit." = "لم يقدم LM Studio إجابة نهائية. تحقق من إعداد فصل الاستنتاج/المحتوى وحدود رموز المخرجات.";
 "Library" = "المكتبة";
@@ -173,7 +172,6 @@
 "Prefer quality, with speed fallback" = "الأولوية للجودة، مع العودة للسرعة عند الحاجة";
 "Prioritize quality" = "الأولوية للجودة";
 "Prioritize speed" = "الأولوية للسرعة";
-"Projects and source URLs stay on this device. Remote providers receive OCR text and translation instructions. Local mode translates on this device. API keys are stored in Keychain." = "تظل المشاريع وروابط المصدر على هذا الجهاز. يتلقى المزودون عن بُعد نص الـ OCR وتعليمات الترجمة. الوضع المحلي يترجم على هذا الجهاز. تُخزن مفاتيح API في Keychain.";
 "Remove saved API key" = "إزالة مفتاح الـ API المحفوظ";
 "The provider returned an invalid or incomplete response" = "أرجع المزود استجابة غير صالحة أو غير مكتملة";
 "United States (Virginia)" = "الولايات المتحدة (فرجينيا)";
@@ -504,9 +502,6 @@
 "Server maintenance" = "صيانة الخادم";
 "The app is temporarily closed for server maintenance. Please check again later." = "التطبيق مغلق مؤقتًا لإجراء صيانة للخادم. يُرجى التحقق مرة أخرى لاحقًا.";
 
-"Allow safety checks" = "السماح بفحوصات الأمان";
-"Checking content safety…" = "جارٍ التحقق من سلامة المحتوى…";
-"Content safety" = "سلامة المحتوى";
 "Email" = "البريد الإلكتروني";
 "Email sign-in failed. Check your email and password." = "فشل تسجيل الدخول بالبريد الإلكتروني. تحقق من بريدك وكلمة المرور.";
 "Enter a valid email address and password." = "أدخل بريدًا إلكترونيًا صالحًا وكلمة مرور.";
@@ -518,8 +513,6 @@
 "Sign in with email" = "تسجيل الدخول بالبريد الإلكتروني";
 "Use the email and password for your existing account." = "استخدم البريد الإلكتروني وكلمة المرور لحسابك الحالي.";
 
-"Allow prompt safety checks before using prompt assistance or generating images." = "السماح بفحوصات سلامة الإرشادات قبل استخدام المساعدة في الإرشادات أو إنشاء الصور.";
-"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "فحوصات السلامة في الخلفية غير متوفرة. تم حظر المساعدة في الإرشادات وإنشاء الصور. يرجى المحاولة لاحقًا.";
 "Chapter imported" = "تم استيراد الفصل";
 "Chapter title (optional)" = "عنوان الفصل (اختياري)";
 "Checking manga genres…" = "جارٍ التحقق من أنواع المانجا…";
@@ -532,14 +525,39 @@
 "Import images or folder" = "استيراد صور أو مجلد";
 "Import manga" = "استيراد المانجا";
 "Importing manga…" = "جارٍ استيراد المانجا…";
-"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "في وضعي نصف الأمان والأمان الكامل، تستخدم فحوصات سلامة الإرشادات خادم Kuruby وتتطلب اتصالًا بالإنترنت. تظل صفحات المانجا والصور المُنشأة محلياً على هذا الجهاز.";
-"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "في وضعي نصف الأمان والأمان الكامل، تُرسل طلبات الصور الخاصة بك عبر خادم Kuruby إلى OpenAI لفحص المحتوى الجنسي. يتطلب اتصالاً بالإنترنت. لا تُرسل صفحات المانجا أو الصور المُنشأة لهذه الفحوصات.";
 "Inappropriate content" = "محتوى غير مناسب";
-"Mode" = "الوضع";
-"Prompt safety checks" = "فحوصات سلامة الإرشادات";
 "Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma موقع خارجي. قد يحتوي على محتوى ناضج أو جنسي.";
-"The safety mode is managed by app configuration." = "يتم إدارة وضع الأمان من خلال إعدادات التطبيق.";
 "This manga has blocked genres and cannot be translated:" = "هذه المانجا تحتوي على أنواع محظورة ولا يمكن ترجمتها:";
-"This prompt contains sexual content. Change it before generating an image." = "تحتوي هذه الإرشادات على محتوى جنسي. يرجى تغييره قبل إنشاء صورة.";
 "Translation is blocked for these genres:" = "تم حظر الترجمة لهذه الأنواع:";
-"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "يمكنك الرفض. ستظل المساعدة في الإرشادات وتوليد الصور محظورة طالما أن فحوصات الإرشادات مطلوبة.";
+
+"AI Manga" = "AI Manga";
+"Allow Kuruby to review your prompt before using prompt assistance or generating images." = "اسمح لـ Kuruby بمراجعة الطلب الخاص بك قبل استخدام المساعدة أو توليد الصور.";
+"Allow prompt review" = "السماح بمراجعة الطلب";
+"Anima Turbo is a derivative of Anima. The upstream Anima weights use the CircleStone Labs Non-Commercial License v1.2; the conversion repository's license does not replace the base model's terms." = "Anima Turbo مشتق من Anima. تستخدم أوزان Anima الأصلية رخصة CircleStone Labs غير التجارية الإصدار 1.2؛ ترخيص مستودع التحويل لا يحل محل شروط نموذج الأساس.";
+"Anime Studio generates images on this device with Anima and can upscale them with Real-ESRGAN. Downloaded model weights have their own licenses, separate from the app's source-code license." = "يولد Anime Studio الصور على هذا الجهاز باستخدام Anima ويمكنه تكبيرها باستخدام Real-ESRGAN. أوزان النماذج المُحمّلة لها تراخيص خاصة بها، مستقلة عن ترخيص شفرة التطبيق المصدرية.";
+"Apple Vision is an Apple platform framework. Optional OCR weights are downloaded separately under their publishers' terms." = "Apple Vision هو إطار عمل لمنصة Apple. يتم تنزيل أوزان OCR الاختيارية بشكل منفصل وفقًا لشروط الناشرين.";
+"Built using Koharu open-source components by Mayo Takanashi and contributors, licensed under MIT or Apache 2.0. The interface and processing workflows have been rebuilt natively for iOS and iPadOS." = "بني باستخدام مكونات مفتوحة المصدر Koharu من Mayo Takanashi والمساهمين، مرخصة بموجب MIT أو Apache 2.0. تم إعادة بناء الواجهة وسير العمل محليًا لـ iOS و iPadOS.";
+"Content and prompts that require review are sent through Kuruby Server to check compliance with the platform's content requirements." = "يتم إرسال المحتوى والطلبات التي تتطلب مراجعة عبر خادم Kuruby للتحقق من الامتثال لمتطلبات محتوى المنصة.";
+"Could not load the bundled license." = "تعذر تحميل الترخيص المرفق.";
+"Credits and licenses" = "الاعتمادات والتراخيص";
+"For this review, prompt text is sent through Kuruby Server to OpenAI. Internet access is required. Manga pages and generated images are not sent for this review." = "للمراجعة، يُرسل نص الطلب عبر خادم Kuruby إلى OpenAI. يتطلب اتصال بالإنترنت. لا تُرسل صفحات المانغا أو الصور المنتجة للمراجعة.";
+"Image generation and upscaling" = "توليد الصور وتحسين الجودة";
+"Inpainting models" = "نماذج إكمال الصور";
+"Inpainting removes source text and reconstructs its background on this device using LaMa, AOT GAN, FLUX.2 Klein or RORem. When disabled, the app uses white speech cards before rendering translated text." = "يجري إكمال الصور إزالة النص المصدر وإعادة بناء الخلفية على هذا الجهاز باستخدام LaMa و AOT GAN و FLUX.2 Klein أو RORem. عند التعطيل، يستخدم التطبيق بطاقات حوار بيضاء قبل عرض النص المترجم.";
+"Kuruby Server manages account sign-in, credits and membership status. With Backend API selected, it chooses the AI provider and model, processes translation and prompt-assistant requests, and provides content review." = "يدير خادم Kuruby تسجيل الدخول، الاعتمادات وحالة العضوية. مع اختيار Backend API، يحدد مزود الذكاء الاصطناعي والنموذج، يعالج الترجمة وطلبات المساعدة بالطلبات ويقدم مراجعة المحتوى.";
+"Kuruby reviews your prompt before creating an image. If it meets the platform's content requirements, you can continue. Otherwise, please use a different prompt." = "يراجع Kuruby طلبك قبل إنشاء صورة. إذا استوفى متطلبات المحتوى، يمكنك المتابعة. وإلا، يرجى استخدام طلب مختلف.";
+"Kuruby's content review service is unavailable. Please try again before using prompt assistance or generating images." = "خدمة مراجعة المحتوى من Kuruby غير متوفرة. يرجى المحاولة مرة أخرى قبل استخدام المساعدة أو توليد الصور.";
+"LaMa Manga and FLUX.2 Klein publish Apache 2.0 terms. AOT GAN's canonical weights use MIT; its ONNX conversion repository does not declare a separate license. RORem combines Apache 2.0 components with an SDXL inpainting base under CreativeML Open RAIL++-M." = "تنشر LaMa Manga و FLUX.2 Klein شروط Apache 2.0. تستخدم الأوزان الرسمية لـ AOT GAN ترخيص MIT؛ مستودع تحويل ONNX لا يعلن عن ترخيص منفصل. تجمع RORem بين مكونات Apache 2.0 وقاعدة SDXL للإكمال تحت CreativeML Open RAIL++-M.";
+"Local translation models" = "نماذج الترجمة المحلية";
+"Native runtimes" = "بيئات التشغيل الأصلية";
+"OCR detects text and recognizes the original dialogue on this device. Apple Vision is built in; Manga OCR, Baberu OCR, Hayai OCR and PaddleOCR are optional model downloads." = "يتعرف OCR على النص والحوار الأصلي على هذا الجهاز. Apple Vision مدمج؛ تُحمَّل نماذج Manga OCR و Baberu OCR و Hayai OCR و PaddleOCR اختياريًا.";
+"OCR models" = "نماذج OCR";
+"Projects, manga pages and generated images are stored on this device. Translation providers receive extracted text and translation instructions. API keys are stored in Keychain." = "يتم تخزين المشاريع والصفحات المانغا والصور المنتجة على هذا الجهاز. يتلقى موفرو الترجمة النص المستخرج وتعليمات الترجمة. تُخزن مفاتيح API في Keychain.";
+"Prompt review" = "مراجعة الطلب";
+"Qwen 3.5 and Gemma 4 catalog models publish Apache 2.0 terms. Follow each model's source card for the downloaded revision and any companion-component terms. Imported models have their own licenses." = "تنشر نماذج دليل Qwen 3.5 و Gemma 4 شروط Apache 2.0. اتبع بطاقة المصدر لكل نموذج للإصدار المُحمّل وأي شروط مكونات مصاحبة. للنماذج المستوردة تراخيص خاصة بها.";
+"Reviewing prompt…" = "جاري مراجعة الطلب…";
+"Source code" = "الشيفرة المصدرية";
+"Source code, models and licenses" = "الشيفرة المصدرية، النماذج والرخص";
+"Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "رخص الشيفرة المصدرية لا تمنح حقوقًا إضافية على أوزان النماذج. تبقى رخصة كل ناشر، إشعارات حقوق النشر وشروط الاستخدام سارية.";
+"This prompt contains restricted content. Please change it before generating an image." = "يحتوي هذا الطلب على محتوى مقيد. يرجى تغييره قبل توليد صورة.";
+"You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "يمكنك الرفض. تستمر المساعدة وتوليد الصور بعد أن تسمح بمراجعة الطلب.";

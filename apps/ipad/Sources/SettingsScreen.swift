@@ -204,15 +204,7 @@ struct SettingsScreen: View {
                     .disabled(!library.canApplyConfiguration || configuration.isRefreshing)
             }
             }
-            Section(L("Content safety")) {
-                LabeledContent(L("Mode"), value: AppConfiguration.current.contentSafety.mode.rawValue)
-                Text(L("The safety mode is managed by app configuration.")).font(.caption).foregroundStyle(.secondary)
-            }
-            Section(L("About")) {
-                Text("Koharu iPad \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
-                Text(L("Projects and source URLs stay on this device. Remote providers receive OCR text and translation instructions. Local mode translates on this device. API keys are stored in Keychain.")).font(.caption).foregroundStyle(.secondary)
-                Text(L("In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device.")).font(.caption).foregroundStyle(.secondary)
-            }
+            AppAboutSection()
         }
         .navigationTitle(L("Settings"))
         .task(id: providerFocus) {

@@ -68,6 +68,43 @@ final class NavigationLayoutTests: XCTestCase {
         try data.write(to: documents.appendingPathComponent("navigation-layout-frames.json"))
     }
 
+    @MainActor func testAboutPromptReviewAndRestrictedAlertSnapshots() async throws {
+        let oldLanguage = AppLocalization.shared.language
+        AppLocalization.shared.language = .vietnamese
+        defer { AppLocalization.shared.language = oldLanguage }
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let library = MangaLibrary(disk: try LibraryDisk(root: root))
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let size = scene.coordinateSpace.bounds
+        let states: [(String, AnyView)] = [
+            ("about-vi", AnyView(NavigationStack { Form { AppAboutSection() }.navigationTitle(L("About")) })),
+            ("prompt-review-vi", AnyView(ContentSafetyConsentScreen(safety: library.safety))),
+            ("licenses-vi", AnyView(NavigationStack { AppAcknowledgementsScreen() })),
+            ("restricted-prompt-vi", AnyView(RootScreen(refreshConfiguration: {}).environment(library))),
+        ]
+        for (name, view) in states {
+            library.error = name == "restricted-prompt-vi" ? ContentSafetyFailure.blocked.localizedDescription : nil
+            let window = UIWindow(windowScene: scene); window.frame = size
+            let host = UIHostingController(rootView: view.tint(.pink).preferredColorScheme(.dark).environment(\.locale, AppLocalization.shared.locale))
+            window.rootViewController = host; window.makeKeyAndVisible()
+            host.view.frame = window.bounds; host.view.layoutIfNeeded()
+            try await Task.sleep(for: .milliseconds(500))
+            let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+            let attachment = XCTAttachment(image: image); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+            let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            try XCTUnwrap(image.pngData()).write(to: documents.appendingPathComponent(name + ".png"))
+            window.isHidden = true
+        }
+    }
+    func testSourceAndRuntimeLicenseNoticesAreBundled() throws {
+        for (name, ext) in [("LICENSE-MIT", nil), ("LICENSE-APACHE", nil), ("llama-LICENSE", "txt"), ("diffusion-LICENSE", "txt"), ("onnxruntime-LICENSE", "txt"), ("firebase-LICENSE", "txt")] as [(String, String?)] {
+            let url = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: ext))
+            let text = try String(contentsOf: url, encoding: .utf8)
+            XCTAssertGreaterThan(text.count, 100, name)
+        }
+    }
+
     @MainActor private func tabController(in controller: UIViewController) -> UITabBarController? {
         if let tabs = controller as? UITabBarController { return tabs }
         for child in controller.children {

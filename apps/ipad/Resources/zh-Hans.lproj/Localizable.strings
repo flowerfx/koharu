@@ -66,7 +66,6 @@
 "Invalid source image" = "无效的源图像";
 "Invalid translation request" = "无效的翻译请求";
 "Invalid vision model manifest" = "无效的视觉模型清单";
-"Koharu" = "Koharu";
 "LM Studio model list is unavailable" = "LM Studio 模型列表不可用";
 "LM Studio returned no final answer. Check its reasoning/content separation setting and output token limit." = "LM Studio 未返回最终答案。请检查其推理/内容分离设置和输出 Token 限制。";
 "Library" = "库";
@@ -173,7 +172,6 @@
 "Prefer quality, with speed fallback" = "质量优先，速度备选";
 "Prioritize quality" = "质量优先";
 "Prioritize speed" = "速度优先";
-"Projects and source URLs stay on this device. Remote providers receive OCR text and translation instructions. Local mode translates on this device. API keys are stored in Keychain." = "项目和源 URL 保留在本地设备。远程服务商接收 OCR 文本和翻译指令。本地模式在设备上进行翻译。API key 存储在 Keychain 中。";
 "Remove saved API key" = "移除已保存的 API key";
 "The provider returned an invalid or incomplete response" = "服务商返回了无效或不完整的响应";
 "United States (Virginia)" = "美国 (弗吉尼亚)";
@@ -504,9 +502,6 @@
 "Server maintenance" = "服务器维护中";
 "The app is temporarily closed for server maintenance. Please check again later." = "应用因服务器维护暂时关闭，请稍后再来查看。";
 
-"Allow safety checks" = "允许安全检查";
-"Checking content safety…" = "正在检查内容安全…";
-"Content safety" = "内容安全";
 "Email" = "电子邮件";
 "Email sign-in failed. Check your email and password." = "电子邮件登录失败。请检查您的电子邮件和密码。";
 "Enter a valid email address and password." = "请输入有效的电子邮件地址和密码。";
@@ -518,8 +513,6 @@
 "Sign in with email" = "使用电子邮件登录";
 "Use the email and password for your existing account." = "请使用您现有账户的电子邮件和密码。";
 
-"Allow prompt safety checks before using prompt assistance or generating images." = "允许在使用提示辅助或生成图像前进行安全检查。";
-"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "后端安全检查不可用。提示辅助和图像生成已被阻止，请稍后再试。";
 "Chapter imported" = "章节已导入";
 "Chapter title (optional)" = "章节标题（可选）";
 "Checking manga genres…" = "正在检查漫画类型…";
@@ -532,14 +525,39 @@
 "Import images or folder" = "导入图片或文件夹";
 "Import manga" = "导入漫画";
 "Importing manga…" = "正在导入漫画…";
-"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "在半安全和完全安全模式下，提示安全检查使用 Kuruby Server 并需要联网。漫画页面和生成的图像保留在本设备上。";
-"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "在半安全和完全安全模式下，您的图像提示通过 Kuruby Server 发送至 OpenAI 以检查色情内容。需要网络连接。您的漫画页面和生成的图像不会发送用于检查。";
 "Inappropriate content" = "不当内容";
-"Mode" = "模式";
-"Prompt safety checks" = "提示安全检查";
 "Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma 是外部网站，可能包含成人或色情内容。";
-"The safety mode is managed by app configuration." = "安全模式由应用程序配置管理。";
 "This manga has blocked genres and cannot be translated:" = "此漫画包含封锁类型，无法翻译：";
-"This prompt contains sexual content. Change it before generating an image." = "此提示含有色情内容。请修改后再生成图像。";
 "Translation is blocked for these genres:" = "这些类型的翻译已被封锁：";
-"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "您可以拒绝。提示辅助和图像生成将在需要提示检查时保持阻止。";
+
+"AI Manga" = "AI Manga";
+"Allow Kuruby to review your prompt before using prompt assistance or generating images." = "允许 Kuruby 在使用提示辅助或生成图像前审核您的提示词。";
+"Allow prompt review" = "允许提示审核";
+"Anima Turbo is a derivative of Anima. The upstream Anima weights use the CircleStone Labs Non-Commercial License v1.2; the conversion repository's license does not replace the base model's terms." = "Anima Turbo 是 Anima 的派生版本，上游 Anima 权重使用 CircleStone Labs 非商业许可证 v1.2；转换仓库的许可证不替代基础模型的条款。";
+"Anime Studio generates images on this device with Anima and can upscale them with Real-ESRGAN. Downloaded model weights have their own licenses, separate from the app's source-code license." = "Anime Studio 使用 Anima 在此设备上生成图像，并可通过 Real-ESRGAN 放大。下载的模型权重拥有独立授权，与应用程序源代码授权分开。";
+"Apple Vision is an Apple platform framework. Optional OCR weights are downloaded separately under their publishers' terms." = "Apple Vision 是 Apple 平台框架，可选的 OCR 权重根据发布者条款单独下载。";
+"Built using Koharu open-source components by Mayo Takanashi and contributors, licensed under MIT or Apache 2.0. The interface and processing workflows have been rebuilt natively for iOS and iPadOS." = "采用 Mayo Takanashi 及贡献者的 Koharu 开源组件构建，遵循 MIT 或 Apache 2.0 授权。界面和处理流程已为 iOS 及 iPadOS 本地重构。";
+"Content and prompts that require review are sent through Kuruby Server to check compliance with the platform's content requirements." = "需审核的内容和提示词通过 Kuruby 服务器发送，以检查是否符合平台内容要求。";
+"Could not load the bundled license." = "无法加载捆绑的许可证。";
+"Credits and licenses" = "感谢与许可证";
+"For this review, prompt text is sent through Kuruby Server to OpenAI. Internet access is required. Manga pages and generated images are not sent for this review." = "此次审核的提示文本通过 Kuruby 服务器发送至 OpenAI，需要网络连接。漫画页和生成的图像不会发送。";
+"Image generation and upscaling" = "图像生成与放大";
+"Inpainting models" = "修补模型";
+"Inpainting removes source text and reconstructs its background on this device using LaMa, AOT GAN, FLUX.2 Klein or RORem. When disabled, the app uses white speech cards before rendering translated text." = "修补使用 LaMa、AOT GAN、FLUX.2 Klein 或 RORem 在此设备上移除原文，并重建背景。禁用时，应用会用白色对白卡代替，显示翻译文字前使用。";
+"Kuruby Server manages account sign-in, credits and membership status. With Backend API selected, it chooses the AI provider and model, processes translation and prompt-assistant requests, and provides content review." = "Kuruby 服务器管理账户登录、积分和会员状态。选用 Backend API 时，选择 AI 提供商及模型，处理翻译和提示助手请求，并提供内容审核。";
+"Kuruby reviews your prompt before creating an image. If it meets the platform's content requirements, you can continue. Otherwise, please use a different prompt." = "Kuruby 会在生成图像前审核您的提示词。符合平台内容要求后可继续，不符请更换提示词。";
+"Kuruby's content review service is unavailable. Please try again before using prompt assistance or generating images." = "Kuruby 内容审核服务不可用，请稍后重试，或在使用提示辅助及生成图像前再次尝试。";
+"LaMa Manga and FLUX.2 Klein publish Apache 2.0 terms. AOT GAN's canonical weights use MIT; its ONNX conversion repository does not declare a separate license. RORem combines Apache 2.0 components with an SDXL inpainting base under CreativeML Open RAIL++-M." = "LaMa Manga 和 FLUX.2 Klein 采用 Apache 2.0 许可。AOT GAN 的标准权重使用 MIT 许可；其 ONNX 转换仓库未声明单独许可。RORem 结合 Apache 2.0 组件与 CreativeML Open RAIL++-M 下的 SDXL 修补基底。";
+"Local translation models" = "本地翻译模型";
+"Native runtimes" = "原生运行时";
+"OCR detects text and recognizes the original dialogue on this device. Apple Vision is built in; Manga OCR, Baberu OCR, Hayai OCR and PaddleOCR are optional model downloads." = "OCR 在此设备上检测文本并识别原始对话。Apple Vision 内置；Manga OCR、Baberu OCR、Hayai OCR 和 PaddleOCR 为可选模型下载。";
+"OCR models" = "OCR 模型";
+"Projects, manga pages and generated images are stored on this device. Translation providers receive extracted text and translation instructions. API keys are stored in Keychain." = "项目、漫画页及生成图像存储于此设备。翻译供应商接收提取文本及翻译指令。API 密钥存储于钥匙串中。";
+"Prompt review" = "提示词审核";
+"Qwen 3.5 and Gemma 4 catalog models publish Apache 2.0 terms. Follow each model's source card for the downloaded revision and any companion-component terms. Imported models have their own licenses." = "Qwen 3.5 和 Gemma 4 目录模型采用 Apache 2.0 许可。请参照各模型的源码卡查看下载版本及相关组件条款。导入模型拥有独立许可。";
+"Reviewing prompt…" = "提示审核中…";
+"Source code" = "源码";
+"Source code, models and licenses" = "源码、模型与许可证";
+"Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "源码许可证并未赋予模型权重额外权利。各模型发布者的许可证、版权声明及使用条件依然适用。";
+"This prompt contains restricted content. Please change it before generating an image." = "此提示包含限制内容，请在生成图像前修改。";
+"You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "您可以拒绝。允许提示审核后，提示辅助与图像生成可继续。";

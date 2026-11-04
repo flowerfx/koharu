@@ -80,6 +80,10 @@ targetTemplates:
     sources:
       - Sources
       - Resources
+      - path: ../../LICENSE-MIT
+        buildPhase: resources
+      - path: ../../LICENSE-APACHE
+        buildPhase: resources
       - path: ../../crates/koharu-translator/src/translation-system.txt
         buildPhase: resources
       - path: ../../packages/bridge/src/rawkuma-navigation.js

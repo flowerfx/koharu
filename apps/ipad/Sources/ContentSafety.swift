@@ -31,9 +31,9 @@ enum ContentSafetyFailure: Error, LocalizedError {
     case blocked, unavailable, consent
     var errorDescription: String? {
         switch self {
-        case .blocked: return L("This prompt contains sexual content. Change it before generating an image.")
-        case .unavailable: return L("Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later.")
-        case .consent: return L("Allow prompt safety checks before using prompt assistance or generating images.")
+        case .blocked: return L("This prompt contains restricted content. Please change it before generating an image.")
+        case .unavailable: return L("Kuruby's content review service is unavailable. Please try again before using prompt assistance or generating images.")
+        case .consent: return L("Allow Kuruby to review your prompt before using prompt assistance or generating images.")
         }
     }
 }
@@ -101,18 +101,19 @@ struct ContentSafetyConsentScreen: View {
         NavigationStack {
             Form {
                 Section {
-                    Label(L("Prompt safety checks"), systemImage: "checkmark.shield")
-                    Text(L("In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks."))
-                    Text(L("You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required."))
+                    Label(L("Prompt review"), systemImage: "checkmark.shield")
+                    Text(L("Kuruby reviews your prompt before creating an image. If it meets the platform's content requirements, you can continue. Otherwise, please use a different prompt."))
+                    Text(L("For this review, prompt text is sent through Kuruby Server to OpenAI. Internet access is required. Manga pages and generated images are not sent for this review."))
+                    Text(L("You can decline. Prompt assistance and image generation can continue after you allow prompt review."))
                     Link(L("Privacy Policy"), destination: URL(string: "https://www.kuruby.com/privacy-policy")!)
                     Link("OpenAI", destination: URL(string: "https://openai.com/policies/privacy-policy/")!)
                 }
                 Section {
-                    Button(L("Allow safety checks")) { safety.resolveConsent(true) }.buttonStyle(.borderedProminent)
+                    Button(L("Allow prompt review")) { safety.resolveConsent(true) }.buttonStyle(.borderedProminent)
                     Button(L("Not now"), role: .cancel) { safety.resolveConsent(false) }
                 }
             }
-            .navigationTitle(L("Content safety"))
+            .navigationTitle(L("Prompt review"))
         }.interactiveDismissDisabled().presentationSizing(.page)
     }
 }

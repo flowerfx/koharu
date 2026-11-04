@@ -66,7 +66,6 @@
 "Invalid source image" = "유효하지 않은 소스 이미지";
 "Invalid translation request" = "유효하지 않은 번역 요청";
 "Invalid vision model manifest" = "유효하지 않은 비전 모델 매니페스트";
-"Koharu" = "Koharu";
 "LM Studio model list is unavailable" = "LM Studio 모델 목록을 사용할 수 없음";
 "LM Studio returned no final answer. Check its reasoning/content separation setting and output token limit." = "LM Studio가 최종 답변을 반환하지 않았습니다. 추론/콘텐츠 분리 설정과 출력 토큰 제한을 확인하세요.";
 "Library" = "라이브러리";
@@ -173,7 +172,6 @@
 "Prefer quality, with speed fallback" = "품질 우선 (속도 보조)";
 "Prioritize quality" = "품질 우선";
 "Prioritize speed" = "속도 우선";
-"Projects and source URLs stay on this device. Remote providers receive OCR text and translation instructions. Local mode translates on this device. API keys are stored in Keychain." = "프로젝트와 소스 URL은 이 기기에 유지됩니다. 원격 제공자는 OCR 텍스트와 번역 지침을 받습니다. 로컬 모드는 이 기기에서 번역합니다. API key는 Keychain에 저장됩니다.";
 "Remove saved API key" = "저장된 API key 삭제";
 "The provider returned an invalid or incomplete response" = "제공자가 유효하지 않거나 불완전한 응답을 반환했습니다";
 "United States (Virginia)" = "미국 (버지니아)";
@@ -504,9 +502,6 @@
 "Server maintenance" = "서버 점검 중";
 "The app is temporarily closed for server maintenance. Please check again later." = "서버 점검으로 앱 이용이 일시 중단되었습니다. 잠시 후 다시 확인해 주세요.";
 
-"Allow safety checks" = "안전 검사 허용";
-"Checking content safety…" = "콘텐츠 안전성 검사 중…";
-"Content safety" = "콘텐츠 안전";
 "Email" = "이메일";
 "Email sign-in failed. Check your email and password." = "이메일 로그인에 실패했습니다. 이메일과 비밀번호를 확인하세요.";
 "Enter a valid email address and password." = "유효한 이메일 주소와 비밀번호를 입력하세요.";
@@ -518,8 +513,6 @@
 "Sign in with email" = "이메일로 로그인";
 "Use the email and password for your existing account." = "기존 계정의 이메일과 비밀번호를 사용하세요.";
 
-"Allow prompt safety checks before using prompt assistance or generating images." = "프롬프트 지원 또는 이미지 생성 전에 안전 검사 허용.";
-"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "백엔드 안전 검사를 사용할 수 없습니다. 프롬프트 지원 및 이미지 생성이 차단되었습니다. 나중에 다시 시도하세요.";
 "Chapter imported" = "챕터가 가져와졌습니다";
 "Chapter title (optional)" = "챕터 제목 (선택 사항)";
 "Checking manga genres…" = "망가 장르 확인 중…";
@@ -532,14 +525,39 @@
 "Import images or folder" = "이미지 또는 폴더 가져오기";
 "Import manga" = "망가 가져오기";
 "Importing manga…" = "망가 가져오는 중…";
-"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "하프 세이프 및 풀 세이프 모드에서는 프롬프트 안전 검사가 Kuruby Server를 사용하며 인터넷 연결이 필요합니다. 망가 페이지와 생성된 이미지는 이 장치에 남아 있습니다.";
-"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "하프 세이프 및 풀 세이프 모드에서는 이미지 프롬프트가 Kuruby Server를 통해 OpenAI로 전송되어 성적 콘텐츠를 검사합니다. 인터넷 접속이 필요하며 망가 페이지와 생성된 이미지는 검사를 위해 전송되지 않습니다.";
 "Inappropriate content" = "부적절한 콘텐츠";
-"Mode" = "모드";
-"Prompt safety checks" = "프롬프트 안전 검사";
 "Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma는 외부 웹사이트입니다. 성인 또는 성적 콘텐츠가 포함될 수 있습니다.";
-"The safety mode is managed by app configuration." = "안전 모드는 앱 설정에서 관리됩니다.";
 "This manga has blocked genres and cannot be translated:" = "이 망가는 차단된 장르가 있어 번역할 수 없습니다:";
-"This prompt contains sexual content. Change it before generating an image." = "이 프롬프트에 성적 콘텐츠가 포함되어 있습니다. 이미지를 생성하기 전에 변경하세요.";
 "Translation is blocked for these genres:" = "이 장르의 번역이 차단되었습니다:";
-"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "거부할 수 있습니다. 프롬프트 지원 및 이미지 생성은 검사 필요 시 계속 차단됩니다.";
+
+"AI Manga" = "AI Manga";
+"Allow Kuruby to review your prompt before using prompt assistance or generating images." = "Kuruby가 프롬프트 지원이나 이미지 생성 전에 프롬프트를 검토하도록 허용합니다.";
+"Allow prompt review" = "프롬프트 검토 허용";
+"Anima Turbo is a derivative of Anima. The upstream Anima weights use the CircleStone Labs Non-Commercial License v1.2; the conversion repository's license does not replace the base model's terms." = "Anima Turbo는 Anima의 파생 모델입니다. 원본 Anima 가중치는 CircleStone Labs 비상업용 라이선스 v1.2를 사용하며, 변환 저장소의 라이선스는 기본 모델의 조건을 대체하지 않습니다.";
+"Anime Studio generates images on this device with Anima and can upscale them with Real-ESRGAN. Downloaded model weights have their own licenses, separate from the app's source-code license." = "Anime Studio는 이 기기에서 Anima로 이미지를 생성하고 Real-ESRGAN으로 업스케일할 수 있습니다. 다운로드된 모델 가중치는 앱 소스 코드 라이선스와 별도의 자체 라이선스를 가집니다.";
+"Apple Vision is an Apple platform framework. Optional OCR weights are downloaded separately under their publishers' terms." = "Apple Vision은 Apple 플랫폼 프레임워크입니다. 선택적 OCR 가중치는 발행자의 약관에 따라 별도로 다운로드됩니다.";
+"Built using Koharu open-source components by Mayo Takanashi and contributors, licensed under MIT or Apache 2.0. The interface and processing workflows have been rebuilt natively for iOS and iPadOS." = "Mayo Takanashi와 기여자들이 만든 Koharu 오픈소스 구성요소로 제작되었으며 MIT 또는 Apache 2.0 라이선스를 따릅니다. 사용자 인터페이스와 처리 과정은 iOS 및 iPadOS에 맞게 네이티브로 재구성되었습니다.";
+"Content and prompts that require review are sent through Kuruby Server to check compliance with the platform's content requirements." = "검토가 필요한 콘텐츠와 프롬프트는 Kuruby 서버를 통해 플랫폼 콘텐츠 규정 준수 여부를 확인합니다.";
+"Could not load the bundled license." = "포함된 라이선스를 불러올 수 없습니다.";
+"Credits and licenses" = "크레딧 및 라이선스";
+"For this review, prompt text is sent through Kuruby Server to OpenAI. Internet access is required. Manga pages and generated images are not sent for this review." = "이 검토를 위해 프롬프트 텍스트는 Kuruby 서버를 거쳐 OpenAI로 전송됩니다. 인터넷 연결이 필요하며, 만화 페이지와 생성된 이미지는 전송되지 않습니다.";
+"Image generation and upscaling" = "이미지 생성 및 업스케일";
+"Inpainting models" = "인페인팅 모델";
+"Inpainting removes source text and reconstructs its background on this device using LaMa, AOT GAN, FLUX.2 Klein or RORem. When disabled, the app uses white speech cards before rendering translated text." = "인페인팅은 LaMa, AOT GAN, FLUX.2 Klein 또는 RORem을 사용해 이 기기에서 원본 텍스트를 제거하고 배경을 복원합니다. 비활성화 시 앱은 번역된 텍스트를 렌더링하기 전에 흰색 대화 카드로 대체합니다.";
+"Kuruby Server manages account sign-in, credits and membership status. With Backend API selected, it chooses the AI provider and model, processes translation and prompt-assistant requests, and provides content review." = "Kuruby 서버는 계정 로그인, 크레딧 및 멤버십 상태를 관리합니다. Backend API 선택 시 AI 제공자와 모델을 선택하고, 번역 및 프롬프트 보조 요청을 처리하며, 콘텐츠 검토를 제공합니다.";
+"Kuruby reviews your prompt before creating an image. If it meets the platform's content requirements, you can continue. Otherwise, please use a different prompt." = "Kuruby가 이미지 생성 전 프롬프트를 검토합니다. 플랫폼 콘텐츠 요구사항에 부합하면 계속 진행할 수 있습니다. 그렇지 않으면 다른 프롬프트를 사용하세요.";
+"Kuruby's content review service is unavailable. Please try again before using prompt assistance or generating images." = "Kuruby의 콘텐츠 검토 서비스가 사용 불가합니다. 프롬프트 지원이나 이미지 생성 전에 다시 시도하세요.";
+"LaMa Manga and FLUX.2 Klein publish Apache 2.0 terms. AOT GAN's canonical weights use MIT; its ONNX conversion repository does not declare a separate license. RORem combines Apache 2.0 components with an SDXL inpainting base under CreativeML Open RAIL++-M." = "LaMa Manga와 FLUX.2 Klein은 Apache 2.0 라이선스를 따릅니다. AOT GAN의 정규 가중치는 MIT 라이선스를 사용하며, ONNX 변환 저장소는 별도 라이선스를 선언하지 않습니다. RORem은 Apache 2.0 구성요소와 CreativeML Open RAIL++-M의 SDXL 인페인팅 베이스를 결합합니다.";
+"Local translation models" = "로컬 번역 모델";
+"Native runtimes" = "네이티브 런타임";
+"OCR detects text and recognizes the original dialogue on this device. Apple Vision is built in; Manga OCR, Baberu OCR, Hayai OCR and PaddleOCR are optional model downloads." = "OCR은 이 기기에서 텍스트를 감지하고 원본 대사를 인식합니다. Apple Vision이 내장되어 있으며, Manga OCR, Baberu OCR, Hayai OCR, PaddleOCR는 선택적 모델 다운로드입니다.";
+"OCR models" = "OCR 모델";
+"Projects, manga pages and generated images are stored on this device. Translation providers receive extracted text and translation instructions. API keys are stored in Keychain." = "프로젝트, 만화 페이지 및 생성된 이미지는 이 기기에 저장되며, 번역 공급자는 추출된 텍스트와 번역 지침을 받습니다. API 키는 키체인에 저장됩니다.";
+"Prompt review" = "프롬프트 검토";
+"Qwen 3.5 and Gemma 4 catalog models publish Apache 2.0 terms. Follow each model's source card for the downloaded revision and any companion-component terms. Imported models have their own licenses." = "Qwen 3.5와 Gemma 4 카탈로그 모델은 Apache 2.0 라이선스를 따릅니다. 다운로드한 버전과 동반 구성요소 조건은 각 모델의 소스 카드를 확인하세요. 가져온 모델은 개별 라이선스를 가집니다.";
+"Reviewing prompt…" = "프롬프트 검토 중…";
+"Source code" = "소스 코드";
+"Source code, models and licenses" = "소스 코드, 모델 및 라이선스";
+"Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "소스 코드 라이선스는 모델 가중치에 대한 추가 권리를 부여하지 않습니다. 각 모델 배포자의 라이선스, 저작권 고지 및 사용 조건은 유효합니다.";
+"This prompt contains restricted content. Please change it before generating an image." = "이 프롬프트에는 제한된 콘텐츠가 포함되어 있습니다. 이미지를 생성하기 전에 변경해 주세요.";
+"You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "거부할 수 있습니다. 프롬프트 검토를 허용한 후에 프롬프트 지원과 이미지 생성이 계속됩니다.";

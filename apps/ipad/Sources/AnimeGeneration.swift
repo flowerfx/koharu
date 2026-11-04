@@ -135,7 +135,7 @@ extension MangaLibrary {
                 var succeeded = false
                 var ticket: String?
                 do {
-                    if AppConfiguration.current.contentSafety.mode.checksPrompts { status = L("Checking content safety…") }
+                    if AppConfiguration.current.contentSafety.mode.checksPrompts { status = L("Reviewing prompt…") }
                     try await safety.checkText(prompt)
                     ticket = try await credits.reserve(action: .image, provider: .local)
                     try Task.checkCancellation()
