@@ -44,7 +44,6 @@
 "Edit text" = "编辑文本";
 "Enter a server root URL without /v1" = "输入不带 /v1 的服务器根 URL";
 "Enter an HTTPS GGUF download URL" = "输入 HTTPS GGUF 下载 URL";
-"Enter an HTTPS Rawkuma URL" = "输入 HTTPS Rawkuma URL";
 "Entire project" = "整个项目";
 "Estimated free RAM required" = "所需可用 RAM（估计）";
 "Export PDF" = "导出 PDF";
@@ -103,7 +102,6 @@
 "Page text exceeds model context. Increase context size." = "页面文本超过模型上下文。请增加上下文大小。";
 "Previous page" = "上一页";
 "Provider" = "提供商";
-"Rawkuma URL" = "Rawkuma URL";
 "Reader" = "阅读器";
 "Redo" = "重做";
 "Refresh models" = "刷新模型";
@@ -526,9 +524,7 @@
 "Import manga" = "导入漫画";
 "Importing manga…" = "正在导入漫画…";
 "Inappropriate content" = "不当内容";
-"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma 是外部网站，可能包含成人或色情内容。";
-"This manga has blocked genres and cannot be translated:" = "此漫画包含封锁类型，无法翻译：";
-"Translation is blocked for these genres:" = "这些类型的翻译已被封锁：";
+"Rawkuma is an external website and may contain inappropriate content." = "Rawkuma 是外部网站，可能包含不适宜的内容。";
 
 "AI Manga" = "AI Manga";
 "Allow Kuruby to review your prompt before using prompt assistance or generating images." = "允许 Kuruby 在使用提示辅助或生成图像前审核您的提示词。";
@@ -561,3 +557,7 @@
 "Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "源码许可证并未赋予模型权重额外权利。各模型发布者的许可证、版权声明及使用条件依然适用。";
 "This prompt contains restricted content. Please change it before generating an image." = "此提示包含限制内容，请在生成图像前修改。";
 "You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "您可以拒绝。允许提示审核后，提示辅助与图像生成可继续。";
+
+"Enter a path on the configured Rawkuma website." = "请输入已配置的 Rawkuma 网站内的路径。";
+"Manga path" = "漫画路径";
+"This content is inappropriate and cannot be translated." = "内容不适宜，无法翻译。";

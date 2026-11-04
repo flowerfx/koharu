@@ -44,7 +44,6 @@
 "Edit text" = "Edit text";
 "Enter a server root URL without /v1" = "Enter a server root URL without /v1";
 "Enter an HTTPS GGUF download URL" = "Enter an HTTPS GGUF download URL";
-"Enter an HTTPS Rawkuma URL" = "Enter an HTTPS Rawkuma URL";
 "Entire project" = "Entire project";
 "Estimated free RAM required" = "Estimated free RAM required";
 "Export PDF" = "Export PDF";
@@ -103,7 +102,6 @@
 "Page text exceeds model context. Increase context size." = "Page text exceeds model context. Increase context size.";
 "Previous page" = "Previous page";
 "Provider" = "Provider";
-"Rawkuma URL" = "Rawkuma URL";
 "Reader" = "Reader";
 "Redo" = "Redo";
 "Refresh models" = "Refresh models";
@@ -526,9 +524,7 @@
 "Import manga" = "Import manga";
 "Importing manga…" = "Importing manga…";
 "Inappropriate content" = "Inappropriate content";
-"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma is an external website. It may contain mature or sexual content.";
-"This manga has blocked genres and cannot be translated:" = "This manga has blocked genres and cannot be translated:";
-"Translation is blocked for these genres:" = "Translation is blocked for these genres:";
+"Rawkuma is an external website and may contain inappropriate content." = "Rawkuma is an external website and may contain inappropriate content.";
 
 "AI Manga" = "AI Manga";
 "Allow Kuruby to review your prompt before using prompt assistance or generating images." = "Allow Kuruby to review your prompt before using prompt assistance or generating images.";
@@ -561,3 +557,7 @@
 "Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable.";
 "This prompt contains restricted content. Please change it before generating an image." = "This prompt contains restricted content. Please change it before generating an image.";
 "You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "You can decline. Prompt assistance and image generation can continue after you allow prompt review.";
+
+"Enter a path on the configured Rawkuma website." = "Enter a path on the configured Rawkuma website.";
+"Manga path" = "Manga path";
+"This content is inappropriate and cannot be translated." = "This content is inappropriate and cannot be translated.";

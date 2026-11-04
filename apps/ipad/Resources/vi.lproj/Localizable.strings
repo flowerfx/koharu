@@ -44,7 +44,6 @@
 "Edit text" = "Sửa chữ";
 "Enter a server root URL without /v1" = "Nhập URL gốc của server, không thêm /v1";
 "Enter an HTTPS GGUF download URL" = "Nhập URL HTTPS tải GGUF";
-"Enter an HTTPS Rawkuma URL" = "Nhập URL HTTPS của Rawkuma";
 "Entire project" = "Toàn bộ project";
 "Estimated free RAM required" = "RAM khả dụng cần có (ước tính)";
 "Export PDF" = "Xuất PDF";
@@ -103,7 +102,6 @@
 "Page text exceeds model context. Increase context size." = "Chữ trong trang vượt ngữ cảnh model. Hãy tăng số token ngữ cảnh.";
 "Previous page" = "Trang trước";
 "Provider" = "Nhà cung cấp";
-"Rawkuma URL" = "URL Rawkuma";
 "Reader" = "Đọc truyện";
 "Redo" = "Làm lại";
 "Refresh models" = "Làm mới model";
@@ -526,9 +524,7 @@
 "Import manga" = "Nhập manga";
 "Importing manga…" = "Đang nhập manga…";
 "Inappropriate content" = "Nội dung không phù hợp";
-"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma là trang web bên ngoài. Có thể chứa nội dung người lớn hoặc tình dục.";
-"This manga has blocked genres and cannot be translated:" = "Manga này có thể loại bị chặn và không thể dịch:";
-"Translation is blocked for these genres:" = "Việc dịch bị chặn cho các thể loại này:";
+"Rawkuma is an external website and may contain inappropriate content." = "Rawkuma là một trang web bên ngoài, có thể chứa nội dung không phù hợp.";
 
 "AI Manga" = "AI Manga";
 "Allow Kuruby to review your prompt before using prompt assistance or generating images." = "Hãy cho phép hệ thống Kuruby kiểm duyệt prompt trước khi hỗ trợ prompt hoặc tạo ảnh.";
@@ -561,3 +557,7 @@
 "Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "Giấy phép mã nguồn không cấp quyền bổ sung cho trọng số mô hình. Giấy phép của mỗi nhà xuất bản mô hình, thông báo bản quyền và điều kiện sử dụng vẫn được áp dụng.";
 "This prompt contains restricted content. Please change it before generating an image." = "Prompt này có nội dung bị hạn chế. Hãy thay đổi lại trước khi tạo ảnh.";
 "You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "Bạn có thể từ chối. Tính năng hỗ trợ prompt và tạo ảnh sẽ hoạt động sau khi bạn đồng ý cho kiểm duyệt prompt.";
+
+"Enter a path on the configured Rawkuma website." = "Hãy nhập phần đường dẫn trên trang Rawkuma đã cấu hình.";
+"Manga path" = "Đường dẫn truyện";
+"This content is inappropriate and cannot be translated." = "Không thể dịch do nội dung không phù hợp.";

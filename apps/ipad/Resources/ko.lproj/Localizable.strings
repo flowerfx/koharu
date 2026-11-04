@@ -44,7 +44,6 @@
 "Edit text" = "텍스트 편집";
 "Enter a server root URL without /v1" = "/v1을 제외한 서버 루트 URL을 입력하세요";
 "Enter an HTTPS GGUF download URL" = "HTTPS GGUF 다운로드 URL를 입력하세요";
-"Enter an HTTPS Rawkuma URL" = "HTTPS Rawkuma URL을 입력하세요";
 "Entire project" = "전체 프로젝트";
 "Estimated free RAM required" = "필요한 여유 RAM (예상)";
 "Export PDF" = "PDF 내보내기";
@@ -103,7 +102,6 @@
 "Page text exceeds model context. Increase context size." = "페이지 텍스트가 모델 컨텍스트를 초과합니다. 컨텍스트 크기를 키우세요.";
 "Previous page" = "이전 페이지";
 "Provider" = "제공자";
-"Rawkuma URL" = "Rawkuma URL";
 "Reader" = "리더";
 "Redo" = "다시 실행";
 "Refresh models" = "모델 새로고침";
@@ -526,9 +524,7 @@
 "Import manga" = "망가 가져오기";
 "Importing manga…" = "망가 가져오는 중…";
 "Inappropriate content" = "부적절한 콘텐츠";
-"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma는 외부 웹사이트입니다. 성인 또는 성적 콘텐츠가 포함될 수 있습니다.";
-"This manga has blocked genres and cannot be translated:" = "이 망가는 차단된 장르가 있어 번역할 수 없습니다:";
-"Translation is blocked for these genres:" = "이 장르의 번역이 차단되었습니다:";
+"Rawkuma is an external website and may contain inappropriate content." = "Rawkuma는 외부 웹사이트이며 부적절한 콘텐츠가 포함될 수 있습니다.";
 
 "AI Manga" = "AI Manga";
 "Allow Kuruby to review your prompt before using prompt assistance or generating images." = "Kuruby가 프롬프트 지원이나 이미지 생성 전에 프롬프트를 검토하도록 허용합니다.";
@@ -561,3 +557,7 @@
 "Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "소스 코드 라이선스는 모델 가중치에 대한 추가 권리를 부여하지 않습니다. 각 모델 배포자의 라이선스, 저작권 고지 및 사용 조건은 유효합니다.";
 "This prompt contains restricted content. Please change it before generating an image." = "이 프롬프트에는 제한된 콘텐츠가 포함되어 있습니다. 이미지를 생성하기 전에 변경해 주세요.";
 "You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "거부할 수 있습니다. 프롬프트 검토를 허용한 후에 프롬프트 지원과 이미지 생성이 계속됩니다.";
+
+"Enter a path on the configured Rawkuma website." = "설정된 Rawkuma 사이트 내 경로를 입력하세요.";
+"Manga path" = "만화 경로";
+"This content is inappropriate and cannot be translated." = "부적절한 콘텐츠이므로 번역할 수 없습니다.";

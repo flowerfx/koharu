@@ -39,9 +39,10 @@ final class ContractTests: XCTestCase {
         ] { XCTAssertThrowsError(try TranslationContract.decode(Data(json.utf8), count: 2)) }
     }
     func testSourceBoundarySupportsFractionalChaptersAndRejectsOtherHosts() throws {
+        let rawkuma = try AppConfiguration.decode(AppConfiguration.bundledData()).rawkuma
         let source = SourceChapter(url: "https://rawkuma.net/manga/example/chapter-38.5/", title: "Chapter", images: ["https://cdn.rawkuma.com/w/example/38.5/1.webp"])
-        XCTAssertNoThrow(try source.validated())
-        for url in ["http://rawkuma.net/", "https://rawkuma.net.evil.test/", "https://user@rawkuma.net/", "file:///private/test"] { XCTAssertFalse(SourceChapter.isSource(url)) }
+        XCTAssertNoThrow(try source.validated(rawkuma: rawkuma))
+        for url in ["http://rawkuma.net/", "https://rawkuma.net.evil.test/", "https://user@rawkuma.net/", "file:///private/test"] { XCTAssertFalse(rawkuma?.contains(url) == true) }
         for url in ["http://cdn.rawkuma.com/a.jpg", "https://evil.test/a.jpg", "https://cdn.rawkuma.com:444/a.jpg"] { XCTAssertFalse(SourceChapter.isImage(url)) }
     }
     func testDiskReopenUndoAndClearCachePreserveOriginalAndManualText() throws {

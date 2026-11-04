@@ -92,7 +92,7 @@ import UIKit
     }
     func importChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool = false, onReady: @escaping @MainActor (UUID) -> Void) {
         guard !busy else { return }
-        guard AppConfiguration.current.contentSafety.mode.allowsRawkuma else { return }
+        guard AppConfiguration.current.allowsRawkuma else { return }
         do { try requireCreditProvider() } catch { self.error = error.localizedDescription; return }
         requestCredits(.translate, cost: creditCost(.translate), explanation: translationCreditExplanation) {
             self.startImportChapter(source, revalidate: revalidate, newCopy: newCopy, onReady: onReady)
@@ -100,7 +100,7 @@ import UIKit
     }
     private func startImportChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool, onReady: @escaping @MainActor (UUID) -> Void) {
         // Configuration may change while the credit approval sheet is open.
-        guard !busy, AppConfiguration.current.contentSafety.mode.allowsRawkuma else { return }
+        guard !busy, AppConfiguration.current.allowsRawkuma else { return }
         let config = preferences
         busy = true; activeJobUsesGPU = true
         activeTask = Task {

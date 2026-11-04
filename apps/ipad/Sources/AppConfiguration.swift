@@ -14,6 +14,8 @@ struct AppConfiguration: Decodable {
         }
     }
     let contentSafety: ContentSafetyConfiguration
+    let rawkuma: RawkumaConfiguration?
+    var allowsRawkuma: Bool { contentSafety.mode.allowsRawkuma && rawkuma?.url != nil }
     let server: Server
     struct Provider: Decodable { let id: TranslationProvider; let enable: Bool }
     struct Defaults: Decodable {

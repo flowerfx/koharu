@@ -4,19 +4,20 @@ import SwiftUI
 
 final class RawkumaGenreTests: XCTestCase {
     func testConfigurableGenreNamesMatchEntireTagsIgnoringCaseAndNoneNeverBlocks() throws {
-        let custom = ContentSafetyConfiguration(mode: .half, blockedGenres: ["Adult", "Mature", "Ecchi", "Hentai", "Custom genre"])
+        let custom = ContentSafetyConfiguration(mode: .half, blockedGenres: ["Adult", "Mature", "Ecchi", "Hentai", "Crime", "Custom genre"])
         try custom.validated()
-        XCTAssertEqual(custom.blockedMatches(["aDuLt", " HENTAI ", "Custom genre", "Comedy"]), ["Adult", "Hentai", "Custom genre"])
+        XCTAssertEqual(custom.blockedMatches(["aDuLt", " HENTAI ", "cRiMe", "Custom genre", "Comedy"]), ["Adult", "Hentai", "Crime", "Custom genre"])
         XCTAssertTrue(custom.blockedMatches(["Adult comedy", "Adventure"]).isEmpty)
         XCTAssertTrue(ContentSafetyConfiguration(mode: .none, blockedGenres: ["Adult"]).blockedMatches(["Adult"]).isEmpty)
         XCTAssertThrowsError(try ContentSafetyConfiguration(mode: .half, blockedGenres: ["Adult", "adult"]).validated())
     }
     @MainActor func testDirectChapterLinksResolveToTheirOwnSeries() throws {
-        XCTAssertEqual(RawkumaGenreChecker.seriesURL("https://rawkuma.net/manga/grapara/chapter-1.166812/?x=1")?.absoluteString, "https://rawkuma.net/manga/grapara/")
+        let rawkuma = try AppConfiguration.decode(AppConfiguration.bundledData()).rawkuma
+        XCTAssertEqual(RawkumaGenreChecker.seriesURL("https://rawkuma.net/manga/grapara/chapter-1.166812/?x=1", rawkuma: rawkuma)?.absoluteString, "https://rawkuma.net/manga/grapara/")
         let slug = "tensei-shitara-joban-de-shinu-naka-boss-datta-heroine-kenzokuka-de-ikinokoru"
-        XCTAssertEqual(RawkumaGenreChecker.seriesURL("https://rawkuma.net/manga/\(slug)/chapter-38.5.428716/")?.absoluteString, "https://rawkuma.net/manga/\(slug)/")
-        XCTAssertNil(RawkumaGenreChecker.seriesURL("https://evil.example/manga/grapara/"))
-        XCTAssertNil(RawkumaGenreChecker.seriesURL("https://rawkuma.net/"))
+        XCTAssertEqual(RawkumaGenreChecker.seriesURL("https://rawkuma.net/manga/\(slug)/chapter-38.5.428716/", rawkuma: rawkuma)?.absoluteString, "https://rawkuma.net/manga/\(slug)/")
+        XCTAssertNil(RawkumaGenreChecker.seriesURL("https://evil.example/manga/grapara/", rawkuma: rawkuma))
+        XCTAssertNil(RawkumaGenreChecker.seriesURL("https://rawkuma.net/", rawkuma: rawkuma))
     }
     @MainActor func testParserReadsOnlySeriesGenresAndDoesNotExecutePageScripts() async throws {
         let html = """
@@ -37,11 +38,11 @@ final class RawkumaGenreTests: XCTestCase {
         let configuration = try AppConfiguration.decode(JSONSerialization.data(withJSONObject: body))
         let browser = RawkumaBrowser(appConfiguration: { configuration })
         browser.acceptWarning()
-        browser.address = "https://rawkuma.net/manga/grapara/chapter-1.166812/"
-        browser.blockedGenres = ["Adult"]; browser.showsBlockedContent = true
+        browser.addressPath = "manga/grapara/chapter-1.166812/"
+        browser.showsBlockedContent = true
         browser.returnHomeFromBlockedContent(); browser.webView.stopLoading()
         XCTAssertEqual(browser.address, "https://rawkuma.net/")
-        XCTAssertFalse(browser.showsBlockedContent); XCTAssertTrue(browser.blockedGenres.isEmpty)
+        XCTAssertFalse(browser.showsBlockedContent)
         XCTAssertFalse(browser.canTranslate); XCTAssertNil(browser.chapter)
     }
     @MainActor func testBlockedGenreDialogSnapshot() async throws {
@@ -52,14 +53,14 @@ final class RawkumaGenreTests: XCTestCase {
         body["contentSafety"] = ["mode": "half-safe", "blockedGenres": ["Adult", "Mature", "Ecchi", "Hentai"]]
         let configuration = try AppConfiguration.decode(JSONSerialization.data(withJSONObject: body))
         let browser = RawkumaBrowser(appConfiguration: { configuration })
-        browser.address = "https://rawkuma.net/manga/grapara/"
-        browser.hasLoaded = true; browser.blockedGenres = ["Adult"]; browser.showsBlockedContent = true; browser.webView.isHidden = true
+        browser.addressPath = "manga/tensei-shitara-joban-de-shinu-naka-boss-datta-heroine-kenzokuka-de-ikinokoru/chapter-38.5.428716/"
+        browser.hasLoaded = true; browser.showsBlockedContent = true; browser.webView.isHidden = true
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let library = MangaLibrary(disk: try LibraryDisk(root: root))
         let host = UIHostingController(rootView: NavigationStack { BrowserScreen(browser: browser, showLibrary: { _ in }) }.environment(library))
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
-        let window = UIWindow(windowScene: scene); window.frame = CGRect(x: 0, y: 0, width: 800, height: 1000)
+        let window = UIWindow(windowScene: scene); window.frame = scene.coordinateSpace.bounds
         window.rootViewController = host; window.makeKeyAndVisible(); host.view.layoutIfNeeded()
         try await Task.sleep(for: .milliseconds(400))
         let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }

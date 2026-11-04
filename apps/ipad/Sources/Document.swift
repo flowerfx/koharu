@@ -126,16 +126,12 @@ struct SourceChapter: Codable {
     var url: String
     var title: String
     var images: [String]
-    func validated() throws -> Self {
-        guard Self.isSource(url), !images.isEmpty, images.count <= 500,
+    func validated(rawkuma: RawkumaConfiguration? = AppConfiguration.current.rawkuma) throws -> Self {
+        guard rawkuma?.contains(url) == true, !images.isEmpty, images.count <= 500,
               Set(images).count == images.count, images.allSatisfy(Self.isImage) else {
             throw AppError.message(L("Open a Rawkuma chapter containing manga pages."))
         }
         return self
-    }
-    static func isSource(_ value: String) -> Bool {
-        guard let url = URL(string: value) else { return false }
-        return url.scheme == "https" && ["rawkuma.net", "www.rawkuma.net"].contains(url.host ?? "") && url.port == nil && url.user == nil && url.password == nil
     }
     static func isImage(_ value: String) -> Bool {
         guard let url = URL(string: value) else { return false }

@@ -1,11 +1,15 @@
 {
+  "rawkuma": {
+    "url": "https://rawkuma.net/"
+  },
   "contentSafety": {
     "mode": "full-safe",
     "blockedGenres": [
       "Adult",
       "Mature",
       "Ecchi",
-      "Hentai"
+      "Hentai",
+      "Crime"
     ]
   },
   "server": {

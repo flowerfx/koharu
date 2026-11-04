@@ -164,11 +164,12 @@ struct AuthenticatedAppScreen: View {
 }
 
 enum MainTab: String {
-    case library, browser, anime, settings
+    case library, importManga, browser, anime, settings
     var title: String {
         switch self {
         case .library: return L("Library")
-        case .browser: return AppConfiguration.current.contentSafety.mode.allowsRawkuma ? L("Rawkuma") : L("Import manga")
+        case .importManga: return L("Import manga")
+        case .browser: return L("Rawkuma")
         case .anime: return L("Anime Studio")
         case .settings: return L("Settings")
         }
@@ -176,6 +177,7 @@ enum MainTab: String {
     var symbol: String {
         switch self {
         case .library: return "books.vertical"
+        case .importManga: return "folder.badge.plus"
         case .browser: return "globe"
         case .anime: return "paintpalette"
         case .settings: return "gear"
@@ -201,22 +203,24 @@ struct RootScreen: View {
         TabView(selection: $selection) {
             Tab(MainTab.library.title, systemImage: MainTab.library.symbol, value: .library) {
                 NavigationStack(path: $readerPath) {
-                    LibraryScreen { url in openSource(url) } browse: { selection = .browser }
+                    LibraryScreen { url in openSource(url) } browse: { selection = AppConfiguration.current.allowsRawkuma ? .browser : .importManga }
                         .navigationDestination(for: UUID.self) { id in
                             ReaderScreen(chapterID: id, openSource: openSource).id(id)
                         }
                 }
                 .modifier(MainTabLayout())
             }
-            Tab(MainTab.browser.title, systemImage: MainTab.browser.symbol, value: .browser) {
+            Tab(MainTab.importManga.title, systemImage: MainTab.importManga.symbol, value: .importManga) {
                 NavigationStack {
-                    if AppConfiguration.current.contentSafety.mode.allowsRawkuma {
+                    PersonalComicImportScreen() { id in readerPath = [id]; selection = .library }
+                }.modifier(MainTabLayout())
+            }
+            if AppConfiguration.current.allowsRawkuma {
+                Tab(MainTab.browser.title, systemImage: MainTab.browser.symbol, value: .browser) {
+                    NavigationStack {
                         BrowserScreen(browser: browser) { id in readerPath = [id]; selection = .library }
-                    } else {
-                        PersonalComicImportScreen() { id in readerPath = [id]; selection = .library }
-                    }
+                    }.modifier(MainTabLayout())
                 }
-                .modifier(MainTabLayout())
             }
             Tab(MainTab.anime.title, systemImage: MainTab.anime.symbol, value: .anime) {
                 NavigationStack {
@@ -238,10 +242,8 @@ struct RootScreen: View {
         .id(AppLocalization.shared.isRightToLeft)
         .tabViewStyle(.sidebarAdaptable)
         .tabBarMinimizeBehavior(.never)
-        .onChange(of: AppConfiguration.current.contentSafety) { _, config in
-            browser.suspend()
-            if config.mode.allowsRawkuma && selection == .browser { browser.go(browser.address) }
-        }
+        .onChange(of: AppConfiguration.current.contentSafety) { _, _ in refreshBrowser() }
+        .onChange(of: AppConfiguration.current.rawkuma) { _, _ in refreshBrowser() }
         .sheet(isPresented: Binding(get: { library.safety.needsConsent }, set: { if !$0 { library.safety.resolveConsent(false) } })) {
             ContentSafetyConsentScreen(safety: library.safety)
         }
@@ -320,8 +322,15 @@ struct RootScreen: View {
         }
     }
     private func openSource(_ url: String) {
-        if AppConfiguration.current.contentSafety.mode.allowsRawkuma { browser.go(url) }
-        selection = .browser
+        if AppConfiguration.current.allowsRawkuma { browser.go(url); selection = .browser }
+        else { selection = .importManga }
+    }
+    private func refreshBrowser() {
+        browser.suspend()
+        if selection == .browser {
+            if AppConfiguration.current.allowsRawkuma { browser.go(browser.baseAddress) }
+            else { selection = .importManga }
+        }
     }
 }
 
@@ -365,7 +374,7 @@ struct LibraryScreen: View {
                 if library.chapters.isEmpty {
                     ContentUnavailableView {
                         Label(L("Your manga library"), systemImage: "books.vertical")
-                    } description: { Text(AppConfiguration.current.contentSafety.mode.allowsRawkuma ? L("Browse Rawkuma and translate a chapter. Saved chapters stay on this device.") : L("Import images or an image folder from Files, then translate them in your library.")) } actions: { Button(MainTab.browser.title, action: browse).buttonStyle(.borderedProminent) }
+                    } description: { Text(AppConfiguration.current.allowsRawkuma ? L("Browse Rawkuma and translate a chapter. Saved chapters stay on this device.") : L("Import images or an image folder from Files, then translate them in your library.")) } actions: { Button(AppConfiguration.current.allowsRawkuma ? MainTab.browser.title : MainTab.importManga.title, action: browse).buttonStyle(.borderedProminent) }
                 }
                 if !library.chapters.isEmpty && visibleChapters.isEmpty {
                     ContentUnavailableView(L("No matching chapters"), systemImage: "magnifyingglass", description: Text(L("Try another chapter title.")))
@@ -383,7 +392,7 @@ struct LibraryScreen: View {
                     }
                     .contextMenu {
                         Button(L("Original chapter"), systemImage: "globe") { openSource(chapter.sourceURL) }
-                            .disabled(!AppConfiguration.current.contentSafety.mode.allowsRawkuma || URL(string: chapter.sourceURL)?.scheme != "https")
+                            .disabled(!AppConfiguration.current.allowsRawkuma || AppConfiguration.current.rawkuma?.contains(chapter.sourceURL) != true)
                         Button(library.preferences.provider == .backend ? "\(L("Retranslate")) · \(library.rerunCreditCost) \(L("credits"))" : L("Retranslate"), systemImage: "arrow.clockwise") { library.run(chapter.id, force: true) }.disabled(library.busy)
                         Divider()
                         Button(L("Delete"), systemImage: "trash", role: .destructive) { deleting = chapter }.disabled(library.busy)
@@ -400,7 +409,8 @@ struct LibraryScreen: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button(L("Delete all chapters"), systemImage: "trash") { deletingAll = true }
                     .disabled(library.busy || library.chapters.isEmpty)
-                Button(MainTab.browser.title, systemImage: "globe", action: browse)
+                Button(AppConfiguration.current.allowsRawkuma ? MainTab.browser.title : MainTab.importManga.title,
+                       systemImage: AppConfiguration.current.allowsRawkuma ? "globe" : "folder.badge.plus", action: browse)
             }
         }
         .confirmationDialog(L("Delete this saved chapter?"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
@@ -468,7 +478,7 @@ struct ReaderScreen: View {
                 .toolbar {
                     ToolbarItemGroup(placement: .primaryAction) {
                         Button(L("Original chapter"), systemImage: "globe") { openSource(chapter.sourceURL) }
-                            .disabled(!AppConfiguration.current.contentSafety.mode.allowsRawkuma || URL(string: chapter.sourceURL)?.scheme != "https")
+                            .disabled(!AppConfiguration.current.allowsRawkuma || AppConfiguration.current.rawkuma?.contains(chapter.sourceURL) != true)
                         Menu {
                             Toggle(L("Entire project"), isOn: $entireProject)
                             Button(L("Run") + rerunCreditSuffix, systemImage: "play") { library.run(chapterID, force: false, page: entireProject ? nil : page.id) }.disabled(library.busy)

@@ -6,7 +6,7 @@
     try {
       const url = new URL(value, window.location.href)
       return url.protocol === 'https:' &&
-        ['rawkuma.net', 'www.rawkuma.net'].includes(url.hostname) &&
+        url.origin === window.location.origin &&
         !url.port &&
         !url.username &&
         !url.password

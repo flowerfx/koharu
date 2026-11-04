@@ -44,7 +44,6 @@
 "Edit text" = "テキストを編集";
 "Enter a server root URL without /v1" = "/v1を含まないサーバールートURLを入力してください";
 "Enter an HTTPS GGUF download URL" = "HTTPSのGGUFダウンロードURLを入力してください";
-"Enter an HTTPS Rawkuma URL" = "HTTPSのRawkuma URLを入力してください";
 "Entire project" = "プロジェクト全体";
 "Estimated free RAM required" = "必要な空きRAM（目安）";
 "Export PDF" = "PDFを書き出し";
@@ -103,7 +102,6 @@
 "Page text exceeds model context. Increase context size." = "ページのテキストがモデルのコンテキストを超えています。コンテキストサイズを大きくしてください。";
 "Previous page" = "前のページ";
 "Provider" = "プロバイダー";
-"Rawkuma URL" = "Rawkuma URL";
 "Reader" = "リーダー";
 "Redo" = "やり直し";
 "Refresh models" = "モデルをリフレッシュ";
@@ -526,9 +524,7 @@
 "Import manga" = "マンガをインポート";
 "Importing manga…" = "マンガをインポート中…";
 "Inappropriate content" = "不適切なコンテンツ";
-"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkumaは外部サイトです。成人向けまたは性的な内容を含む場合があります。";
-"This manga has blocked genres and cannot be translated:" = "このマンガにはブロックされたジャンルが含まれており、翻訳できません:";
-"Translation is blocked for these genres:" = "これらのジャンルは翻訳がブロックされています:";
+"Rawkuma is an external website and may contain inappropriate content." = "Rawkumaは外部のウェブサイトであり、不適切なコンテンツが含まれる場合があります。";
 
 "AI Manga" = "AI Manga";
 "Allow Kuruby to review your prompt before using prompt assistance or generating images." = "Kurubyがプロンプトアシストや画像生成の前にあなたのプロンプトを確認することを許可してください。";
@@ -561,3 +557,7 @@
 "Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "ソースコードライセンスはモデルの重みへの追加権利を付与しません。各モデルの発行者のライセンス、著作権表示、使用条件は有効です。";
 "This prompt contains restricted content. Please change it before generating an image." = "このプロンプトには制限された内容が含まれています。画像生成前に変更してください。";
 "You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "拒否することもできます。プロンプト確認を許可した後にアシストと画像生成は続行されます。";
+
+"Enter a path on the configured Rawkuma website." = "設定されたRawkumaサイト内のパスを入力してください。";
+"Manga path" = "漫画のパス";
+"This content is inappropriate and cannot be translated." = "不適切なコンテンツのため翻訳できません。";

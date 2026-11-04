@@ -26,7 +26,8 @@ final class NavigationLayoutTests: XCTestCase {
         try await Task.sleep(for: .seconds(1))
         let tabs = try XCTUnwrap(tabController(in: host))
         var frames: [[String: Any]] = []
-        for index in 0..<4 {
+        let tabCount = AppConfiguration.current.allowsRawkuma ? 5 : 4
+        for index in 0..<tabCount {
             tabs.selectedIndex = index
             let selected = try XCTUnwrap(tabs.viewControllers?[index])
             tabs.delegate?.tabBarController?(tabs, didSelect: selected)
@@ -43,7 +44,7 @@ final class NavigationLayoutTests: XCTestCase {
                 XCTAssertGreaterThan(bar.alpha, 0.9)
                 XCTAssertTrue(window.bounds.contains(frame), "Tab bar must stay inside the window: \(frame)")
                 let count = try XCTUnwrap(bar.items).count
-                XCTAssertEqual(count, 4)
+                XCTAssertEqual(count, tabCount)
                 for item in 0..<count {
                     let point = CGPoint(x: frame.minX + frame.width * (CGFloat(item) + 0.5) / CGFloat(count), y: frame.midY)
                     let hit = try XCTUnwrap(window.hitTest(point, with: nil))
@@ -102,6 +103,38 @@ final class NavigationLayoutTests: XCTestCase {
             let url = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: ext))
             let text = try String(contentsOf: url, encoding: .utf8)
             XCTAssertGreaterThan(text.count, 100, name)
+        }
+    }
+
+    @MainActor func testMangaImportAndOptionalRawkumaTabsSnapshot() async throws {
+        let previous = AppLocalization.shared.language
+        AppLocalization.shared.language = .vietnamese
+        defer { AppLocalization.shared.language = previous }
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let library = MangaLibrary(disk: try LibraryDisk(root: root))
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene); window.frame = scene.coordinateSpace.bounds
+        let host = UIHostingController(rootView: RootScreen(refreshConfiguration: {}).environment(library).tint(.pink).preferredColorScheme(.dark))
+        window.rootViewController = host; window.makeKeyAndVisible()
+        defer { window.isHidden = true }
+        host.view.frame = window.bounds; host.view.layoutIfNeeded()
+        try await Task.sleep(for: .milliseconds(500))
+        let tabs = try XCTUnwrap(tabController(in: host))
+        let enabled = AppConfiguration.current.allowsRawkuma
+        XCTAssertEqual(tabs.tabBar.items?.count, enabled ? 5 : 4)
+        // Image/folder import occupies a stable tab even when the source URL
+        // is disabled; Rawkuma is the additional, configuration-controlled tab.
+        for index in enabled ? [1, 2] : [1] {
+            tabs.selectedIndex = index
+            let selected = try XCTUnwrap(tabs.viewControllers?[index])
+            tabs.delegate?.tabBarController?(tabs, didSelect: selected)
+            try await Task.sleep(for: .milliseconds(500))
+            let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+            let name = "manga-\(AppConfiguration.current.contentSafety.mode.rawValue)-\(enabled ? "source" : "no-source")-tab-\(index)"
+            let attachment = XCTAttachment(image: image); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+            let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            try XCTUnwrap(image.pngData()).write(to: docs.appendingPathComponent(name + ".png"))
         }
     }
 

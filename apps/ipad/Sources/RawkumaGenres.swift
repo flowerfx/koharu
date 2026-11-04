@@ -5,36 +5,36 @@ enum RawkumaGenreFailure: Error, LocalizedError {
     case blocked([String]), unavailable
     var errorDescription: String? {
         switch self {
-        case .blocked(let genres): return L("Translation is blocked for these genres:") + " " + genres.joined(separator: ", ")
+        case .blocked: return L("This content is inappropriate and cannot be translated.")
         case .unavailable: return L("Could not verify this manga's genres. Translation is blocked. Please try again.")
         }
     }
 }
 
 @MainActor enum RawkumaGenreChecker {
-    static func seriesURL(_ value: String) -> URL? {
-        guard SourceChapter.isSource(value), let url = URL(string: value) else { return nil }
+    static func seriesURL(_ value: String, rawkuma: RawkumaConfiguration? = AppConfiguration.current.rawkuma) -> URL? {
+        guard rawkuma?.contains(value) == true, let url = URL(string: value) else { return nil }
         let parts = url.pathComponents.filter { $0 != "/" }
         guard parts.count >= 2, parts[0] == "manga", !parts[1].isEmpty,
               var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return nil }
         components.path = "/manga/" + parts[1] + "/"; components.query = nil; components.fragment = nil
         return components.url
     }
-    static func requireAllowed(_ value: String, configuration: ContentSafetyConfiguration) async throws {
+    static func requireAllowed(_ value: String, configuration: ContentSafetyConfiguration, rawkuma: RawkumaConfiguration? = AppConfiguration.current.rawkuma) async throws {
         // none-safe does not fetch or filter genres. Imported local images have
         // no Rawkuma series; full-safe has no built-in Rawkuma entry point.
-        guard configuration.mode == .half, !configuration.blockedGenres.isEmpty, SourceChapter.isSource(value) else { return }
-        guard let url = seriesURL(value) else { throw RawkumaGenreFailure.unavailable }
+        guard configuration.mode == .half, !configuration.blockedGenres.isEmpty, !value.hasPrefix("imported://") else { return }
+        guard let url = seriesURL(value, rawkuma: rawkuma) else { throw RawkumaGenreFailure.unavailable }
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 15; config.timeoutIntervalForResource = 20
-        let session = URLSession(configuration: config, delegate: RedirectBoundary { SourceChapter.isSource($0.absoluteString) }, delegateQueue: nil)
+        let session = URLSession(configuration: config, delegate: RedirectBoundary { rawkuma?.contains($0.absoluteString) == true }, delegateQueue: nil)
         defer { session.invalidateAndCancel() }
         do {
             var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
             request.setValue("KoharuPad/1.0", forHTTPHeaderField: "User-Agent")
             let (file, response) = try await session.download(for: request)
             defer { try? FileManager.default.removeItem(at: file) }
-            guard (response as? HTTPURLResponse)?.statusCode == 200, response.url.flatMap({ seriesURL($0.absoluteString) })?.path == url.path,
+            guard (response as? HTTPURLResponse)?.statusCode == 200, response.url.flatMap({ seriesURL($0.absoluteString, rawkuma: rawkuma) })?.path == url.path,
                   (try file.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) <= 4 * 1024 * 1024,
                   let html = String(data: try Data(contentsOf: file), encoding: .utf8) else { throw RawkumaGenreFailure.unavailable }
             let genres = try await RawkumaGenreDocument().parse(html, base: url)
@@ -75,7 +75,7 @@ enum RawkumaGenreFailure: Error, LocalizedError {
           const panel=document.getElementById('tabpanel-description');
           if(!panel)return [];
           return [...panel.querySelectorAll('a[itemprop="genre"]')].filter(a=>{
-            try{const u=new URL(a.href);return u.protocol==='https:'&&['rawkuma.net','www.rawkuma.net'].includes(u.hostname)&&/^\/genre\/[^/]+\/$/.test(u.pathname);}catch{return false;}
+            try{const u=new URL(a.href);return u.protocol==='https:'&&u.origin===new URL(document.baseURI).origin&&/^\/genre\/[^/]+\/$/.test(u.pathname);}catch{return false;}
           }).map(a=>a.textContent.trim()).filter(s=>s.length>0&&s.length<=80);
         })()
         """#)

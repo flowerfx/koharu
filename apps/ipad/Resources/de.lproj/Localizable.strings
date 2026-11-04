@@ -44,7 +44,6 @@
 "Edit text" = "Text bearbeiten";
 "Enter a server root URL without /v1" = "Server-Root-URL ohne /v1 eingeben";
 "Enter an HTTPS GGUF download URL" = "HTTPS GGUF-Download-URL eingeben";
-"Enter an HTTPS Rawkuma URL" = "HTTPS Rawkuma-URL eingeben";
 "Entire project" = "Gesamtes Projekt";
 "Estimated free RAM required" = "Benötigter freier RAM (geschätzt)";
 "Export PDF" = "PDF exportieren";
@@ -103,7 +102,6 @@
 "Page text exceeds model context. Increase context size." = "Seitentext überschreitet den Modellkontext. Vergrößere die Kontextgröße.";
 "Previous page" = "Vorherige Seite";
 "Provider" = "Anbieter";
-"Rawkuma URL" = "Rawkuma URL";
 "Reader" = "Reader";
 "Redo" = "Wiederholen";
 "Refresh models" = "Modelle aktualisieren";
@@ -526,9 +524,7 @@
 "Import manga" = "Manga importieren";
 "Importing manga…" = "Manga wird importiert…";
 "Inappropriate content" = "Unangemessener Inhalt";
-"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma ist eine externe Webseite. Sie kann erwachsene oder sexuelle Inhalte enthalten.";
-"This manga has blocked genres and cannot be translated:" = "Dieser Manga enthält gesperrte Genres und kann nicht übersetzt werden:";
-"Translation is blocked for these genres:" = "Übersetzung ist für diese Genres blockiert:";
+"Rawkuma is an external website and may contain inappropriate content." = "Rawkuma ist eine externe Website und kann unangemessene Inhalte enthalten.";
 
 "AI Manga" = "AI Manga";
 "Allow Kuruby to review your prompt before using prompt assistance or generating images." = "Erlaube Kuruby, deinen Prompt vor der Nutzung der Prompthilfe oder Bildgenerierung zu überprüfen.";
@@ -561,3 +557,7 @@
 "Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "Quellcode-Lizenzen gewähren keine zusätzlichen Rechte an Modellgewichten. Die Lizenz, Urheberrechts-Hinweise und Nutzungsbedingungen jedes Modells bleiben gültig.";
 "This prompt contains restricted content. Please change it before generating an image." = "Dieser Prompt enthält eingeschränkte Inhalte. Bitte ändere ihn, bevor du ein Bild generierst.";
 "You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "Du kannst ablehnen. Prompt-Hilfe und Bildgenerierung können fortgesetzt werden, nachdem du die Promptprüfung erlaubt hast.";
+
+"Enter a path on the configured Rawkuma website." = "Gib einen Pfad auf der konfigurierten Rawkuma-Website ein.";
+"Manga path" = "Manga-Pfad";
+"This content is inappropriate and cannot be translated." = "Dieser Inhalt ist unangemessen und kann nicht übersetzt werden.";

@@ -11,15 +11,16 @@ afterEach(() => {
   for (const cleanup of cleanups.splice(0)) cleanup()
 })
 
-function install(missingList = false) {
+function install(missingList = false, origin = 'https://rawkuma.net') {
+  const currentChapter = origin + new URL(chapter).pathname
   document.body.innerHTML = `
     <a aria-label="Prev" href="/manga/example/chapter-38/">Prev</a>
     <a aria-label="Next" href="/manga/example/chapter-39/">Next</a>
-    <button aria-label="Home" _="on click go to url \`https://rawkuma.net/manga/example/\`">Home</button>
+    <button aria-label="Home" _="on click go to url \`${origin}/manga/example/\`">Home</button>
     <button pop-content="#chapter-lists-head">Chapter 38.5</button>
     <div id="chapter-lists-head" hidden>
       <a href="/manga/example/chapter-39/">Chapter 39</a>
-      <a href="${chapter}">Chapter 38.5</a>
+      <a href="${currentChapter}">Chapter 38.5</a>
       <a href="https://unrelated.test/tracker">Unrelated</a>
     </div>`
   if (missingList) {
@@ -33,15 +34,15 @@ function install(missingList = false) {
   const assign = vi.fn()
   const fetch = vi.fn().mockResolvedValue({
     ok: true,
-    text: async () => `<a href="${chapter}">Chapter 38.5</a>
+    text: async () => `<a href="${currentChapter}">Chapter 38.5</a>
       <a href="/manga/example/chapter-39/">Chapter 39</a>
       <a href="/manga/other/chapter-1/">Other series</a>
       <a href="https://unrelated.test/tracker">Unrelated</a>`,
   })
   const target = {
     location: {
-      href: chapter,
-      origin: 'https://rawkuma.net',
+      href: currentChapter,
+      origin,
       pathname: new URL(chapter).pathname,
       assign,
     },
@@ -70,6 +71,18 @@ function install(missingList = false) {
 }
 
 describe('Rawkuma chapter navigation', () => {
+  it('uses the native-approved origin after a domain change and ignores external chapter links', () => {
+    const assign = install(false, 'https://manga.example')
+    const next = document.querySelector('[aria-label="Next"]')!
+    next.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+    expect(assign).toHaveBeenLastCalledWith('https://manga.example/manga/example/chapter-39/')
+    assign.mockClear()
+    for (const href of ['https://rawkuma.net/manga/example/', 'https://manga.example.evil.test/manga/example/']) {
+      next.setAttribute('href', href)
+      next.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+      expect(assign).not.toHaveBeenCalled()
+    }
+  })
   it('navigates Prev/Next/Home before page capture handlers consume a chapter click', () => {
     const assign = install()
     const pageCapture = vi.fn()

@@ -44,7 +44,6 @@
 "Edit text" = "Editar texto";
 "Enter a server root URL without /v1" = "Introduz a URL raiz do servidor sem /v1";
 "Enter an HTTPS GGUF download URL" = "Introduz uma URL de download GGUF HTTPS";
-"Enter an HTTPS Rawkuma URL" = "Introduz uma URL Rawkuma HTTPS";
 "Entire project" = "Projeto completo";
 "Estimated free RAM required" = "RAM livre necessária (estimativa)";
 "Export PDF" = "Exportar PDF";
@@ -103,7 +102,6 @@
 "Page text exceeds model context. Increase context size." = "O texto da página excede o contexto do modelo. Aumenta o tamanho do contexto.";
 "Previous page" = "Página anterior";
 "Provider" = "Provedor";
-"Rawkuma URL" = "URL Rawkuma";
 "Reader" = "Leitor";
 "Redo" = "Refazer";
 "Refresh models" = "Atualizar modelos";
@@ -526,9 +524,7 @@
 "Import manga" = "Importar mangá";
 "Importing manga…" = "Importando mangá…";
 "Inappropriate content" = "Conteúdo inadequado";
-"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma é um site externo. Pode conter conteúdo maduro ou sexual.";
-"This manga has blocked genres and cannot be translated:" = "Este mangá tem gêneros bloqueados e não pode ser traduzido:";
-"Translation is blocked for these genres:" = "A tradução está bloqueada para estes gêneros:";
+"Rawkuma is an external website and may contain inappropriate content." = "Rawkuma é um site externo e pode conter conteúdo inadequado.";
 
 "AI Manga" = "AI Manga";
 "Allow Kuruby to review your prompt before using prompt assistance or generating images." = "Permita que Kuruby revise seu prompt antes de usar a assistência ou gerar imagens.";
@@ -561,3 +557,7 @@
 "Source-code licenses do not grant additional rights to model weights. Each model publisher's license, copyright notices and usage conditions remain applicable." = "Licenças do código fonte não concedem direitos adicionais aos pesos de modelos. As licenças, avisos de copyright e condições de cada publicador permanecem válidas.";
 "This prompt contains restricted content. Please change it before generating an image." = "Este prompt contém conteúdo restrito. Por favor, altere antes de gerar uma imagem.";
 "You can decline. Prompt assistance and image generation can continue after you allow prompt review." = "Você pode recusar. A assistência e geração continuam após permitir a revisão do prompt.";
+
+"Enter a path on the configured Rawkuma website." = "Insira um caminho no site Rawkuma configurado.";
+"Manga path" = "Caminho do mangá";
+"This content is inappropriate and cannot be translated." = "Este conteúdo é inadequado e não pode ser traduzido.";

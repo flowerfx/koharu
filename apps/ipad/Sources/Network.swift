@@ -45,7 +45,7 @@ actor SourceImages {
         return URLSession(configuration: config, delegate: RedirectBoundary { SourceChapter.isImage($0.absoluteString) }, delegateQueue: nil)
     }()
     func fetch(url: String, referer: String, chapter: UUID, previous: MangaPage?, revalidate: Bool, disk: LibraryDisk) async throws -> MangaPage {
-        guard SourceChapter.isImage(url), SourceChapter.isSource(referer), let address = URL(string: url) else { throw AppError.message(L("Invalid source image")) }
+        guard SourceChapter.isImage(url), AppConfiguration.current.rawkuma?.contains(referer) == true, let address = URL(string: url) else { throw AppError.message(L("Invalid source image")) }
         let existing = previous.map { disk.pageURL(chapter, $0.original) }
         let cached = existing.map { FileManager.default.fileExists(atPath: $0.path) } == true
         if cached && !revalidate, let previous { return previous }
