@@ -168,7 +168,7 @@ enum MainTab: String {
     var title: String {
         switch self {
         case .library: return L("Library")
-        case .browser: return L("Rawkuma")
+        case .browser: return AppConfiguration.current.contentSafety.mode.allowsRawkuma ? L("Rawkuma") : L("Import manga")
         case .anime: return L("Anime Studio")
         case .settings: return L("Settings")
         }
@@ -201,18 +201,19 @@ struct RootScreen: View {
         TabView(selection: $selection) {
             Tab(MainTab.library.title, systemImage: MainTab.library.symbol, value: .library) {
                 NavigationStack(path: $readerPath) {
-                    LibraryScreen { url in browser.go(url); selection = .browser } browse: { selection = .browser }
+                    LibraryScreen { url in openSource(url) } browse: { selection = .browser }
                         .navigationDestination(for: UUID.self) { id in
-                            ReaderScreen(chapterID: id, openSource: { url in browser.go(url); selection = .browser }).id(id)
+                            ReaderScreen(chapterID: id, openSource: openSource).id(id)
                         }
                 }
                 .modifier(MainTabLayout())
             }
             Tab(MainTab.browser.title, systemImage: MainTab.browser.symbol, value: .browser) {
                 NavigationStack {
-                    BrowserScreen(browser: browser) { id in
-                        readerPath = [id]
-                        selection = .library
+                    if AppConfiguration.current.contentSafety.mode.allowsRawkuma {
+                        BrowserScreen(browser: browser) { id in readerPath = [id]; selection = .library }
+                    } else {
+                        PersonalComicImportScreen() { id in readerPath = [id]; selection = .library }
                     }
                 }
                 .modifier(MainTabLayout())
@@ -237,6 +238,13 @@ struct RootScreen: View {
         .id(AppLocalization.shared.isRightToLeft)
         .tabViewStyle(.sidebarAdaptable)
         .tabBarMinimizeBehavior(.never)
+        .onChange(of: AppConfiguration.current.contentSafety) { _, config in
+            browser.suspend()
+            if config.mode.allowsRawkuma && selection == .browser { browser.go(browser.address) }
+        }
+        .sheet(isPresented: Binding(get: { library.safety.needsConsent }, set: { if !$0 { library.safety.resolveConsent(false) } })) {
+            ContentSafetyConsentScreen(safety: library.safety)
+        }
         .task(id: CreditReminderSchedule(nextReset: library.credits.loaded ? library.credits.nextDaily : nil, language: AppLocalization.shared.language)) {
             guard library.credits.loaded else { return }
             let accountID = library.credits.profile.id
@@ -311,6 +319,10 @@ struct RootScreen: View {
             if !library.busy { Task { await library.translator.unload(); await library.pipeline.releaseCachedModels() } }
         }
     }
+    private func openSource(_ url: String) {
+        if AppConfiguration.current.contentSafety.mode.allowsRawkuma { browser.go(url) }
+        selection = .browser
+    }
 }
 
 private struct MainTabLayout: ViewModifier {
@@ -353,7 +365,7 @@ struct LibraryScreen: View {
                 if library.chapters.isEmpty {
                     ContentUnavailableView {
                         Label(L("Your manga library"), systemImage: "books.vertical")
-                    } description: { Text(L("Browse Rawkuma and translate a chapter. Saved chapters stay on this device.")) } actions: { Button(L("Browse Rawkuma"), action: browse).buttonStyle(.borderedProminent) }
+                    } description: { Text(AppConfiguration.current.contentSafety.mode.allowsRawkuma ? L("Browse Rawkuma and translate a chapter. Saved chapters stay on this device.") : L("Import images or an image folder from Files, then translate them in your library.")) } actions: { Button(MainTab.browser.title, action: browse).buttonStyle(.borderedProminent) }
                 }
                 if !library.chapters.isEmpty && visibleChapters.isEmpty {
                     ContentUnavailableView(L("No matching chapters"), systemImage: "magnifyingglass", description: Text(L("Try another chapter title.")))
@@ -371,6 +383,7 @@ struct LibraryScreen: View {
                     }
                     .contextMenu {
                         Button(L("Original chapter"), systemImage: "globe") { openSource(chapter.sourceURL) }
+                            .disabled(!AppConfiguration.current.contentSafety.mode.allowsRawkuma || URL(string: chapter.sourceURL)?.scheme != "https")
                         Button(library.preferences.provider == .backend ? "\(L("Retranslate")) · \(library.rerunCreditCost) \(L("credits"))" : L("Retranslate"), systemImage: "arrow.clockwise") { library.run(chapter.id, force: true) }.disabled(library.busy)
                         Divider()
                         Button(L("Delete"), systemImage: "trash", role: .destructive) { deleting = chapter }.disabled(library.busy)
@@ -387,7 +400,7 @@ struct LibraryScreen: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button(L("Delete all chapters"), systemImage: "trash") { deletingAll = true }
                     .disabled(library.busy || library.chapters.isEmpty)
-                Button(L("Browse Rawkuma"), systemImage: "globe", action: browse)
+                Button(MainTab.browser.title, systemImage: "globe", action: browse)
             }
         }
         .confirmationDialog(L("Delete this saved chapter?"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
@@ -455,6 +468,7 @@ struct ReaderScreen: View {
                 .toolbar {
                     ToolbarItemGroup(placement: .primaryAction) {
                         Button(L("Original chapter"), systemImage: "globe") { openSource(chapter.sourceURL) }
+                            .disabled(!AppConfiguration.current.contentSafety.mode.allowsRawkuma || URL(string: chapter.sourceURL)?.scheme != "https")
                         Menu {
                             Toggle(L("Entire project"), isOn: $entireProject)
                             Button(L("Run") + rerunCreditSuffix, systemImage: "play") { library.run(chapterID, force: false, page: entireProject ? nil : page.id) }.disabled(library.busy)

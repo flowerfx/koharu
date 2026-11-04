@@ -234,7 +234,6 @@
 "Configuration updated" = "設定データを更新しました";
 "Could not refresh configuration. Using the last valid configuration." = "設定データを更新できませんでした。最後に有効だった設定を使用します。";
 "Check configuration updates" = "設定データの更新を確認";
-"Configuration source" = "設定データの取得元";
 "Last modified" = "最終更新";
 "ETag" = "ETag";
 
@@ -477,10 +476,7 @@
 "The AI request was interrupted. Please try again." = "AIリクエストが中断されました。もう一度お試しください。";
 "The AI service could not complete the request. Please try again later." = "AIサービスがリクエストを完了できませんでした。しばらくしてからお試しください。";
 "Preferred AI provider" = "優先するAIプロバイダー";
-"Automatic (random available provider)" = "自動（利用可能なプロバイダーをランダムに選択）";
-"Currently unavailable; automatic fallback" = "現在利用不可・自動で代替";
 "Refresh available providers" = "利用可能なプロバイダーを更新";
-"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "プロンプトはサーバーへ安全に送信されます。サーバーは設定済みのモデルを選び、AIの結果を返します。優先プロバイダーが利用できない場合は自動で別のプロバイダーを使用します。";
 "Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "Backend APIはAIの結果が返された時点でクレジットを消費します。その後に停止したり描画に失敗した場合も同様です。AIの結果が得られず失敗したリクエストは返金されます。";
 
 "Loading rewarded ad…" = "リワード広告を読み込み中…";
@@ -507,3 +503,43 @@
 
 "Server maintenance" = "サーバーメンテナンス中";
 "The app is temporarily closed for server maintenance. Please check again later." = "サーバーメンテナンスのため、アプリを一時停止しています。しばらくしてから再度ご確認ください。";
+
+"Allow safety checks" = "安全確認を許可する";
+"Checking content safety…" = "コンテンツの安全性を確認中…";
+"Content safety" = "コンテンツの安全性";
+"Email" = "メール";
+"Email sign-in failed. Check your email and password." = "メールサインインに失敗しました。メールアドレスとパスワードを確認してください。";
+"Enter a valid email address and password." = "有効なメールアドレスとパスワードを入力してください。";
+"Kuruby Server" = "Kurubyサーバー";
+"Kuruby Server manages the AI provider and model automatically." = "KurubyサーバーがAIプロバイダーとモデルを自動管理します。";
+"Not now" = "今はしない";
+"Password" = "パスワード";
+"Sign in" = "サインイン";
+"Sign in with email" = "メールでサインイン";
+"Use the email and password for your existing account." = "既存のアカウントのメールとパスワードを使用してください。";
+
+"Allow prompt safety checks before using prompt assistance or generating images." = "プロンプト支援や画像生成の前に安全チェックを許可する。";
+"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "バックエンドの安全チェックが利用できません。プロンプト支援と画像生成はブロックされています。後で再度お試しください。";
+"Chapter imported" = "チャプターをインポートしました";
+"Chapter title (optional)" = "チャプタータイトル（任意）";
+"Checking manga genres…" = "マンガのジャンルを確認しています…";
+"Choose image files or a folder containing up to 500 images. PDFs and links are not supported." = "最大500枚の画像ファイルまたはフォルダを選択してください。PDF とリンクはサポートされていません。";
+"Could not verify this manga's genres. Translation is blocked. Please try again." = "このマンガのジャンルを確認できませんでした。翻訳がブロックされています。再度お試しください。";
+"External content warning" = "外部コンテンツの警告";
+"Files" = "ファイル";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "フォルダ内の画像はファイル名とページ番号でソートされています。インポートは無料です。チャプターを開き、[実行]を選択して翻訳してください。";
+"Import images or an image folder from Files, then translate them in your library." = "ファイルから画像または画像フォルダをインポートし、ライブラリで翻訳してください。";
+"Import images or folder" = "画像またはフォルダをインポート";
+"Import manga" = "マンガをインポート";
+"Importing manga…" = "マンガをインポート中…";
+"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "ハーフセーフおよびフルセーフモードでは、プロンプト安全チェックにKuruby Serverを使用し、インターネット接続が必要です。マンガページや生成画像はこのデバイスにとどまります。";
+"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "ハーフセーフおよびフルセーフモードでは、画像のプロンプトがKuruby Serverを通じてOpenAIに送信され、性的内容のチェックが行われます。インターネット接続が必要です。マンガページや生成画像はチェックのために送信されません。";
+"Inappropriate content" = "不適切なコンテンツ";
+"Mode" = "モード";
+"Prompt safety checks" = "プロンプト安全チェック";
+"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkumaは外部サイトです。成人向けまたは性的な内容を含む場合があります。";
+"The safety mode is managed by app configuration." = "安全モードはアプリの設定で管理されています。";
+"This manga has blocked genres and cannot be translated:" = "このマンガにはブロックされたジャンルが含まれており、翻訳できません:";
+"This prompt contains sexual content. Change it before generating an image." = "このプロンプトには性的な内容が含まれています。画像生成前に変更してください。";
+"Translation is blocked for these genres:" = "これらのジャンルは翻訳がブロックされています:";
+"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "拒否できます。プロンプト支援と画像生成はチェックが必要な間、引き続きブロックされます。";

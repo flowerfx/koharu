@@ -126,6 +126,10 @@ actor NakamaClient {
         let data = try await send("v2/account/authenticate/device", body: ["id": id], query: [.init(name: "create", value: "true")])
         return try JSONDecoder().decode(NakamaSession.self, from: data)
     }
+    func email(_ address: String, password: String) async throws -> NakamaSession {
+        let data = try await send("v2/account/authenticate/email", body: ["email": address, "password": password], query: [.init(name: "create", value: "false")])
+        return try JSONDecoder().decode(NakamaSession.self, from: data)
+    }
     func account(_ auth: NakamaSession) async throws -> NakamaAccount {
         try JSONDecoder().decode(NakamaAccount.self, from: await send("v2/account", body: nil, token: auth.token))
     }
@@ -270,6 +274,18 @@ actor NakamaClient {
             message = nil
             await prepareChallenge()
         } catch { message = error.localizedDescription }
+    }
+    func signInEmail(_ address: String, password: String) async {
+        guard !working, let client else { return }
+        let email = address.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard email.count <= 254, email.range(of: #"^[^\s@]+@[^\s@]+\.[^\s@]+$"#, options: .regularExpression) != nil,
+              (8...128).contains(password.count) else { message = L("Enter a valid email address and password."); return }
+        working = true; defer { working = false }
+        do {
+            try await publish(client.email(email, password: password), client: client)
+            message = nil
+            await prepareChallenge()
+        } catch { message = L("Email sign-in failed. Check your email and password.") }
     }
     private func deviceCredential() throws -> String {
         var id = Credentials.read(credentialScope + ":device")

@@ -50,34 +50,34 @@ final class ChapterNavigationChecks: XCTestCase {
         XCTAssertEqual(library.preferences, preferences)
         XCTAssertEqual(MangaLibrary(disk: disk).translationBatchSize, 25)
     }
-    @MainActor func testImportPublishesReadyChapterBeforeTranslation() async throws {
+    @MainActor func testImageImportPublishesReadyChapterWithoutStartingTranslation() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let disk = try LibraryDisk(root: root), library = MangaLibrary(disk: disk)
-        library.preferences.provider = .local // No model: fail translation after publishing the route.
+        let old = Chapter(title: "Old chapter", sourceURL: "imported://old", target: library.preferences.target, pages: [])
+        try library.update(old)
         let image = UIGraphicsImageRenderer(size: CGSize(width: 100, height: 100)).image { context in
             UIColor.white.setFill(); context.fill(CGRect(x: 0, y: 0, width: 100, height: 100))
         }
-        let old = Chapter(title: "Old chapter", sourceURL: "https://rawkuma.net/manga/check/chapter-1/", target: library.preferences.target, pages: [])
-        try library.update(old)
-        var chapter = Chapter(title: "New chapter", sourceURL: "https://rawkuma.net/manga/check/chapter-2/", target: library.preferences.target, pages: [MangaPage(source: "https://cdn.rawkuma.com/check/2/1.jpg", original: "source.png")])
-        chapter.pages[0].segments = [TextSegment(id: 0, source: "こんにちは", rect: CGRect(x: 0.1, y: 0.1, width: 0.5, height: 0.5))]
-        chapter.pages[0].ocrSignature = "vision-3:apple:document-2"
-        try library.update(chapter)
-        try XCTUnwrap(image.pngData()).write(to: disk.pageURL(chapter.id, "source.png"))
+        let input = root.appendingPathComponent("page1.png")
+        try XCTUnwrap(image.pngData()).write(to: input)
         var ready: [UUID] = []
-        library.importChapter(SourceChapter(url: chapter.sourceURL, title: chapter.title, images: chapter.pages.map(\.source)), revalidate: false) { id in
+        library.importPersonalComic([input], title: "New chapter") { id in
             ready.append(id)
             XCTAssertTrue(library.busy)
             XCTAssertNil(library.error)
-            XCTAssertEqual(library.chapters.first { $0.id == id }?.pages.count, 1)
-            XCTAssertTrue(FileManager.default.fileExists(atPath: disk.pageURL(id, "source.png").path))
+            let chapter = library.chapters.first { $0.id == id }
+            XCTAssertEqual(chapter?.pages.count, 1)
+            XCTAssertTrue(chapter?.pages.allSatisfy { $0.rendered == nil } == true)
         }
         try await XCTUnwrap(library.activeTask).value
-        XCTAssertEqual(ready, [chapter.id])
-        XCTAssertNotNil(library.error, "The missing model must fail only after the new chapter is available to read")
+        XCTAssertEqual(ready.count, 1); XCTAssertNotEqual(ready.first, old.id)
+        XCTAssertNil(library.error)
+        XCTAssertTrue(library.chapters.contains { $0.id == old.id })
+        let invalid = root.appendingPathComponent("invalid.pdf")
+        try Data("not supported".utf8).write(to: invalid)
         ready = []
-        library.importChapter(SourceChapter(url: "https://example.invalid/", title: "Invalid", images: chapter.pages.map(\.source)), revalidate: false) { ready.append($0) }
+        library.importPersonalComic([invalid], title: "Invalid") { ready.append($0) }
         try await XCTUnwrap(library.activeTask).value
         XCTAssertTrue(ready.isEmpty, "A rejected import must not replace the reader route")
     }

@@ -13,6 +13,7 @@ struct AppConfiguration: Decodable {
             }
         }
     }
+    let contentSafety: ContentSafetyConfiguration
     let server: Server
     struct Provider: Decodable { let id: TranslationProvider; let enable: Bool }
     struct Defaults: Decodable {
@@ -54,6 +55,7 @@ struct AppConfiguration: Decodable {
             let config = try JSONDecoder().decode(Self.self, from: data)
             _ = try config.credit.validated()
             try config.server.validated()
+            try config.contentSafety.validated()
             func unique(_ ids: [String]) -> Bool { Set(ids).count == ids.count }
             func secure(_ url: URL) -> Bool { url.scheme == "https" && url.host != nil && url.user == nil && url.password == nil }
             let vision = config.ocr + config.inpainting

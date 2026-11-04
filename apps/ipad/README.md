@@ -131,6 +131,16 @@ The assistant reuses the existing provider credentials, endpoint boundaries and 
 
 Translation and prompt assistance share a typed structured-text request and the existing LM Studio/local/hosted transport. Translation keeps its original prompt, translation schema/grammar, output validation, batches, provider-specific API packaging and timeouts. Anime prompt output has its own strict prompt/character schema and grammar, with size/shape validation; malformed responses fail rather than being repaired or substituted.
 
+## Content safety and manga imports
+
+`app-config.json` owns `contentSafety`; there is no user-facing mode selector. Production bundles `{"mode":"full-safe","blockedGenres":["Adult","Mature","Ecchi","Hentai"]}`. Both fields are required. Invalid modes or malformed genre lists are rejected without replacing the validated configuration.
+
+- `none-safe`: original Rawkuma browsing and image-prompt flow, with no app-added genre or prompt checks.
+- `half-safe`: Rawkuma shows an external-content warning. Every series/chapter navigation checks the parent series synopsis genre tags. Exact tag names match `blockedGenres` without case sensitivity. Blocked content shows a dialog with Back to Rawkuma home and cannot be imported or translated. Import and rerun also recheck before reserving credits. Missing genre metadata blocks translation. Edit the array to add/remove genre names; an empty array disables only the genre filter.
+- `full-safe`: the built-in Rawkuma browser and URL entry are replaced by importing images or image folders from Files. PDF and URL imports are unavailable. Folder images, including subfolders, use natural filename order, with limits of 500 pages, 32 MB per image, 24 MP per page and 512 MB total. Symbolic links and hidden/package contents are excluded. Original pages stay local; import is free and Run starts translation through the existing credit flow.
+
+In half/full mode, user prompts and prompt-assistant results pass an authenticated backend sexual-content check before inference/publication. Backend failure, disabled Backend API, invalid responses or rejected consent block the prompt action. Approvals are not cached, so each action requires a live backend. Only prompt text is sent via Kuruby Server to OpenAI after explicit consent; manga pages and generated images are not sent. No safety request occurs in none-safe mode. Backend provider/model selection is server-managed and appears as Kuruby Server; provider refresh is disabled.
+
 ## Reading and translation
 
 1. On a new installation, choose a provider in the setup dialog. You can later change it and the target language in **Settings**: **LM Studio**, **On-device GGUF**, or one of the hosted APIs below.

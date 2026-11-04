@@ -1,4 +1,13 @@
 {
+  "contentSafety": {
+    "mode": "full-safe",
+    "blockedGenres": [
+      "Adult",
+      "Mature",
+      "Ecchi",
+      "Hentai"
+    ]
+  },
   "server": {
     "active": true,
     "endpoint": "https://54.165.230.197:443"

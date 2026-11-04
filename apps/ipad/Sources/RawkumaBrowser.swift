@@ -3,13 +3,25 @@ import WebKit
 import Observation
 
 @MainActor @Observable final class RawkumaBrowser: NSObject, WKNavigationDelegate, WKUIDelegate {
+    private let appConfiguration: () -> AppConfiguration
+    var safetyMode: ContentSafetyMode { appConfiguration().contentSafety.mode }
     let webView: WKWebView
     var address = "https://rawkuma.net/"
     var loading = false
+    var hasLoaded = false
     var chapter: SourceChapter?
     var error: String?
+    var showsWarning = false
+    var showsBlockedContent = false
+    var blockedGenres: [String] = []
+    var genreMessage: String?
+    private var genresVerified = false
+    var canTranslate: Bool { safetyMode == .none || (safetyMode == .half && genresVerified) }
+    private var acceptedWarning = false
+    private var pendingAddress: String?
     private var inspection: Task<Void, Never>?
-    override init() {
+    init(appConfiguration: @escaping () -> AppConfiguration = { AppConfiguration.current }) {
+        self.appConfiguration = appConfiguration
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
         if let file = Bundle.main.url(forResource: "rawkuma-navigation", withExtension: "js"), let script = try? String(contentsOf: file, encoding: .utf8) {
@@ -21,23 +33,66 @@ import Observation
         webView.allowsBackForwardNavigationGestures = true
     }
     func go(_ address: String) {
+        guard safetyMode.allowsRawkuma else { suspend(); return }
         guard SourceChapter.isSource(address), let url = URL(string: address) else { error = L("Enter an HTTPS Rawkuma URL"); return }
-        self.address = address; chapter = nil; error = nil
+        if safetyMode.warnsAboutRawkuma && !acceptedWarning {
+            pendingAddress = address; showsWarning = true; return
+        }
+        self.address = address; chapter = nil; error = nil; hasLoaded = true; webView.isHidden = safetyMode == .half
         inspection?.cancel()
         webView.load(URLRequest(url: url))
     }
+    func acceptWarning() {
+        acceptedWarning = true; showsWarning = false
+        if let pendingAddress { go(pendingAddress) }
+        pendingAddress = nil
+    }
+    func suspend() {
+        inspection?.cancel(); webView.stopLoading(); chapter = nil; loading = false; hasLoaded = false; webView.isHidden = true
+        acceptedWarning = false; pendingAddress = nil; showsWarning = false
+        genresVerified = false; genreMessage = nil; showsBlockedContent = false; blockedGenres = []
+        webView.loadHTMLString("", baseURL: nil)
+    }
+    func returnHomeFromBlockedContent() {
+        guard showsBlockedContent else { return }
+        showsBlockedContent = false; blockedGenres = []
+        go("https://rawkuma.net/")
+    }
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard safetyMode.allowsRawkuma,
+              !safetyMode.warnsAboutRawkuma || acceptedWarning else { decisionHandler(.cancel); return }
         if action.targetFrame?.isMainFrame == true || action.targetFrame == nil {
             decisionHandler(action.request.url.map { SourceChapter.isSource($0.absoluteString) } == true && action.targetFrame != nil ? .allow : .cancel)
         } else { decisionHandler(.allow) }
     }
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? { nil }
-    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) { loading = true; chapter = nil; error = nil; inspection?.cancel() }
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        loading = true; chapter = nil; error = nil; inspection?.cancel()
+        genresVerified = false; genreMessage = nil
+        if safetyMode == .half { webView.isHidden = true }
+    }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         loading = false
         if let url = webView.url { address = url.absoluteString }
         inspection?.cancel()
         inspection = Task {
+            if safetyMode == .half, let value = webView.url?.absoluteString, RawkumaGenreChecker.seriesURL(value) != nil {
+                genreMessage = L("Checking manga genres…")
+                do {
+                    try await RawkumaGenreChecker.requireAllowed(value, configuration: appConfiguration().contentSafety)
+                    try Task.checkCancellation()
+                    guard webView.url?.absoluteString == value else { return }
+                    genresVerified = true; genreMessage = nil
+                } catch {
+                    guard !Task.isCancelled, webView.url?.absoluteString == value else { return }
+                    genreMessage = error.localizedDescription; chapter = nil
+                    if case RawkumaGenreFailure.blocked(let genres) = error {
+                        blockedGenres = genres; showsBlockedContent = true
+                    } else { webView.isHidden = false }
+                    return
+                }
+            }
+            webView.isHidden = false
             for _ in 0..<15 {
                 if Task.isCancelled { return }
                 await inspect()
@@ -102,6 +157,13 @@ struct BrowserScreen: View {
     }
     var body: some View {
         VStack(spacing: 0) {
+            if browser.safetyMode.warnsAboutRawkuma {
+                Label(L("Rawkuma is an external website. It may contain mature or sexual content."), systemImage: "exclamationmark.triangle")
+                    .font(.caption).foregroundStyle(.orange).padding(8)
+            }
+            if let message = browser.genreMessage {
+                Text(message).font(.caption).foregroundStyle(.orange).padding(8)
+            }
             if horizontalSizeClass == .compact {
                 VStack(spacing: 2) {
                     HStack(spacing: 8) {
@@ -142,7 +204,7 @@ struct BrowserScreen: View {
                             }.font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity, minHeight: 30)
                         }
                         .buttonStyle(.borderedProminent).controlSize(.small)
-                        .disabled(library.busy || browser.chapter == nil || browser.loading)
+                        .disabled(library.busy || browser.chapter == nil || browser.loading || !browser.canTranslate)
                         Menu {
                             if let chapter = browser.chapter { Text("\(chapter.images.count) \(L("pages"))") }
                             Toggle(L("Check source updates"), isOn: $revalidate)
@@ -163,7 +225,7 @@ struct BrowserScreen: View {
                 }.padding(10)
                 HStack {
                     Button(action: translateChapter) { Label(translateTitle, systemImage: "translate") }
-                    .buttonStyle(.borderedProminent).disabled(library.busy || browser.chapter == nil || browser.loading)
+                    .buttonStyle(.borderedProminent).disabled(library.busy || browser.chapter == nil || browser.loading || !browser.canTranslate)
                     Toggle(L("Check source updates"), isOn: $revalidate).toggleStyle(.button)
                     Toggle(L("New copy"), isOn: $newCopy).toggleStyle(.button)
                     Spacer()
@@ -175,11 +237,26 @@ struct BrowserScreen: View {
             BrowserSurface(browser: browser)
         }
         .navigationTitle(L("Rawkuma"))
+        .alert(browser.showsBlockedContent ? L("Inappropriate content") : L("External content warning"), isPresented: Binding(get: { browser.showsWarning || browser.showsBlockedContent }, set: { visible in
+            if !visible {
+                if browser.showsBlockedContent { browser.returnHomeFromBlockedContent() }
+                else { browser.showsWarning = false }
+            }
+        })) {
+            if browser.showsBlockedContent {
+                Button(L("Back"), role: .cancel) { browser.returnHomeFromBlockedContent() }
+            } else {
+                Button(L("Continue")) { browser.acceptWarning() }
+                Button(L("Cancel"), role: .cancel) { browser.showsWarning = false }
+            }
+        } message: {
+            Text(browser.showsBlockedContent ? L("This manga has blocked genres and cannot be translated:") + " " + browser.blockedGenres.joined(separator: ", ") : L("Rawkuma is an external website. It may contain mature or sexual content."))
+        }
         .navigationBarTitleDisplayMode(horizontalSizeClass == .compact ? .inline : .large)
-        .task { if browser.webView.url == nil { browser.go(browser.address) } }
+        .task { if !browser.hasLoaded { browser.go(browser.address) } }
     }
     private func translateChapter() {
-        guard let chapter = browser.chapter else { return }
+        guard browser.canTranslate, let chapter = browser.chapter else { return }
         library.importChapter(chapter, revalidate: revalidate, newCopy: newCopy, onReady: showLibrary)
     }
 }

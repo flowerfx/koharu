@@ -134,29 +134,32 @@ extension MangaLibrary {
             activeTask = Task {
                 var succeeded = false
                 var ticket: String?
-                let reporting = Task { @MainActor in
-                    while !Task.isCancelled {
-                        let (step, steps, phase) = job.progress()
-                        if phase == 4 { progress = 0; status = L("Upscaling image") }
-                        else if phase == 1 { progress = 0; status = L("Loading Anima model") }
-                        // The runtime also reports weight-loading counters.
-                        // Only the configured sampling pass belongs in this bar.
-                        else if phase == 2 && steps == settings.steps && (1...steps).contains(step) {
-                            progress = min(1, max(0, Double(step) / Double(steps)))
-                            status = "\(L("Generating anime image")) · \(step)/\(steps)"
-                        } else { status = L("Generating anime image") }
-                        do { try await Task.sleep(for: .milliseconds(250)) } catch { break }
-                    }
-                }
-                defer { reporting.cancel() }
                 do {
+                    if AppConfiguration.current.contentSafety.mode.checksPrompts { status = L("Checking content safety…") }
+                    try await safety.checkText(prompt)
                     ticket = try await credits.reserve(action: .image, provider: .local)
                     try Task.checkCancellation()
                     await translator.unload()
                     try Task.checkCancellation()
+                    let reporting = Task { @MainActor in
+                        while !Task.isCancelled {
+                            let (step, steps, phase) = job.progress()
+                            if phase == 4 { progress = 0; status = L("Upscaling image") }
+                            else if phase == 1 { progress = 0; status = L("Loading Anima model") }
+                            // The runtime also reports weight-loading counters.
+                            // Only the configured sampling pass belongs in this bar.
+                            else if phase == 2 && steps == settings.steps && (1...steps).contains(step) {
+                                progress = min(1, max(0, Double(step) / Double(steps)))
+                                status = "\(L("Generating anime image")) · \(step)/\(steps)"
+                            } else { status = L("Generating anime image") }
+                            do { try await Task.sleep(for: .milliseconds(250)) } catch { break }
+                        }
+                    }
+                    defer { reporting.cancel() }
                     let png = try await withTaskCancellationHandler {
                         try await pipeline.generateAnime(configuration, settings: settings, root: disk.modelsURL, prompt: prompt, seed: image.seed, job: job)
                     } onCancel: { job.cancel() }
+                    reporting.cancel()
                     try Task.checkCancellation()
                     try FileManager.default.createDirectory(at: animeDirectory, withIntermediateDirectories: true)
                     let destination = animeDirectory.appendingPathComponent(image.filename)

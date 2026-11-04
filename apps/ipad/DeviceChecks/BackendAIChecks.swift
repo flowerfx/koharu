@@ -39,12 +39,11 @@ final class BackendAIChecks: XCTestCase {
         let engine = TranslationEngine(backend: backend)
         let initial = try await profile("profile_daily", ["operation_id": UUID().uuidString.lowercased()])
         var config = Preferences(); config.provider = .backend; config.target = "en-US"; config.instructions = ""
-        // A valid preferred ID that is absent from the catalog exercises fallback.
-        config.backendProvider = BackendAI.providerIDs.sorted().first { id in !catalog.contains { $0.id == id } }
+        // Translation and prompt assistance use the server-managed provider order.
         let translationReservation = try await profile("profile_reserve", ["operation_id": UUID().uuidString.lowercased(), "action": "translate", "provider": "backend", "rerun": false])
         let translationTicket = try XCTUnwrap(translationReservation.reservation_id)
         let translations = try await engine.translate(["こんにちは", "ありがとう"], config: config, model: nil, batchSize: 1,
-            backendContext: .init(reservationID: translationTicket, provider: config.backendProvider))
+            backendContext: .init(reservationID: translationTicket))
         XCTAssertEqual(translations.count, 2); XCTAssertTrue(translations.allSatisfy { !$0.isEmpty })
         let afterTranslation = try await profile("ai_finish", ["reservation_id": translationTicket])
         XCTAssertEqual(afterTranslation.profile.credit, initial.profile.credit - initial.policy.cost(.translate, tier: initial.profile.account_type, provider: .backend))
@@ -52,7 +51,7 @@ final class BackendAIChecks: XCTestCase {
         let promptTicket = try XCTUnwrap(promptReservation.reservation_id)
         let input = try AnimePromptContract.request(.enhance, prompt: "An original anime girl with pink hair and a white dress in a garden.")
         let data = try await engine.generateStructured(input, config: config, model: nil,
-            backendContext: .init(reservationID: promptTicket, provider: nil), backendTask: .enhance)
+            backendContext: .init(reservationID: promptTicket), backendTask: .enhance)
         let prompt = try AnimePromptContract.decode(data)
         let finished = try await profile("ai_finish", ["reservation_id": promptTicket])
         XCTAssertEqual(finished.profile.credit, afterTranslation.profile.credit - initial.policy.cost(.enhance, tier: initial.profile.account_type, provider: .backend))
@@ -63,7 +62,7 @@ final class BackendAIChecks: XCTestCase {
             "translationBatches": 2, "translations": translations, "enhancedPrompt": prompt.prompt,
             "actualResults": outputs, "chapterChargedOnce": true, "promptChargedOnce": true,
             "initialCredit": initial.profile.credit, "finalCredit": finished.profile.credit,
-            "preferredProvider": config.backendProvider ?? "automatic"]
+            "preferredProvider": "server-managed"]
         let evidence = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
         let attachment = XCTAttachment(data: evidence, uniformTypeIdentifier: "public.json"); attachment.name = "Native client Nakama AI RPC"; attachment.lifetime = .keepAlways; add(attachment)
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]

@@ -234,7 +234,6 @@
 "Configuration updated" = "Configuração atualizada";
 "Could not refresh configuration. Using the last valid configuration." = "Não foi possível atualizar a configuração. É usada a última versão válida.";
 "Check configuration updates" = "Procurar atualizações de configuração";
-"Configuration source" = "Origem da configuração";
 "Last modified" = "Última alteração";
 "ETag" = "ETag";
 
@@ -477,10 +476,7 @@
 "The AI request was interrupted. Please try again." = "A solicitação de IA foi interrompida. Tente novamente.";
 "The AI service could not complete the request. Please try again later." = "O serviço de IA não conseguiu concluir a solicitação. Tente novamente mais tarde.";
 "Preferred AI provider" = "Provedor de IA preferido";
-"Automatic (random available provider)" = "Automático (provedor disponível aleatório)";
-"Currently unavailable; automatic fallback" = "Indisponível no momento; alternativa automática";
 "Refresh available providers" = "Atualizar provedores disponíveis";
-"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "Os prompts são enviados ao servidor com segurança. Ele escolhe o modelo configurado e retorna o resultado da IA. Se o provedor preferido estiver indisponível, outro será usado automaticamente.";
 "Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "A API Backend usa créditos quando retorna um resultado de IA, mesmo se você parar ou a renderização falhar depois. Solicitações com falha e sem resultado de IA são reembolsadas.";
 
 "Loading rewarded ad…" = "Carregando anúncio com recompensa…";
@@ -507,3 +503,43 @@
 
 "Server maintenance" = "Manutenção do servidor";
 "The app is temporarily closed for server maintenance. Please check again later." = "A aplicação está temporariamente fechada para manutenção do servidor. Volta a verificar mais tarde.";
+
+"Allow safety checks" = "Permitir verificações de segurança";
+"Checking content safety…" = "Verificando segurança do conteúdo…";
+"Content safety" = "Segurança do conteúdo";
+"Email" = "E-mail";
+"Email sign-in failed. Check your email and password." = "Falha no login por e-mail. Verifique seu e-mail e senha.";
+"Enter a valid email address and password." = "Digite um endereço de e-mail e senha válidos.";
+"Kuruby Server" = "Servidor Kuruby";
+"Kuruby Server manages the AI provider and model automatically." = "O Servidor Kuruby gerencia automaticamente o provedor e modelo de IA.";
+"Not now" = "Agora não";
+"Password" = "Senha";
+"Sign in" = "Entrar";
+"Sign in with email" = "Entrar com e-mail";
+"Use the email and password for your existing account." = "Use o e-mail e a senha da sua conta existente.";
+
+"Allow prompt safety checks before using prompt assistance or generating images." = "Permitir verificações de segurança do prompt antes de usar assistência ou gerar imagens.";
+"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "Verificações de segurança do backend indisponíveis. Assistência e geração de imagens bloqueadas. Tente novamente mais tarde.";
+"Chapter imported" = "Capítulo importado";
+"Chapter title (optional)" = "Título do capítulo (opcional)";
+"Checking manga genres…" = "Verificando gêneros de mangá…";
+"Choose image files or a folder containing up to 500 images. PDFs and links are not supported." = "Escolha arquivos de imagem ou uma pasta com até 500 imagens. PDFs e links não são suportados.";
+"Could not verify this manga's genres. Translation is blocked. Please try again." = "Não foi possível verificar os gêneros deste mangá. A tradução está bloqueada. Por favor, tente novamente.";
+"External content warning" = "Aviso de conteúdo externo";
+"Files" = "Arquivos";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "Imagens na pasta são ordenadas por nome de arquivo e número da página. Importar é gratuito; abra o capítulo e escolha Executar para traduzir.";
+"Import images or an image folder from Files, then translate them in your library." = "Importe imagens ou uma pasta do app Arquivos, depois traduza na sua biblioteca.";
+"Import images or folder" = "Importar imagens ou pasta";
+"Import manga" = "Importar mangá";
+"Importing manga…" = "Importando mangá…";
+"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "Nos modos semi-seguro e totalmente seguro, as verificações de segurança do prompt usam o Server da Kuruby e exigem internet. Páginas de mangá e imagens geradas permanecem neste dispositivo.";
+"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "Nos modos semi-seguro e totalmente seguro, seus prompts de imagem são enviados via Server da Kuruby para OpenAI para verificação de conteúdo sexual. Requer acesso à internet. Suas páginas de mangá e imagens geradas não são enviadas nestas verificações.";
+"Inappropriate content" = "Conteúdo inadequado";
+"Mode" = "Modo";
+"Prompt safety checks" = "Verificações de segurança de prompt";
+"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma é um site externo. Pode conter conteúdo maduro ou sexual.";
+"The safety mode is managed by app configuration." = "O modo de segurança é gerenciado pela configuração do app.";
+"This manga has blocked genres and cannot be translated:" = "Este mangá tem gêneros bloqueados e não pode ser traduzido:";
+"This prompt contains sexual content. Change it before generating an image." = "Este prompt contém conteúdo sexual. Altere antes de gerar uma imagem.";
+"Translation is blocked for these genres:" = "A tradução está bloqueada para estes gêneros:";
+"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "Você pode recusar. Assistência e geração de imagens continuarão bloqueadas enquanto forem necessárias as verificações.";

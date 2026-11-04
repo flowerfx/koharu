@@ -234,7 +234,6 @@
 "Configuration updated" = "Configuration updated";
 "Could not refresh configuration. Using the last valid configuration." = "Could not refresh configuration. Using the last valid configuration.";
 "Check configuration updates" = "Check configuration updates";
-"Configuration source" = "Configuration source";
 "Last modified" = "Last modified";
 "ETag" = "ETag";
 
@@ -477,10 +476,7 @@
 "The AI request was interrupted. Please try again." = "The AI request was interrupted. Please try again.";
 "The AI service could not complete the request. Please try again later." = "The AI service could not complete the request. Please try again later.";
 "Preferred AI provider" = "Preferred AI provider";
-"Automatic (random available provider)" = "Automatic (random available provider)";
-"Currently unavailable; automatic fallback" = "Currently unavailable; automatic fallback";
 "Refresh available providers" = "Refresh available providers";
-"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically.";
 "Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded.";
 
 "Loading rewarded ad…" = "Loading rewarded ad…";
@@ -507,3 +503,43 @@
 
 "Server maintenance" = "Server maintenance";
 "The app is temporarily closed for server maintenance. Please check again later." = "The app is temporarily closed for server maintenance. Please check again later.";
+
+"Allow safety checks" = "Allow safety checks";
+"Checking content safety…" = "Checking content safety…";
+"Content safety" = "Content safety";
+"Email" = "Email";
+"Email sign-in failed. Check your email and password." = "Email sign-in failed. Check your email and password.";
+"Enter a valid email address and password." = "Enter a valid email address and password.";
+"Kuruby Server" = "Kuruby Server";
+"Kuruby Server manages the AI provider and model automatically." = "Kuruby Server manages the AI provider and model automatically.";
+"Not now" = "Not now";
+"Password" = "Password";
+"Sign in" = "Sign in";
+"Sign in with email" = "Sign in with email";
+"Use the email and password for your existing account." = "Use the email and password for your existing account.";
+
+"Allow prompt safety checks before using prompt assistance or generating images." = "Allow prompt safety checks before using prompt assistance or generating images.";
+"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later.";
+"Chapter imported" = "Chapter imported";
+"Chapter title (optional)" = "Chapter title (optional)";
+"Checking manga genres…" = "Checking manga genres…";
+"Choose image files or a folder containing up to 500 images. PDFs and links are not supported." = "Choose image files or a folder containing up to 500 images. PDFs and links are not supported.";
+"Could not verify this manga's genres. Translation is blocked. Please try again." = "Could not verify this manga's genres. Translation is blocked. Please try again.";
+"External content warning" = "External content warning";
+"Files" = "Files";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate.";
+"Import images or an image folder from Files, then translate them in your library." = "Import images or an image folder from Files, then translate them in your library.";
+"Import images or folder" = "Import images or folder";
+"Import manga" = "Import manga";
+"Importing manga…" = "Importing manga…";
+"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device.";
+"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks.";
+"Inappropriate content" = "Inappropriate content";
+"Mode" = "Mode";
+"Prompt safety checks" = "Prompt safety checks";
+"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma is an external website. It may contain mature or sexual content.";
+"The safety mode is managed by app configuration." = "The safety mode is managed by app configuration.";
+"This manga has blocked genres and cannot be translated:" = "This manga has blocked genres and cannot be translated:";
+"This prompt contains sexual content. Change it before generating an image." = "This prompt contains sexual content. Change it before generating an image.";
+"Translation is blocked for these genres:" = "Translation is blocked for these genres:";
+"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required.";

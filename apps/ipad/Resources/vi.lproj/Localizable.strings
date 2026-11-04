@@ -234,7 +234,6 @@
 "Configuration updated" = "Đã cập nhật cấu hình";
 "Could not refresh configuration. Using the last valid configuration." = "Không thể cập nhật cấu hình. Đang dùng bản hợp lệ gần nhất.";
 "Check configuration updates" = "Kiểm tra cập nhật cấu hình";
-"Configuration source" = "Nguồn cấu hình";
 "Last modified" = "Sửa đổi lần cuối";
 "ETag" = "ETag";
 
@@ -477,10 +476,7 @@
 "The AI request was interrupted. Please try again." = "Yêu cầu AI đã bị gián đoạn. Vui lòng thử lại.";
 "The AI service could not complete the request. Please try again later." = "Dịch vụ AI chưa thể hoàn tất yêu cầu. Vui lòng thử lại sau.";
 "Preferred AI provider" = "Nhà cung cấp AI ưu tiên";
-"Automatic (random available provider)" = "Tự động (chọn ngẫu nhiên nhà cung cấp khả dụng)";
-"Currently unavailable; automatic fallback" = "Hiện không khả dụng; tự động dùng nhà cung cấp khác";
 "Refresh available providers" = "Tải lại nhà cung cấp khả dụng";
-"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "Prompt được gửi bảo mật lên server. Server chọn model đã cấu hình và trả lại kết quả AI. Nếu nhà cung cấp ưu tiên không khả dụng, server tự động dùng nhà cung cấp khác.";
 "Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "API Backend dùng credit khi AI trả về kết quả, kể cả khi bạn dừng hoặc bước dựng trang thất bại sau đó. Yêu cầu thất bại mà chưa có kết quả AI sẽ được hoàn credit.";
 
 "Loading rewarded ad…" = "Đang tải quảng cáo thưởng…";
@@ -507,3 +503,43 @@
 
 "Server maintenance" = "Server đang bảo trì";
 "The app is temporarily closed for server maintenance. Please check again later." = "Ứng dụng đang tạm đóng để bảo trì server. Bạn quay lại kiểm tra sau nhé.";
+
+"Allow safety checks" = "Cho phép kiểm tra an toàn";
+"Checking content safety…" = "Đang kiểm tra an toàn nội dung…";
+"Content safety" = "An toàn nội dung";
+"Email" = "Email";
+"Email sign-in failed. Check your email and password." = "Đăng nhập bằng email thất bại. Vui lòng kiểm tra email và mật khẩu.";
+"Enter a valid email address and password." = "Nhập địa chỉ email và mật khẩu hợp lệ.";
+"Kuruby Server" = "Server của Kuruby";
+"Kuruby Server manages the AI provider and model automatically." = "Server của Kuruby tự động quản lý nhà cung cấp AI và mô hình.";
+"Not now" = "Không phải bây giờ";
+"Password" = "Mật khẩu";
+"Sign in" = "Đăng nhập";
+"Sign in with email" = "Đăng nhập bằng email";
+"Use the email and password for your existing account." = "Sử dụng email và mật khẩu của tài khoản hiện có.";
+
+"Allow prompt safety checks before using prompt assistance or generating images." = "Hãy cho phép kiểm tra an toàn prompt trước khi dùng tính năng hỗ trợ prompt hoặc tạo ảnh.";
+"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "Backend kiểm tra an toàn hiện không khả dụng. Chưa thể hỗ trợ prompt hoặc tạo ảnh. Bạn thử lại sau nhé.";
+"Chapter imported" = "Đã nhập chương";
+"Chapter title (optional)" = "Tiêu đề chương (tùy chọn)";
+"Checking manga genres…" = "Đang kiểm tra thể loại manga…";
+"Choose image files or a folder containing up to 500 images. PDFs and links are not supported." = "Chọn tệp hình ảnh hoặc thư mục chứa tối đa 500 hình. Không hỗ trợ PDF và liên kết.";
+"Could not verify this manga's genres. Translation is blocked. Please try again." = "Không thể xác minh thể loại manga này. Việc dịch bị chặn. Vui lòng thử lại.";
+"External content warning" = "Cảnh báo nội dung bên ngoài";
+"Files" = "Tệp";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "Ảnh trong thư mục được sắp xếp theo tên tệp và số trang. Nhập miễn phí; mở chương và chọn Chạy để dịch.";
+"Import images or an image folder from Files, then translate them in your library." = "Nhập ảnh hoặc thư mục ảnh từ Tệp, sau đó dịch trong thư viện của bạn.";
+"Import images or folder" = "Nhập ảnh hoặc thư mục";
+"Import manga" = "Nhập manga";
+"Importing manga…" = "Đang nhập manga…";
+"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "Ở chế độ half-safe và full-safe, prompt được kiểm tra qua Server của Kuruby và cần kết nối internet. Trang truyện và ảnh đã tạo vẫn nằm trên thiết bị.";
+"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "Ở chế độ half-safe và full-safe, prompt tạo ảnh được gửi qua Server của Kuruby tới OpenAI để kiểm tra nội dung tình dục. Tính năng này cần internet. Trang truyện và ảnh đã tạo không được gửi đi để kiểm tra.";
+"Inappropriate content" = "Nội dung không phù hợp";
+"Mode" = "Chế độ";
+"Prompt safety checks" = "Kiểm tra an toàn prompt";
+"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma là trang web bên ngoài. Có thể chứa nội dung người lớn hoặc tình dục.";
+"The safety mode is managed by app configuration." = "Chế độ an toàn được quản lý bởi cấu hình ứng dụng.";
+"This manga has blocked genres and cannot be translated:" = "Manga này có thể loại bị chặn và không thể dịch:";
+"This prompt contains sexual content. Change it before generating an image." = "Prompt này chứa nội dung tình dục. Hãy chỉnh lại trước khi tạo ảnh.";
+"Translation is blocked for these genres:" = "Việc dịch bị chặn cho các thể loại này:";
+"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "Bạn có thể từ chối. Tính năng hỗ trợ prompt và tạo ảnh sẽ bị chặn khi chế độ hiện tại yêu cầu kiểm tra prompt.";

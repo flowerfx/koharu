@@ -234,7 +234,6 @@
 "Configuration updated" = "تم تحديث الإعداد";
 "Could not refresh configuration. Using the last valid configuration." = "تعذّر تحديث الإعداد. يُستخدم آخر إصدار صالح.";
 "Check configuration updates" = "التحقق من تحديثات الإعداد";
-"Configuration source" = "مصدر الإعداد";
 "Last modified" = "آخر تعديل";
 "ETag" = "ETag";
 
@@ -477,10 +476,7 @@
 "The AI request was interrupted. Please try again." = "انقطع طلب الذكاء الاصطناعي. يرجى المحاولة مجددًا.";
 "The AI service could not complete the request. Please try again later." = "تعذّر على خدمة الذكاء الاصطناعي إكمال الطلب. يرجى المحاولة لاحقًا.";
 "Preferred AI provider" = "مزوّد الذكاء الاصطناعي المفضّل";
-"Automatic (random available provider)" = "تلقائي (اختيار مزوّد متاح عشوائيًا)";
-"Currently unavailable; automatic fallback" = "غير متاح حاليًا؛ سيتم التبديل تلقائيًا";
 "Refresh available providers" = "تحديث المزوّدين المتاحين";
-"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "تُرسل الأوصاف بأمان إلى الخادم. يختار الخادم النموذج المُعدّ ويعيد نتيجة الذكاء الاصطناعي. إذا لم يتوفر المزوّد المفضّل، يُستخدم مزوّد آخر تلقائيًا.";
 "Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "تستخدم واجهة Backend API الرصيد عند إرجاع نتيجة الذكاء الاصطناعي، حتى لو أوقفت العملية أو فشل العرض لاحقًا. تُسترد تكلفة الطلبات التي تفشل دون نتيجة.";
 
 "Loading rewarded ad…" = "جارٍ تحميل الإعلان بمكافأة…";
@@ -507,3 +503,43 @@
 
 "Server maintenance" = "صيانة الخادم";
 "The app is temporarily closed for server maintenance. Please check again later." = "التطبيق مغلق مؤقتًا لإجراء صيانة للخادم. يُرجى التحقق مرة أخرى لاحقًا.";
+
+"Allow safety checks" = "السماح بفحوصات الأمان";
+"Checking content safety…" = "جارٍ التحقق من سلامة المحتوى…";
+"Content safety" = "سلامة المحتوى";
+"Email" = "البريد الإلكتروني";
+"Email sign-in failed. Check your email and password." = "فشل تسجيل الدخول بالبريد الإلكتروني. تحقق من بريدك وكلمة المرور.";
+"Enter a valid email address and password." = "أدخل بريدًا إلكترونيًا صالحًا وكلمة مرور.";
+"Kuruby Server" = "خادم Kuruby";
+"Kuruby Server manages the AI provider and model automatically." = "يدير خادم Kuruby مزود الذكاء الاصطناعي والنموذج تلقائيًا.";
+"Not now" = "ليس الآن";
+"Password" = "كلمة المرور";
+"Sign in" = "تسجيل الدخول";
+"Sign in with email" = "تسجيل الدخول بالبريد الإلكتروني";
+"Use the email and password for your existing account." = "استخدم البريد الإلكتروني وكلمة المرور لحسابك الحالي.";
+
+"Allow prompt safety checks before using prompt assistance or generating images." = "السماح بفحوصات سلامة الإرشادات قبل استخدام المساعدة في الإرشادات أو إنشاء الصور.";
+"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "فحوصات السلامة في الخلفية غير متوفرة. تم حظر المساعدة في الإرشادات وإنشاء الصور. يرجى المحاولة لاحقًا.";
+"Chapter imported" = "تم استيراد الفصل";
+"Chapter title (optional)" = "عنوان الفصل (اختياري)";
+"Checking manga genres…" = "جارٍ التحقق من أنواع المانجا…";
+"Choose image files or a folder containing up to 500 images. PDFs and links are not supported." = "اختر ملفات صور أو مجلد يحتوي على ما يصل إلى ٥٠٠ صورة. لا يتم دعم ملفات PDF أو الروابط.";
+"Could not verify this manga's genres. Translation is blocked. Please try again." = "تعذر التحقق من أنواع هذه المانجا. الترجمة محظورة. يرجى المحاولة مرة أخرى.";
+"External content warning" = "تحذير من محتوى خارجي";
+"Files" = "الملفات";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "يتم ترتيب الصور في المجلد حسب اسم الملف ورقم الصفحة. الاستيراد مجاني؛ افتح الفصل واختر تشغيل للترجمة.";
+"Import images or an image folder from Files, then translate them in your library." = "استورد الصور أو مجلد الصور من الملفات، ثم ترجمها في مكتبتك.";
+"Import images or folder" = "استيراد صور أو مجلد";
+"Import manga" = "استيراد المانجا";
+"Importing manga…" = "جارٍ استيراد المانجا…";
+"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "في وضعي نصف الأمان والأمان الكامل، تستخدم فحوصات سلامة الإرشادات خادم Kuruby وتتطلب اتصالًا بالإنترنت. تظل صفحات المانجا والصور المُنشأة محلياً على هذا الجهاز.";
+"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "في وضعي نصف الأمان والأمان الكامل، تُرسل طلبات الصور الخاصة بك عبر خادم Kuruby إلى OpenAI لفحص المحتوى الجنسي. يتطلب اتصالاً بالإنترنت. لا تُرسل صفحات المانجا أو الصور المُنشأة لهذه الفحوصات.";
+"Inappropriate content" = "محتوى غير مناسب";
+"Mode" = "الوضع";
+"Prompt safety checks" = "فحوصات سلامة الإرشادات";
+"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma موقع خارجي. قد يحتوي على محتوى ناضج أو جنسي.";
+"The safety mode is managed by app configuration." = "يتم إدارة وضع الأمان من خلال إعدادات التطبيق.";
+"This manga has blocked genres and cannot be translated:" = "هذه المانجا تحتوي على أنواع محظورة ولا يمكن ترجمتها:";
+"This prompt contains sexual content. Change it before generating an image." = "تحتوي هذه الإرشادات على محتوى جنسي. يرجى تغييره قبل إنشاء صورة.";
+"Translation is blocked for these genres:" = "تم حظر الترجمة لهذه الأنواع:";
+"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "يمكنك الرفض. ستظل المساعدة في الإرشادات وتوليد الصور محظورة طالما أن فحوصات الإرشادات مطلوبة.";

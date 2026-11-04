@@ -7,7 +7,6 @@ struct BackendAIProvider: Decodable, Identifiable, Sendable {
 }
 struct BackendAIContext: Sendable {
     let reservationID: String
-    let provider: String?
 }
 enum BackendAITask: String, Sendable { case translate, enhance, generatePrompt }
 
@@ -38,13 +37,11 @@ actor BackendAI {
     private func cancel(_ requestID: String) async { _ = try? await call("ai_cancel", ["request_id": requestID]) }
     func generate(_ input: StructuredTextRequest, task: BackendAITask, context: BackendAIContext, count: Int? = nil) async throws -> Data {
         guard let reservation = UUID(uuidString: context.reservationID), input.system.utf16.count <= 8192, input.user.utf16.count <= 32768,
-              context.provider == nil || Self.providerIDs.contains(context.provider!),
               task == .translate ? count.map({ (1...100).contains($0) }) == true : count == nil else {
             throw AppError.message(L("The AI request is too large or invalid. Reduce segments per request or shorten the instructions."))
         }
         let requestID = UUID().uuidString.lowercased(), reservationID = reservation.uuidString.lowercased()
         var payload: [String: Any] = ["request_id": requestID, "reservation_id": reservationID, "task": task.rawValue, "system": input.system, "user": input.user]
-        if let provider = context.provider { payload["provider"] = provider }
         if let count { payload["count"] = count }
         return try await withTaskCancellationHandler {
             do {

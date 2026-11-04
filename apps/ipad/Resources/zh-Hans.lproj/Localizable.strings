@@ -234,7 +234,6 @@
 "Configuration updated" = "配置已更新";
 "Could not refresh configuration. Using the last valid configuration." = "无法更新配置。正在使用最近一次有效的配置。";
 "Check configuration updates" = "检查配置更新";
-"Configuration source" = "配置来源";
 "Last modified" = "最后修改";
 "ETag" = "ETag";
 
@@ -477,10 +476,7 @@
 "The AI request was interrupted. Please try again." = "AI 请求已中断，请重试。";
 "The AI service could not complete the request. Please try again later." = "AI 服务无法完成请求，请稍后重试。";
 "Preferred AI provider" = "首选 AI 提供商";
-"Automatic (random available provider)" = "自动（随机选择可用提供商）";
-"Currently unavailable; automatic fallback" = "当前不可用，将自动切换";
 "Refresh available providers" = "刷新可用提供商";
-"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "提示词会安全地发送到服务器。服务器选择已配置的模型并返回 AI 结果。首选提供商不可用时，会自动切换到其他提供商。";
 "Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "Backend API 在返回 AI 结果时扣除点数，即使之后停止任务或渲染失败也一样。未返回 AI 结果的失败请求会退还点数。";
 
 "Loading rewarded ad…" = "正在加载激励广告…";
@@ -507,3 +503,43 @@
 
 "Server maintenance" = "服务器维护中";
 "The app is temporarily closed for server maintenance. Please check again later." = "应用因服务器维护暂时关闭，请稍后再来查看。";
+
+"Allow safety checks" = "允许安全检查";
+"Checking content safety…" = "正在检查内容安全…";
+"Content safety" = "内容安全";
+"Email" = "电子邮件";
+"Email sign-in failed. Check your email and password." = "电子邮件登录失败。请检查您的电子邮件和密码。";
+"Enter a valid email address and password." = "请输入有效的电子邮件地址和密码。";
+"Kuruby Server" = "Kuruby 服务器";
+"Kuruby Server manages the AI provider and model automatically." = "Kuruby 服务器会自动管理 AI 供应商和模型。";
+"Not now" = "现在不要";
+"Password" = "密码";
+"Sign in" = "登录";
+"Sign in with email" = "使用电子邮件登录";
+"Use the email and password for your existing account." = "请使用您现有账户的电子邮件和密码。";
+
+"Allow prompt safety checks before using prompt assistance or generating images." = "允许在使用提示辅助或生成图像前进行安全检查。";
+"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "后端安全检查不可用。提示辅助和图像生成已被阻止，请稍后再试。";
+"Chapter imported" = "章节已导入";
+"Chapter title (optional)" = "章节标题（可选）";
+"Checking manga genres…" = "正在检查漫画类型…";
+"Choose image files or a folder containing up to 500 images. PDFs and links are not supported." = "选择包含最多500张图片的图像文件或文件夹。不支持PDF和链接。";
+"Could not verify this manga's genres. Translation is blocked. Please try again." = "无法验证此漫画的类型。翻译被阻止，请重试。";
+"External content warning" = "外部内容警告";
+"Files" = "文件";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "文件夹中的图片按文件名和页码排序。导入免费；打开章节并选择运行以翻译。";
+"Import images or an image folder from Files, then translate them in your library." = "从文件中导入图片或文件夹，然后在您的库中翻译。";
+"Import images or folder" = "导入图片或文件夹";
+"Import manga" = "导入漫画";
+"Importing manga…" = "正在导入漫画…";
+"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "在半安全和完全安全模式下，提示安全检查使用 Kuruby Server 并需要联网。漫画页面和生成的图像保留在本设备上。";
+"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "在半安全和完全安全模式下，您的图像提示通过 Kuruby Server 发送至 OpenAI 以检查色情内容。需要网络连接。您的漫画页面和生成的图像不会发送用于检查。";
+"Inappropriate content" = "不当内容";
+"Mode" = "模式";
+"Prompt safety checks" = "提示安全检查";
+"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma 是外部网站，可能包含成人或色情内容。";
+"The safety mode is managed by app configuration." = "安全模式由应用程序配置管理。";
+"This manga has blocked genres and cannot be translated:" = "此漫画包含封锁类型，无法翻译：";
+"This prompt contains sexual content. Change it before generating an image." = "此提示含有色情内容。请修改后再生成图像。";
+"Translation is blocked for these genres:" = "这些类型的翻译已被封锁：";
+"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "您可以拒绝。提示辅助和图像生成将在需要提示检查时保持阻止。";

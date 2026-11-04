@@ -54,7 +54,6 @@ struct Preferences: Codable, Equatable {
     var server = "http://localhost:1234"
     var remoteModel = ""
     var hosted: [String: HostedConfiguration]?
-    var backendProvider: String?
     var localModel: UUID?
     var target = AppLocalization.shared.resolvedLanguage.translationTarget
     var instructions = ""
@@ -78,7 +77,7 @@ struct RenderFingerprint: Encodable {
         switch preferences.provider {
         case .local: model = preferences.localModel?.uuidString ?? ""
         case .lmStudio: model = preferences.remoteModel
-        case .backend: model = preferences.backendProvider ?? ""
+        case .backend: model = ""
         default: model = preferences.hosted?[preferences.provider.rawValue]?.model ?? ""
         }
         target = preferences.target

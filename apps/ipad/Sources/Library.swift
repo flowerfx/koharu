@@ -7,6 +7,7 @@ import UIKit
     let credits: CreditStore
     let subscriptions: SubscriptionStore
     let backendAuthentication: NakamaAuthentication
+    let safety: ContentSafety
     var showCreditRewards = false
     var creditRequest: CreditRequest?
     var approvedCreditRequest: CreditRequest?
@@ -58,6 +59,8 @@ import UIKit
         self.disk = disk
         let authentication = NakamaAuthentication()
         backendAuthentication = authentication
+        let safety = ContentSafety(authentication: authentication)
+        self.safety = safety
         let backend = BackendAI { name, payload in
             try AppConfiguration.current.requireProvider(.backend)
             return try await authentication.rpcCommand(name, payload: payload)
@@ -89,6 +92,7 @@ import UIKit
     }
     func importChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool = false, onReady: @escaping @MainActor (UUID) -> Void) {
         guard !busy else { return }
+        guard AppConfiguration.current.contentSafety.mode.allowsRawkuma else { return }
         do { try requireCreditProvider() } catch { self.error = error.localizedDescription; return }
         requestCredits(.translate, cost: creditCost(.translate), explanation: translationCreditExplanation) {
             self.startImportChapter(source, revalidate: revalidate, newCopy: newCopy, onReady: onReady)
@@ -103,9 +107,10 @@ import UIKit
             var renderedPages = 0
             var ticket: String?
             do {
+                let source = try source.validated()
+                try await RawkumaGenreChecker.requireAllowed(source.url, configuration: AppConfiguration.current.contentSafety)
                 ticket = try await credits.reserve(action: .translate, provider: config.provider, rerun: false)
                 try Task.checkCancellation()
-                let source = try source.validated()
                 var chapter = (newCopy ? nil : chapters.first { $0.sourceURL == source.url && $0.target == config.target }) ?? Chapter(title: source.title, sourceURL: source.url, target: config.target, pages: [])
                 var pages: [MangaPage] = []
                 for (index, url) in source.images.enumerated() {
@@ -147,6 +152,9 @@ import UIKit
             var renderedPages = 0
             var ticket: String?
             do {
+                if let source = chapters.first(where: { $0.id == id }) {
+                    try await RawkumaGenreChecker.requireAllowed(source.sourceURL, configuration: AppConfiguration.current.contentSafety)
+                }
                 ticket = try await credits.reserve(action: .translate, provider: config.provider, rerun: true)
                 try Task.checkCancellation()
                 var target = id
@@ -221,7 +229,7 @@ import UIKit
                 status = "\(L("Translating")) \(index + 1)/\(chapter.pages.count)"
                 // A local GGUF needs the memory held by cached OCR/cleanup sessions.
                 if config.provider == .local { await pipeline.releaseCachedModels() }
-                let context = ticket.map { BackendAIContext(reservationID: $0, provider: config.backendProvider) }
+                let context = ticket.map { BackendAIContext(reservationID: $0) }
                 let texts = try await translator.translate(targets.map(\.source), config: config, model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog, batchSize: batchSize, backendContext: context)
                 for (segment, text) in zip(targets, texts) {
                     if let i = page.segments.firstIndex(where: { $0.id == segment.id }) { page.segments[i].text = text }

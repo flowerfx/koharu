@@ -62,14 +62,21 @@ actor SourceImages {
         if http.statusCode == 304, cached, let previous { return previous }
         guard http.statusCode == 200 else { throw AppError.message("HTTP \(http.statusCode): \(address.lastPathComponent)") }
         let size = try temporary.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-        guard size > 0, size <= 32 * 1024 * 1024,
-              let image = CGImageSourceCreateWithURL(temporary as CFURL, nil),
+        guard size > 0, size <= 32 * 1024 * 1024 else { throw AppError.message(L("Image is invalid or too large for on-device processing")) }
+        var page = try Self.store(Data(contentsOf: temporary, options: .mappedIfSafe), source: url, chapter: chapter, previous: previous, disk: disk)
+        page.etag = http.value(forHTTPHeaderField: "ETag")
+        page.modified = http.value(forHTTPHeaderField: "Last-Modified")
+        return page
+    }
+    static func store(_ data: Data, source: String, chapter: UUID, previous: MangaPage? = nil, disk: LibraryDisk) throws -> MangaPage {
+        guard !data.isEmpty, data.count <= 32 * 1024 * 1024,
+              let image = CGImageSourceCreateWithData(data as CFData, nil),
               let props = CGImageSourceCopyPropertiesAtIndex(image, 0, nil) as? [CFString: Any],
               let width = props[kCGImagePropertyPixelWidth] as? Int, let height = props[kCGImagePropertyPixelHeight] as? Int,
               width > 0, height > 0, width <= 20000, height <= 30000, width * height <= 24_000_000 else {
             throw AppError.message(L("Image is invalid or too large for on-device processing"))
         }
-        var bytes = try Data(contentsOf: temporary, options: .mappedIfSafe)
+        var bytes = data
         // Name by the source bytes so revalidation and de-duplication stay stable.
         let filename = digest(bytes) + ".image"
         // OCR crops and inpainting read raw pixels, while layout uses the oriented
@@ -80,10 +87,7 @@ actor SourceImages {
         let destination = disk.pageURL(chapter, filename)
         try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         if !FileManager.default.fileExists(atPath: destination.path) { try bytes.write(to: destination, options: .atomic) }
-        var page = previous?.original == filename ? previous! : MangaPage(source: url, original: filename)
-        page.etag = http.value(forHTTPHeaderField: "ETag")
-        page.modified = http.value(forHTTPHeaderField: "Last-Modified")
-        return page
+        return previous?.original == filename ? previous! : MangaPage(source: source, original: filename)
     }
     private static func upright(_ source: CGImageSource, longestSide: Int) throws -> Data {
         let options: [CFString: Any] = [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceCreateThumbnailWithTransform: true,

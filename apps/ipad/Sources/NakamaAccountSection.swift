@@ -44,6 +44,7 @@ struct NakamaAccountSection: View {
 struct NakamaSignInButtons: View {
     @Environment(MangaLibrary.self) private var library
     @Environment(\.colorScheme) private var colorScheme
+    @State private var showingEmailSignIn = false
     var body: some View {
         VStack(spacing: 12) {
             Button { Task { await library.backendAuthentication.signInDevice() } } label: {
@@ -58,7 +59,44 @@ struct NakamaSignInButtons: View {
             .disabled(library.backendAuthentication.working)
             .accessibilityIdentifier("nakama-sign-in-device")
             NakamaAppleSignInButton()
+            Button(L("Sign in with email")) { showingEmailSignIn = true }
+                .disabled(library.backendAuthentication.working)
+                .accessibilityIdentifier("nakama-sign-in-email")
         }.padding(.vertical, 8)
+        .sheet(isPresented: $showingEmailSignIn) { NakamaEmailSignInScreen() }
+    }
+}
+
+private struct NakamaEmailSignInScreen: View {
+    @Environment(MangaLibrary.self) private var library
+    @Environment(\.dismiss) private var dismiss
+    @State private var email = ""
+    @State private var password = ""
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField(L("Email"), text: $email).keyboardType(.emailAddress).textContentType(.username)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled().privacySensitive()
+                        .accessibilityIdentifier("nakama-email")
+                    SecureField(L("Password"), text: $password).textContentType(.password)
+                        .accessibilityIdentifier("nakama-password")
+                    Text(L("Use the email and password for your existing account.")).font(.caption).foregroundStyle(.secondary)
+                    if let message = library.backendAuthentication.message { Text(message).foregroundStyle(.red) }
+                    Button(L("Sign in")) {
+                        Task {
+                            await library.backendAuthentication.signInEmail(email, password: password)
+                            password = ""
+                            if library.backendAuthentication.user != nil { dismiss() }
+                        }
+                    }.disabled(email.isEmpty || password.isEmpty || library.backendAuthentication.working)
+                        .accessibilityIdentifier("nakama-email-submit")
+                    if library.backendAuthentication.working { ProgressView() }
+                }
+            }
+            .navigationTitle(L("Sign in with email"))
+            .toolbar { Button(L("Cancel")) { dismiss() }.disabled(library.backendAuthentication.working) }
+        }.presentationSizing(.page)
     }
 }
 

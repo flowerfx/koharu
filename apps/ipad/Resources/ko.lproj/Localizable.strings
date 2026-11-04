@@ -234,7 +234,6 @@
 "Configuration updated" = "구성이 업데이트되었습니다";
 "Could not refresh configuration. Using the last valid configuration." = "구성을 새로고침하지 못했습니다. 마지막으로 유효한 구성을 사용합니다.";
 "Check configuration updates" = "구성 업데이트 확인";
-"Configuration source" = "구성 출처";
 "Last modified" = "마지막 수정";
 "ETag" = "ETag";
 
@@ -477,10 +476,7 @@
 "The AI request was interrupted. Please try again." = "AI 요청이 중단되었습니다. 다시 시도해 주세요.";
 "The AI service could not complete the request. Please try again later." = "AI 서비스가 요청을 완료하지 못했습니다. 나중에 다시 시도해 주세요.";
 "Preferred AI provider" = "선호하는 AI 제공자";
-"Automatic (random available provider)" = "자동 (사용 가능한 제공자 무작위 선택)";
-"Currently unavailable; automatic fallback" = "현재 사용 불가, 자동 대체";
 "Refresh available providers" = "사용 가능한 제공자 새로 고침";
-"Prompts are sent securely to the server. It selects the configured model and returns the AI result. An unavailable preferred provider falls back automatically." = "프롬프트는 서버로 안전하게 전송됩니다. 서버는 설정된 모델을 선택하고 AI 결과를 반환합니다. 선호하는 제공자를 사용할 수 없으면 다른 제공자로 자동 전환합니다.";
 "Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded." = "Backend API는 AI 결과가 반환될 때 크레딧을 사용하며, 이후 중지하거나 렌더링이 실패해도 동일합니다. AI 결과 없이 실패한 요청은 환불됩니다.";
 
 "Loading rewarded ad…" = "보상형 광고 불러오는 중…";
@@ -507,3 +503,43 @@
 
 "Server maintenance" = "서버 점검 중";
 "The app is temporarily closed for server maintenance. Please check again later." = "서버 점검으로 앱 이용이 일시 중단되었습니다. 잠시 후 다시 확인해 주세요.";
+
+"Allow safety checks" = "안전 검사 허용";
+"Checking content safety…" = "콘텐츠 안전성 검사 중…";
+"Content safety" = "콘텐츠 안전";
+"Email" = "이메일";
+"Email sign-in failed. Check your email and password." = "이메일 로그인에 실패했습니다. 이메일과 비밀번호를 확인하세요.";
+"Enter a valid email address and password." = "유효한 이메일 주소와 비밀번호를 입력하세요.";
+"Kuruby Server" = "Kuruby 서버";
+"Kuruby Server manages the AI provider and model automatically." = "Kuruby 서버가 AI 제공자와 모델을 자동으로 관리합니다.";
+"Not now" = "지금은 아니요";
+"Password" = "비밀번호";
+"Sign in" = "로그인";
+"Sign in with email" = "이메일로 로그인";
+"Use the email and password for your existing account." = "기존 계정의 이메일과 비밀번호를 사용하세요.";
+
+"Allow prompt safety checks before using prompt assistance or generating images." = "프롬프트 지원 또는 이미지 생성 전에 안전 검사 허용.";
+"Backend safety checks are unavailable. Prompt assistance and image generation are blocked. Please try again later." = "백엔드 안전 검사를 사용할 수 없습니다. 프롬프트 지원 및 이미지 생성이 차단되었습니다. 나중에 다시 시도하세요.";
+"Chapter imported" = "챕터가 가져와졌습니다";
+"Chapter title (optional)" = "챕터 제목 (선택 사항)";
+"Checking manga genres…" = "망가 장르 확인 중…";
+"Choose image files or a folder containing up to 500 images. PDFs and links are not supported." = "최대 500장의 이미지 파일 또는 폴더를 선택하세요. PDF와 링크는 지원하지 않습니다.";
+"Could not verify this manga's genres. Translation is blocked. Please try again." = "이 망가의 장르를 확인할 수 없습니다. 번역이 차단되었습니다. 다시 시도하세요.";
+"External content warning" = "외부 콘텐츠 경고";
+"Files" = "파일";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "폴더 내 이미지는 파일명과 페이지 번호로 정렬됩니다. 가져오기는 무료이며, 챕터를 열고 실행을 선택해 번역하세요.";
+"Import images or an image folder from Files, then translate them in your library." = "파일에서 이미지 또는 이미지 폴더를 가져온 다음 라이브러리에서 번역하세요.";
+"Import images or folder" = "이미지 또는 폴더 가져오기";
+"Import manga" = "망가 가져오기";
+"Importing manga…" = "망가 가져오는 중…";
+"In half-safe and full-safe modes, prompt safety checks use Kuruby Server and require internet access. Manga pages and generated images stay on this device." = "하프 세이프 및 풀 세이프 모드에서는 프롬프트 안전 검사가 Kuruby Server를 사용하며 인터넷 연결이 필요합니다. 망가 페이지와 생성된 이미지는 이 장치에 남아 있습니다.";
+"In half-safe and full-safe modes, your image prompts are sent through Kuruby Server to OpenAI to check for sexual content. Internet access is required. Your manga pages and generated images are not sent for these checks." = "하프 세이프 및 풀 세이프 모드에서는 이미지 프롬프트가 Kuruby Server를 통해 OpenAI로 전송되어 성적 콘텐츠를 검사합니다. 인터넷 접속이 필요하며 망가 페이지와 생성된 이미지는 검사를 위해 전송되지 않습니다.";
+"Inappropriate content" = "부적절한 콘텐츠";
+"Mode" = "모드";
+"Prompt safety checks" = "프롬프트 안전 검사";
+"Rawkuma is an external website. It may contain mature or sexual content." = "Rawkuma는 외부 웹사이트입니다. 성인 또는 성적 콘텐츠가 포함될 수 있습니다.";
+"The safety mode is managed by app configuration." = "안전 모드는 앱 설정에서 관리됩니다.";
+"This manga has blocked genres and cannot be translated:" = "이 망가는 차단된 장르가 있어 번역할 수 없습니다:";
+"This prompt contains sexual content. Change it before generating an image." = "이 프롬프트에 성적 콘텐츠가 포함되어 있습니다. 이미지를 생성하기 전에 변경하세요.";
+"Translation is blocked for these genres:" = "이 장르의 번역이 차단되었습니다:";
+"You can decline. Prompt assistance and image generation will stay blocked while prompt checks are required." = "거부할 수 있습니다. 프롬프트 지원 및 이미지 생성은 검사 필요 시 계속 차단됩니다.";
