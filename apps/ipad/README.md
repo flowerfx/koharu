@@ -133,7 +133,7 @@ Translation and prompt assistance share a typed structured-text request and the 
 
 ## Content safety and manga imports
 
-`app-config.json` owns `contentSafety`; there is no user-facing mode selector. Production bundles `{"mode":"full-safe","blockedGenres":["Adult","Mature","Ecchi","Hentai","Crime"]}`. Both fields are required. Invalid modes or malformed genre lists are rejected without replacing the validated configuration.
+`app-config.json` owns `contentSafety`; there is no user-facing mode selector. The 1.0.1 (39) production verification build bundles `{"mode":"none-safe","blockedGenres":["Adult","Mature","Ecchi","Hentai","Crime"]}`. Both fields are required. Invalid modes or malformed genre lists are rejected without replacing the validated configuration.
 
 Every mode includes a separate **Import manga** tab for images or image folders from Files. The additional **Rawkuma** tab appears only in half/none mode when `rawkuma.url` is configured. The bundled source is `"rawkuma":{"url":"https://rawkuma.net/"}`. A missing `rawkuma`/`url`, JSON `null`, or an empty/whitespace URL disables that tab. Nonempty URLs must be HTTPS origins without credentials, ports, paths, queries or fragments. The fixed origin is displayed in a noneditable frame; users enter only its path, query or fragment. Native navigation, redirects, parent-series checks, source validation and image-request referers use that same configured origin. External domains and full URLs pasted into the path field are rejected. Changing this source does not change the separately restricted `cdn.rawkuma.com` image host.
 
