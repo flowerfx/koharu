@@ -1,0 +1,33 @@
+REVIEW BUILD: 1.0.0 (38)
+
+SIGN-IN AND ACCESS — ANONYMOUS GUEST OR APPLE
+A supplied username/password is not required. To review the app, use "Sign in as guest" (Anonymous) or the optional "Sign in with Apple" button.
+
+Guest access steps:
+1. Launch the app with an internet connection.
+2. On "Sign in to continue", tap "Sign in as guest". This creates a regular backend account using a random device credential stored in Keychain. No registration, email, password or OTP is required for Guest access.
+3. Tracking and notification permissions are optional and may be declined.
+4. On the optional Premium offer, choose "Continue for free".
+5. In provider setup, choose "Backend API", then "Continue". The built-in Kuruby service does not require the reviewer to supply an external provider API key.
+6. Claim the daily reward when offered. If credits are needed, open Settings > Credits and membership > Daily reward. A purchase is not required to try the free translation workflow.
+
+Sign in with Apple is optional and uses Apple's standard authentication flow. Reviewers do not need to use their personal Apple ID when choosing Guest access.
+
+TEST IMAGE AND FOLDER TRANSLATION
+1. Open the "Import manga" tab.
+2. Choose "Import images or folder" and select text-containing manga/comic images or anime screenshots from Files. You may also select an image folder. Pages are sorted by filename. Importing itself does not use credits.
+3. Open the imported chapter in Library, then choose "Run" to translate it. Reading saved pages is free. Translation actions use the account's credits.
+4. Review translated text, edit text if needed, and read with vertical scrolling or horizontal page navigation. The app saves reading progress.
+
+Apple Vision OCR is built in. AI inpainting is off by default, so the basic translation workflow does not require downloading a separate OCR or inpainting model. Optional OCR, inpainting and local-language models can be selected and downloaded in Settings. Original pages are stored on the device; online translation providers receive OCR text and translation instructions.
+
+ANIME STUDIO AND PROMPT REVIEW
+Anima image generation runs locally with Metal on a supported physical iPhone/iPad with at least 8 GB RAM. It requires sufficient free storage and the model download shown in Anime Studio. Adjust image size and generation steps or use the optional upscaler. Devices below the memory requirement display an explanation.
+
+Prompt assistance can use Backend API. Before prompt assistance or image generation, a consent screen explains that prompt text is sent via Kuruby Server to OpenAI for sexual-content screening. Restricted prompts are rejected before image generation. If the review service is unavailable, prompt actions are blocked. Manga pages and generated images are not uploaded for this screening.
+
+CURRENT RELEASE CONTENT SOURCES
+The production release configuration allows image/image-folder imports only. The built-in Rawkuma website browser and URL imports are disabled in this release. There is no built-in manga catalog or video-translation feature. Users must have the rights to process their imported content.
+
+PREMIUM
+A monthly auto-renewable Premium subscription is optional. Review its offer from Settings > Credits and membership > View Premium. Purchases and restoration use Apple's StoreKit. Guest users can review the free translation and creative workflows with available daily credits, subject to the device/model requirements above.

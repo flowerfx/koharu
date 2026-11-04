@@ -29,4 +29,6 @@ Use an existing, suitably scoped App Store Connect API key with Key ID, Issuer I
 
 [asc](https://github.com/rorkai/App-Store-Connect-CLI) is another third-party CLI using Apple's official App Store Connect API. Its current metadata workflow supports validation and dry runs; check the installed version's help before applying a folder.
 
+`review-notes.txt` is the English App Review Information note for build 38. It guides Anonymous Guest or optional Apple sign-in without supplied demo credentials; the Sign-in required checkbox is off. Review notes are separate from localized storefront descriptions.
+
 Store metadata languages are separate from UI and translation-target languages. Creating localizations does not change country availability or publish a release. No build upload, resubmission or production configuration switch is part of this metadata update.
