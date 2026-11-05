@@ -115,7 +115,10 @@ int koharu_anima_generate(void *opaque, const char *diffusion, const char *text,
         job->progress_ready = true;
         sd_ctx_params_t context; sd_ctx_params_init(&context);
         context.diffusion_model_path = diffusion; context.llm_path = text; context.vae_path = vae;
-        context.backend = metal.c_str(); context.params_backend = "*=cpu";
+        // Anima's VAE decode can trigger the iOS Metal watchdog. Keep diffusion
+        // and text encoding on Metal, but execute VAE graphs on CPU.
+        std::string backend = "*=" + metal + ",vae=cpu";
+        context.backend = backend.c_str(); context.params_backend = "*=cpu";
         context.enable_mmap = true; context.n_threads = 4;
         context.max_vram = "2.5"; context.disable_prefetch = true; context.flash_attn = true;
         std::unique_ptr<sd_ctx_t, decltype(&sd_dart_exit_free)> runtime(sd_dart_new_sd_ctx(&context), sd_dart_exit_free);

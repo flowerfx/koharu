@@ -52,7 +52,8 @@ final class AnimeGenerationChecks: XCTestCase {
         try png.write(to: evidence.appendingPathComponent("anima-turbo-seed42.png"), options: .atomic)
         let metadata: [String: Any] = ["model": configuration.id, "prompt": prompt, "seed": 42, "width": 512, "height": 512,
                                        "steps": configuration.generation.steps, "secondsIncludingLoad": duration,
-                                       "physicalMemoryBytes": ProcessInfo.processInfo.physicalMemory, "backend": "Metal GPU"]
+                                       "physicalMemoryBytes": ProcessInfo.processInfo.physicalMemory,
+                                       "backend": "Metal GPU", "vaeBackend": "CPU"]
         try JSONSerialization.data(withJSONObject: metadata, options: [.prettyPrinted, .sortedKeys]).write(to: evidence.appendingPathComponent("generation.json"))
         print("ANIMA_METAL_SMOKE \(duration) seconds, \(png.count) PNG bytes")
     }
