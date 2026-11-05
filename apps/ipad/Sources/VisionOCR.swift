@@ -35,19 +35,19 @@ final class VisionONNX {
         if let paddle { koharu_paddle_close(paddle.handle) }
         paddle = nil
     }
-    func session(_ url: URL, coreMLCache: URL? = nil) throws -> ORTSession {
-        let key = url.path + "|" + (coreMLCache?.path ?? "")
+    func session(_ url: URL, coreMLCache: URL? = nil, computeUnits: String = "ALL") throws -> ORTSession {
+        let key = url.path + "|" + (coreMLCache?.path ?? "") + "|" + computeUnits
         if let cached = sessions[key] { return cached }
-        let session = try makeSession(url, coreMLCache: coreMLCache)
+        let session = try makeSession(url, coreMLCache: coreMLCache, computeUnits: computeUnits)
         sessions[key] = session
         return session
     }
-    private func makeSession(_ url: URL, coreMLCache: URL?) throws -> ORTSession {
+    private func makeSession(_ url: URL, coreMLCache: URL?, computeUnits: String) throws -> ORTSession {
         let options = try ORTSessionOptions()
         try options.setIntraOpNumThreads(4)
         if let coreMLCache {
             try FileManager.default.createDirectory(at: coreMLCache, withIntermediateDirectories: true)
-            try options.appendCoreMLExecutionProvider(withOptionsV2: ["ModelFormat": "MLProgram", "MLComputeUnits": "ALL", "ModelCacheDirectory": coreMLCache.path])
+            try options.appendCoreMLExecutionProvider(withOptionsV2: ["ModelFormat": "MLProgram", "MLComputeUnits": computeUnits, "ModelCacheDirectory": coreMLCache.path])
         }
         return try ORTSession(env: environment, modelPath: url.path, sessionOptions: options)
     }

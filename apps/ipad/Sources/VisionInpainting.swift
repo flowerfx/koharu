@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import OnnxRuntimeBindings
+import os
 
 struct InpaintTile: Equatable {
     let x: Int
@@ -37,8 +38,33 @@ extension PagePipeline {
             releaseDiffusion()
             try onnx.admit(model, at: directory)
         }
-        let session = ["lama", "aot"].contains(modelID) ? try onnx.session(directory.appendingPathComponent("model.onnx"), coreMLCache: modelID == "aot" ? directory.appendingPathComponent("coreml-" + model.files[0].sha256) : nil) : nil
         var error = [CChar](repeating: 0, count: 4096)
+        let session: ORTSession?
+        if modelID == "lama" {
+            // LaMa runs through Core ML on the GPU, which rejects the published
+            // model's dynamic batch axis (error -14) and several of its ops, so
+            // load a copy fixed to batch 1 with those ops rewritten.
+            let fixed = directory.appendingPathComponent("model-coreml.onnx")
+            if !FileManager.default.fileExists(atPath: fixed.path) {
+                let batched = directory.appendingPathComponent("model-b1.partial.onnx")
+                let partial = directory.appendingPathComponent("model-coreml.partial.onnx")
+                defer { try? FileManager.default.removeItem(at: batched) }
+                guard koharu_onnx_fix_batch(directory.appendingPathComponent("model.onnx").path, batched.path, &error, error.count) != 0,
+                      koharu_onnx_rewrite_coreml(batched.path, partial.path, &error, error.count) != 0 else {
+                    throw AppError.message(String(cString: error))
+                }
+                try FileManager.default.moveItem(at: partial, to: fixed)
+            }
+            // ONNX Runtime keys its Core ML cache by model path, so name the cache
+            // after the file's size and date to drop programs built from an older copy.
+            let stamp = try fixed.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey])
+            let cache = "coreml-gpu-\(stamp.fileSize ?? 0)-\(Int(stamp.contentModificationDate?.timeIntervalSince1970 ?? 0))"
+            session = try onnx.session(fixed, coreMLCache: directory.appendingPathComponent(cache), computeUnits: "CPUAndGPU")
+        } else if modelID == "aot" {
+            session = try onnx.session(directory.appendingPathComponent("model.onnx"), coreMLCache: directory.appendingPathComponent("coreml-" + model.files[0].sha256))
+        } else {
+            session = nil
+        }
         var diffusionHandle: UnsafeMutableRawPointer?
         if session == nil {
             if let cachedDiffusion, cachedDiffusion.key == diffusionKey { diffusionHandle = cachedDiffusion.handle }
@@ -53,6 +79,7 @@ extension PagePipeline {
         let edge = InpaintTile.edge, count = edge * edge
         let tiles = InpaintTile.covering(boxes, size: image.size)
         onProgress(.tiles(completed: 0, total: tiles.count))
+        let started = ContinuousClock.now
         for (index, tile) in tiles.enumerated() {
             try Task.checkCancellation()
             var pixels = [UInt8](repeating: 255, count: count * 3), mask = [UInt8](repeating: 0, count: count)
@@ -102,6 +129,8 @@ extension PagePipeline {
             } }
             onProgress(.tiles(completed: index + 1, total: tiles.count))
         }
+        let elapsed = started.duration(to: .now).components
+        Logger(subsystem: "KoharuPad", category: "Cleanup").notice("cleanup \(modelID, privacy: .public) tiles=\(tiles.count, privacy: .public) seconds=\(Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18, privacy: .public)")
         return try result.image()
     }
 }

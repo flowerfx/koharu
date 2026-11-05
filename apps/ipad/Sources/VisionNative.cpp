@@ -257,3 +257,24 @@ void *koharu_paddle_open(const char *, char *error, size_t n) { report(error, n,
 int koharu_paddle_read(void *, const uint8_t *, int, int, char *, size_t) { return 0; }
 void koharu_paddle_close(void *) {}
 #endif
+
+#include <onnxruntime/onnxruntime_c_api.h>
+// Core ML's GPU path cannot build programs with unbounded input dimensions, so
+// ONNX Runtime's basic optimizer re-saves the model with batch fixed to 1 and
+// its shape arithmetic folded into constants.
+int koharu_onnx_fix_batch(const char *source, const char *target, char *error, size_t capacity) {
+    const OrtApi *api = OrtGetApiBase()->GetApi(ORT_API_VERSION);
+    OrtEnv *env = nullptr; OrtSessionOptions *options = nullptr; OrtSession *session = nullptr;
+    OrtStatus *status = api->CreateEnv(ORT_LOGGING_LEVEL_ERROR, "koharu", &env);
+    if (!status) status = api->CreateSessionOptions(&options);
+    if (!status) status = api->AddFreeDimensionOverrideByName(options, "batch", 1);
+    if (!status) status = api->SetSessionGraphOptimizationLevel(options, ORT_ENABLE_BASIC);
+    if (!status) status = api->SetOptimizedModelFilePath(options, target);
+    if (!status) status = api->CreateSession(env, source, options, &session);
+    int ok = status == nullptr;
+    if (status) { report(error, capacity, api->GetErrorMessage(status)); api->ReleaseStatus(status); }
+    if (session) api->ReleaseSession(session);
+    if (options) api->ReleaseSessionOptions(options);
+    if (env) api->ReleaseEnv(env);
+    return ok;
+}

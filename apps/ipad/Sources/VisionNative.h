@@ -21,6 +21,10 @@ int koharu_anima_upscale(void *job, const char *model, const uint8_t *rgb, int w
 void *koharu_paddle_open(const char *directory, char *error, size_t capacity);
 int koharu_paddle_read(void *handle, const uint8_t *rgb, int width, int height, char *output, size_t capacity);
 void koharu_paddle_close(void *handle);
+// Writes a copy of an ONNX model with its free dimension `batch` fixed to 1.
+int koharu_onnx_fix_batch(const char *source, const char *target, char *error, size_t capacity);
+// Rewrites the ops ONNX Runtime's Core ML EP cannot place into exact equivalents (OnnxRewrite.cpp).
+int koharu_onnx_rewrite_coreml(const char *source, const char *target, char *error, size_t capacity);
 #ifdef __cplusplus
 }
 #endif
