@@ -3,7 +3,7 @@
     "url": "https://rawkuma.net/"
   },
   "contentSafety": {
-    "mode": "none-safe",
+    "mode": "full-safe",
     "blockedGenres": [
       "Adult",
       "Mature",
