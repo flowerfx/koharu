@@ -40,8 +40,8 @@ final class BackendAITests: XCTestCase {
         let engine = TranslationEngine(backend: backend, configuration: { configuration })
         var config = Preferences(); config.provider = .backend
         let context = BackendAIContext(reservationID: f.reservation)
-        let input = (0..<205).map { "原文 \($0)" }
-        let result = try await engine.translate(input, config: config, model: nil, batchSize: 7, backendContext: context)
+        let input = (0..<1005).map { "原文 \($0)" }
+        let result = try await engine.translate(input, config: config, model: nil, batchSize: 1000, backendContext: context)
         XCTAssertEqual(result, input.indices.map { "Translated \($0)" })
         let calls = await f.recorded(), submissions = calls.filter { $0.0 == "ai_generate" }.map(\.1)
         XCTAssertEqual(submissions.count, 1)
@@ -49,8 +49,8 @@ final class BackendAITests: XCTestCase {
             XCTAssertEqual(p["reservation_id"] as? String, f.reservation)
             XCTAssertNil(p["provider"])
             XCTAssertEqual(p["task"] as? String, "translate")
-            XCTAssertEqual(p["count"] as? Int, 205)
-            XCTAssertEqual(p["batch_size"] as? Int, 7)
+            XCTAssertEqual(p["count"] as? Int, 1005)
+            XCTAssertEqual(p["batch_size"] as? Int, 1000)
             let payload = try JSONDecoder().decode(TranslationPayload.self, from: Data(try XCTUnwrap(p["user"] as? String).utf8))
             XCTAssertEqual(payload.segments.map(\.text), input)
             XCTAssertEqual(p["system"] as? String, try TranslationContract.prompts(["Bonjour"], preferences: config).0)

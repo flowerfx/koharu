@@ -177,7 +177,7 @@ final class HostedProviderTests: XCTestCase {
         defer { try? Credentials.save("", endpoint.credentialAccount) }
         var config = Preferences(); config.provider = .qwen; config.hosted = ["qwen": settings]
         let input = (0..<103).map { "原文 \($0)" }
-        for limit in [100, 7] {
+        for limit in [100, 7, 300, 1000] {
             var sizes: [Int] = []
             let service = ProviderHTTP.setup { request in
                 if request.httpMethod == "GET" {
@@ -194,8 +194,8 @@ final class HostedProviderTests: XCTestCase {
             let engine = TranslationEngine(hosted: service)
             let output = try await engine.translate(input, config: config, model: nil, batchSize: limit)
             XCTAssertEqual(output, input.map { "Dịch " + $0 })
-            XCTAssertEqual(sizes, limit == 100 ? [100, 3] : Array(repeating: 7, count: 14) + [5])
-            for invalid in [0, 101] {
+            XCTAssertEqual(sizes, limit == 100 ? [100, 3] : limit == 7 ? Array(repeating: 7, count: 14) + [5] : [103])
+            for invalid in [0, 1001] {
                 do { _ = try await engine.translate(input, config: config, model: nil, batchSize: invalid); XCTFail("Invalid batch size accepted") }
                 catch {}
             }

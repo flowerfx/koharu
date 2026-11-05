@@ -578,4 +578,4 @@
 
 "Text regions per batch" = "Zones de texte par lot";
 
-"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "Par défaut : 100. L’OCR analyse tout le chapitre avant la traduction. Choisissez 1 à 100 zones par lot ; réduisez ce nombre si le contexte ou la sortie du modèle est limité.";
+"Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "Par défaut : 300. Choisissez de 100 à 1 000 zones de texte par lot. Les lots peuvent être réduits selon les limites du modèle.";

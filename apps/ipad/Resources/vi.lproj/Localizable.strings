@@ -578,4 +578,4 @@
 
 "Text regions per batch" = "Số vùng chữ mỗi lô";
 
-"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "Mặc định: 100. OCR quét cả chapter trước khi dịch. Chọn 1–100 vùng chữ mỗi lô; giảm nếu giới hạn ngữ cảnh hoặc đầu ra của model quá nhỏ.";
+"Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "Mặc định: 300. Chọn 100–1.000 vùng chữ mỗi lô. Hệ thống có thể chia lô nhỏ hơn để phù hợp giới hạn của model.";

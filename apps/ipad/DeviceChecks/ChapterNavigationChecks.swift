@@ -44,11 +44,17 @@ final class ChapterNavigationChecks: XCTestCase {
         }
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
+        UserDefaults.standard.removeObject(forKey: "translationBatchSize")
         let disk = try LibraryDisk(root: root), library = MangaLibrary(disk: disk)
+        XCTAssertEqual(library.translationBatchSize, 300)
         let preferences = library.preferences
-        library.translationBatchSize = 25
+        library.translationBatchSize = 1000
         XCTAssertEqual(library.preferences, preferences)
-        XCTAssertEqual(MangaLibrary(disk: disk).translationBatchSize, 25)
+        XCTAssertEqual(MangaLibrary(disk: disk).translationBatchSize, 1000)
+        library.translationBatchSize = 99
+        XCTAssertEqual(library.translationBatchSize, 100)
+        library.translationBatchSize = 1001
+        XCTAssertEqual(MangaLibrary(disk: disk).translationBatchSize, 1000)
     }
     @MainActor func testImageImportPublishesReadyChapterWithoutStartingTranslation() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

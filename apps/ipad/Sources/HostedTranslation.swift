@@ -205,7 +205,7 @@ actor HostedTranslation {
 
     func translate(endpoint: HostedEndpoint, key: String, model: String, system: String, user: String, count: Int, instructions: String = "") async throws -> Data {
         let key = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard (1...100).contains(count) else { throw invalidResponse }
+        guard (1...1000).contains(count) else { throw invalidResponse }
         if endpoint.provider == .deepL {
             let available = try await models(endpoint: endpoint, key: key)
             guard available.contains(where: { $0.id == model }) else { throw AppError.message(L("Validate the API key and select a supported model in Settings")) }

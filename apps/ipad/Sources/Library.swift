@@ -18,9 +18,12 @@ import UIKit
         didSet { UserDefaults.standard.set(readingMode.rawValue, forKey: "readingMode") }
     }
     // Request sizing is an execution preference, separate from page content/cache.
-    var translationBatchSize = min(100, max(1, UserDefaults.standard.object(forKey: "translationBatchSize") as? Int ?? 100)) {
-        didSet {
-            UserDefaults.standard.set(translationBatchSize, forKey: "translationBatchSize")
+    private var savedTranslationBatchSize = min(1000, max(100, UserDefaults.standard.object(forKey: "translationBatchSize") as? Int ?? 300))
+    var translationBatchSize: Int {
+        get { savedTranslationBatchSize }
+        set {
+            savedTranslationBatchSize = min(1000, max(100, newValue))
+            UserDefaults.standard.set(savedTranslationBatchSize, forKey: "translationBatchSize")
         }
     }
     var models: [LocalModel] = []

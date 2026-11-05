@@ -159,7 +159,7 @@ Two focused Debug checks passed on the physical iPad M5 (iPadOS 27.0, 0.034 seco
 
 ## OCR and inpainting models
 
-In **Settings → Translation → Segments per request**, enter **1–100**; the default is **100**. OCR finishes each page before its segments are sent in sequential batches. A 26-segment page now uses one request with the default, while a 103-segment page uses 100 + 3. Pages are never combined. This execution setting is saved on the device separately from project processing fingerprints, so changing it does not invalidate completed pages. Output budgets grow with the segment count up to 8,192 tokens; LM Studio allows 180–600 seconds per request, and hosted APIs allow up to 660 seconds total. Model/provider context, output and request-size limits still apply. Reduce the batch size or increase local context if a large request cannot complete; the app never silently drops segments or publishes partial JSON.
+In **Settings → Translation → Text regions per batch**, use the slider to select **100–1,000**; the default is **300**. The current value is shown above the slider and saved on the device separately from processing fingerprints, so changing it does not invalidate completed pages. OCR finishes the chapter before translation. Backend API sends one chapter job with the selected ceiling; other providers batch locally. Both paths may use smaller batches to fit the 12,000-source-character and estimated output budgets. DeepL additionally keeps its 50-text request cap. Output budgets remain bounded at 8,192 tokens; LM Studio allows 180–600 seconds per request. Model/provider context, output and request-size limits still apply; the output estimate is not a tokenizer guarantee. Reduce the ceiling or increase local context if a request cannot complete. Invalid/incomplete output fails instead of dropping regions.
 
 **AI inpainting defaults to off.** Enable it explicitly to select/download a cleanup model; switching it off uses bordered white cards and hides cleanup-model controls. Existing explicit settings are retained when updating.
 
@@ -350,7 +350,7 @@ ID is sent without a model, URL or vendor credential. The server owns active
 status, key validation, model selection, bounded transient retries and random fallback. Translation retains
 the shared prompt builder, batch size and strict segment-ID validation.
 
-Each chapter/action reserves credits once. `ai_generate` submits one UUID-bound chapter job with all OCR regions (up to 2,000 regions and a 240 KiB encoded RPC body). The server respects the configured 1–100 regions per batch and additionally caps source text at 12,000 characters per model call. `ai_result.progress` reports completed/total regions and batches. Oversized chapters fail explicitly instead of being truncated;
+Each chapter/action reserves credits once. `ai_generate` submits one UUID-bound chapter job with all OCR regions (up to 2,000 regions and a 240 KiB encoded RPC body). The server respects the configured 100–1,000-region ceiling (default 300) and additionally bounds source text and estimated output per model call. `ai_result.progress` reports completed/total regions and batches. Oversized chapters fail explicitly instead of being truncated;
 `ai_result` polls until a validated result or a sanitized error is returned. A lost
 submission response retries the same request ID. Stop attempts `ai_cancel` for
 queued work. `ai_finish` closes batch admission and releases an unused reservation;

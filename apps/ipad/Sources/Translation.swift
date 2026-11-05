@@ -44,9 +44,9 @@ struct TranslationPayload: Codable {
 }
 enum TranslationContract {
     static func request(system: String, user: String, count: Int) throws -> StructuredTextRequest {
-        guard (1...100).contains(count) else { throw AppError.message(L("Invalid translation request")) }
+        guard (1...1000).contains(count) else { throw AppError.message(L("Invalid translation request")) }
         return try StructuredTextRequest(system: system, user: user, name: "translation", schema: schema(count: count),
-                                         hostedSchema: hostedSchema(count: count), grammar: grammar(count: count), outputTokens: outputTokenLimit(count: count), timeout: Double(max(180, count * 6)))
+                                         hostedSchema: hostedSchema(count: count), grammar: grammar(count: count), outputTokens: outputTokenLimit(count: count), timeout: Double(min(600, max(180, count * 6))))
     }
     static func outputTokenLimit(count: Int) -> Int { max(2048, min(8192, count * 96)) }
     static func prompts(_ texts: [String], preferences: Preferences) throws -> (String, String) {
@@ -116,7 +116,7 @@ actor TranslationEngine {
             guard catalog.enable else { throw AppError.message(L("This provider or model is disabled in app-config.json. Choose another option in Settings.")) }
             guard config.contextSize <= catalog.maxTokens else { throw AppError.message(L("Context tokens exceed this GGUF model’s configured maximum.")) }
         }
-        guard (1...100).contains(batchSize) else { throw AppError.message(L("Invalid translation request")) }
+        guard (1...1000).contains(batchSize) else { throw AppError.message(L("Invalid translation request")) }
         guard !texts.isEmpty else { return [] }
         if config.provider == .backend {
             guard let backend, let backendContext else { throw AppError.message(L("Sign in to the backend before using Backend API.")) }
@@ -127,10 +127,19 @@ actor TranslationEngine {
         var result: [String] = []
         let limit = config.provider == .deepL ? min(batchSize, 50) : batchSize
         // Batch across the chapter after every selected page has completed OCR.
-        for start in stride(from: 0, to: texts.count, by: limit) {
+        var batches: [[String]] = [], batch: [String] = [], characters = 0, estimatedOutput = 0
+        for text in texts {
+            guard text.utf16.count <= 12000 else { throw AppError.message(L("This chapter is too large for one server request. Split it into smaller chapters.")) }
+            let output = 12 + (text.utf16.count + 1) / 2
+            if !batch.isEmpty && (batch.count >= limit || characters + text.utf16.count > 12000 || estimatedOutput + output > 7168) {
+                batches.append(batch); batch = []; characters = 0; estimatedOutput = 0
+            }
+            batch.append(text); characters += text.utf16.count; estimatedOutput += output
+        }
+        if !batch.isEmpty { batches.append(batch) }
+        for (index, batch) in batches.enumerated() {
             try Task.checkCancellation()
-            let batch = Array(texts[start..<min(start + limit, texts.count)])
-            onProgress(.translating(.init(completed: start, total: texts.count, batch: start / limit, batches: (texts.count + limit - 1) / limit)))
+            onProgress(.translating(.init(completed: result.count, total: texts.count, batch: index, batches: batches.count)))
             let (system, user) = try TranslationContract.prompts(batch, preferences: config)
             let data: Data
             if config.provider == .deepL {
@@ -143,7 +152,7 @@ actor TranslationEngine {
                                                     config: config, model: model, catalog: catalog, backendContext: backendContext, backendTask: .translate, count: batch.count)
             }
             result += try TranslationContract.decode(data, count: batch.count)
-            onProgress(.translating(.init(completed: result.count, total: texts.count, batch: start / limit + 1, batches: (texts.count + limit - 1) / limit)))
+            onProgress(.translating(.init(completed: result.count, total: texts.count, batch: index + 1, batches: batches.count)))
         }
         onProgress(.received(total: texts.count))
         return result

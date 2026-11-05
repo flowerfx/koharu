@@ -578,4 +578,4 @@
 
 "Text regions per batch" = "مناطق النص لكل دفعة";
 
-"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "الافتراضي: 100. يمسح OCR الفصل كاملاً قبل الترجمة. اختر من 1 إلى 100 منطقة لكل دفعة، وقلّل العدد إذا كان حد السياق أو الإخراج للنموذج صغيراً.";
+"Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "الافتراضي: 300. اختر من 100 إلى 1,000 منطقة نصية لكل دفعة. قد تُستخدم دفعات أصغر لتناسب حدود النموذج.";

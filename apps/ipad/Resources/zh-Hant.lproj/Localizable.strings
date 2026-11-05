@@ -578,4 +578,4 @@
 
 "Text regions per batch" = "每批文字區域數";
 
-"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "預設：100。OCR 會先掃描整個章節，再進行翻譯。每批選擇 1–100 個區域；若模型的上下文或輸出上限較小，請減少此值。";
+"Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "預設：300。每批設定 100–1,000 個文字區域。系統可能根據模型限制使用更小的批次。";

@@ -578,4 +578,4 @@
 
 "Text regions per batch" = "배치당 텍스트 영역 수";
 
-"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "기본값: 100. 번역 전에 OCR이 챕터 전체를 스캔합니다. 배치당 1~100개 영역을 선택하고 모델의 문맥 또는 출력 제한이 작으면 값을 줄이세요.";
+"Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "기본값: 300. 배치당 텍스트 영역을 100~1,000개로 설정하세요. 모델 제한에 맞춰 더 작은 배치로 나눌 수 있습니다.";

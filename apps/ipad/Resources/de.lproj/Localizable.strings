@@ -578,4 +578,4 @@
 
 "Text regions per batch" = "Textbereiche pro Stapel";
 
-"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "Standard: 100. OCR scannt das gesamte Kapitel vor der Übersetzung. Wählen Sie 1–100 Bereiche pro Stapel; reduzieren Sie die Anzahl bei kleinem Kontext- oder Ausgabelimit des Modells.";
+"Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "Standard: 300. Wählen Sie 100–1.000 Textbereiche pro Stapel. Je nach Modellgrenzen können kleinere Stapel verwendet werden.";

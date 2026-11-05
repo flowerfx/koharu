@@ -578,4 +578,4 @@
 
 "Text regions per batch" = "バッチごとのテキスト領域数";
 
-"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "初期値：100。翻訳前に章全体をOCRで読み取ります。バッチごとに1〜100領域を指定します。モデルのコンテキストや出力上限が小さい場合は減らしてください。";
+"Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "初期値：300。バッチごとに100〜1,000のテキスト領域を指定します。モデルの制限に応じて、より小さいバッチに分割される場合があります。";
