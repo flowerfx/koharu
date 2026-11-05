@@ -2,6 +2,7 @@ import Foundation
 import ImageIO
 import Security
 import Darwin
+import Network
 
 enum Credentials {
     private static let service = Bundle.main.bundleIdentifier!
@@ -111,6 +112,43 @@ func isConnectivityError(_ error: Error) -> Bool {
 
 enum LMStudio {
     struct Server: Identifiable { var url: String; var models: [String]; var id: String { url } }
+    private final class LANAccess: @unchecked Sendable {
+        private let connection: NWConnection
+        private let queue = DispatchQueue(label: "LMStudio.LANAccess")
+        private var continuation: CheckedContinuation<Void, Error>?
+        private var finished = false
+        init(host: String) { connection = NWConnection(host: NWEndpoint.Host(host), port: 9, using: .udp) }
+        func wait() async throws {
+            try await withTaskCancellationHandler {
+                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                    queue.async {
+                        guard !self.finished else { continuation.resume(throwing: CancellationError()); return }
+                        self.continuation = continuation
+                        self.connection.stateUpdateHandler = { [weak self] state in
+                            switch state {
+                            case .ready: self?.finish(.success(()))
+                            case .failed(let error): self?.finish(.failure(error))
+                            case .cancelled: self?.finish(.failure(CancellationError()))
+                            default: break
+                            }
+                        }
+                        self.connection.start(queue: self.queue)
+                        self.queue.asyncAfter(deadline: .now() + 60) { [weak self] in
+                            self?.finish(.failure(URLError(.notConnectedToInternet)))
+                        }
+                    }
+                }
+            } onCancel: { self.queue.async { self.finish(.failure(CancellationError())) } }
+        }
+        private func finish(_ result: Result<Void, Error>) {
+            guard !finished else { return }
+            finished = true
+            let pending = continuation; continuation = nil
+            connection.stateUpdateHandler = nil
+            connection.cancel()
+            pending?.resume(with: result)
+        }
+    }
     static func baseURL(_ text: String) throws -> URL {
         guard let url = URL(string: text.trimmingCharacters(in: .whitespacesAndNewlines)),
               ["http", "https"].contains(url.scheme ?? ""), let host = url.host, !host.isEmpty,
@@ -128,9 +166,14 @@ enum LMStudio {
         var v4 = in_addr(), v6 = in6_addr()
         return inet_pton(AF_INET, name, &v4) == 1 || inet_pton(AF_INET6, name, &v6) == 1
     }
-    static func session(timeout: Double = 120) -> URLSession {
+    static func session(timeout: Double = 120, waitsForConnectivity: Bool = true) -> URLSession {
         let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = timeout; config.timeoutIntervalForResource = timeout
+        // The first LAN request must survive the system permission prompt.
+        // Keep the normal inactivity limit once connected, with a bounded
+        // resource lifetime that leaves time for the user to grant access.
+        config.waitsForConnectivity = waitsForConnectivity
+        config.timeoutIntervalForRequest = timeout
+        config.timeoutIntervalForResource = waitsForConnectivity ? max(timeout, 60) : timeout
         config.connectionProxyDictionary = [:]
         return URLSession(configuration: config, delegate: RedirectBoundary { _ in false }, delegateQueue: nil)
     }
@@ -173,8 +216,12 @@ enum LMStudio {
     static func discover(port: Int) async throws -> [Server] {
         let subnets = privateSubnets()
         guard !subnets.isEmpty, subnets.count <= 4, (1...65535).contains(port) else { throw AppError.message(L("No private /24 network found. Enter the server URL manually.")) }
+        // A connected UDP socket needs no remote handshake or packets. Network
+        // framework waits here for LAN permission (Apple TN3179), before the
+        // short per-host HTTP probes start consuming their timeout budgets.
+        for subnet in subnets { try await LANAccess(host: subnet + ".1").wait() }
         let addresses = subnets.flatMap { subnet in (1...254).map { "http://\(subnet).\($0):\(port)" } }
-        let session = session(timeout: 1.2); defer { session.invalidateAndCancel() }
+        let session = session(timeout: 1.2, waitsForConnectivity: false); defer { session.invalidateAndCancel() }
         return try await withThrowingTaskGroup(of: Server?.self) { group in
             var iterator = addresses.makeIterator()
             func probe(_ address: String) { group.addTask {
