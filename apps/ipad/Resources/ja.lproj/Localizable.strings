@@ -185,8 +185,6 @@
 "Rendering page" = "ページを描画中";
 "Saving page" = "ページを保存中";
 "Failed" = "失敗";
-"Segments per request" = "リクエストごとのテキスト数";
-"Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small." = "初期値：100。各ページのOCRが完了してから翻訳します。1回のリクエストにつき1〜100個を設定できます。モデルのコンテキストや出力上限が不足する場合は値を下げてください。";
 "Delete all chapters" = "すべてのチャプターを削除";
 "Delete all saved chapters?" = "保存済みのチャプターをすべて削除しますか？";
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "元の画像、翻訳、チャプターの履歴は完全に削除されます。ダウンロード済みのモデルと設定は保持されます。";
@@ -561,3 +559,23 @@
 "Enter a path on the configured Rawkuma website." = "設定されたRawkumaサイト内のパスを入力してください。";
 "Manga path" = "漫画のパス";
 "This content is inappropriate and cannot be translated." = "不適切なコンテンツのため翻訳できません。";
+
+"Scanning chapter · page %lld/%lld" = "章を読み取り中 · ページ %lld/%lld";
+
+"Sending chapter · %lld text regions" = "章を送信中 · テキスト領域 %lld 個";
+
+"Chapter queued · %lld text regions" = "章の翻訳待ち · テキスト領域 %lld 個";
+
+"Translating chapter · waiting for the server" = "章を翻訳中 · サーバーの処理を待っています";
+
+"Translating chapter · %lld/%lld regions · batch %lld/%lld" = "章を翻訳中 · %lld/%lld 領域 · バッチ %lld/%lld";
+
+"Receiving chapter translation" = "章の翻訳を受信中";
+
+"This chapter is too large for one server request. Split it into smaller chapters." = "この章は1回のリクエストで送信するには大きすぎます。小さな章に分割してください。";
+
+"Sign in to the backend before using Backend API." = "Backend API を使う前にサーバーにサインインしてください。";
+
+"Text regions per batch" = "バッチごとのテキスト領域数";
+
+"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "初期値：100。翻訳前に章全体をOCRで読み取ります。バッチごとに1〜100領域を指定します。モデルのコンテキストや出力上限が小さい場合は減らしてください。";

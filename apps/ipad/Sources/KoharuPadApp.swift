@@ -345,15 +345,27 @@ private struct MainTabLayout: ViewModifier {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 VStack(spacing: 0) {
                     if library.busy {
-                        HStack {
-                            ProgressView(value: library.progress).frame(maxWidth: 180)
-                            Text(library.status).font(.caption)
-                            Button(L("Stop"), role: .destructive) { library.activeTask?.cancel() }.buttonStyle(.bordered)
-                        }.padding(10).frame(maxWidth: .infinity).background(.regularMaterial)
+                        ChapterProcessingIndicator()
                     }
                     CreditSummary()
                 }
             }
+    }
+}
+
+struct ChapterProcessingIndicator: View {
+    @Environment(MangaLibrary.self) private var library
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                if library.progressIndeterminate { ProgressView() }
+                else { ProgressView(value: library.progress).frame(maxWidth: .infinity) }
+                Spacer(minLength: 12)
+                Button(L("Stop"), role: .destructive) { library.activeTask?.cancel() }.buttonStyle(.bordered)
+            }
+            Text(library.status).font(.caption).fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("chapter-processing-status")
+        }.padding(10).frame(maxWidth: .infinity, alignment: .leading).background(.regularMaterial)
     }
 }
 

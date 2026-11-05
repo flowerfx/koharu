@@ -36,7 +36,7 @@ import UIKit
         !busy && !downloadingModel && !credits.working && !backendAuthentication.working && !rewardedAds.working && !subscriptions.purchasing
     }
     var busy = false {
-        didSet { if !busy { activeJobUsesGPU = false; endBackgroundWork() } }
+        didSet { if !busy { progressIndeterminate = false; activeJobUsesGPU = false; endBackgroundWork() } }
     }
     // Metal, Core ML and Vision work cannot run while the app is in the
     // background; such jobs are stopped cooperatively when the scene leaves.
@@ -45,6 +45,7 @@ import UIKit
     @ObservationIgnored var readPositionSaves: [UUID: Task<Void, Never>] = [:]
     var status = ""
     var progress: Double = 0
+    var progressIndeterminate = false
     var error: String?
     var activeTask: Task<Void, Never>?
     var modelTask: Task<Void, Never>?
@@ -55,7 +56,7 @@ import UIKit
     let pipeline = PagePipeline()
     let images = SourceImages()
 
-    init(disk: LibraryDisk) {
+    init(disk: LibraryDisk, translator: TranslationEngine? = nil) {
         self.disk = disk
         let authentication = NakamaAuthentication()
         backendAuthentication = authentication
@@ -66,7 +67,7 @@ import UIKit
             return try await authentication.rpcCommand(name, payload: payload)
         }
         backendAI = backend
-        translator = TranslationEngine(backend: backend)
+        self.translator = translator ?? TranslationEngine(backend: backend)
         // KoharuPadApp validates both bundled resources before creating the
         // library and shows a startup error instead; these are build invariants.
         let policy = AppConfiguration.current.credit
@@ -125,7 +126,7 @@ import UIKit
                 chapter.pages = pages
                 try update(chapter)
                 onReady(chapter.id)
-                try await translate(chapter.id, config: config, ticket: ticket, force: false) { renderedPages += 1 }
+                try await processChapter(chapter.id, config: config, ticket: ticket, force: false) { renderedPages += 1 }
                 translated = true
             } catch is CancellationError { status = L("Stopped") }
             catch { processingFailed(error) }
@@ -165,12 +166,12 @@ import UIKit
                     for i in copy.pages.indices {
                         let input = disk.pageURL(source.id, copy.pages[i].original), output = disk.pageURL(copy.id, copy.pages[i].original)
                         if !FileManager.default.fileExists(atPath: output.path) { try FileManager.default.copyItem(at: input, to: output) }
-                        copy.pages[i].rendered = nil; copy.pages[i].fingerprint = nil
+                        copy.pages[i].rendered = nil; copy.pages[i].fingerprint = nil; copy.pages[i].translationFingerprint = nil
                         for s in copy.pages[i].segments.indices { copy.pages[i].segments[s].text = nil; copy.pages[i].segments[s].edited = false }
                     }
                     try update(copy); target = copy.id
                 }
-                try await translate(target, config: config, ticket: ticket, force: force, only: page) { renderedPages += 1 }
+                try await processChapter(target, config: config, ticket: ticket, force: force, only: page) { renderedPages += 1 }
                 translated = true
             }
             catch is CancellationError { status = L("Stopped") }
@@ -187,7 +188,7 @@ import UIKit
         self.error = status + "\n" + error.localizedDescription
         status = L("Failed")
     }
-    private func translate(_ id: UUID, config: Preferences, ticket: String?, force: Bool, only: UUID? = nil, onPageSaved: () -> Void = {}) async throws {
+    func processChapter(_ id: UUID, config: Preferences, ticket: String?, force: Bool, only: UUID? = nil, onPageSaved: () -> Void = {}) async throws {
         guard var chapter = chapters.first(where: { $0.id == id }) else { throw AppError.message(L("Chapter not found")) }
         // Superseded renders are unreferenced once the run ends (also on failure).
         defer { disk.pruneRendered(id) }
@@ -205,40 +206,84 @@ import UIKit
         let legacyFingerprint = digest(Data(("ipad-pipeline-3\n" + prompt).utf8) + (try encoder.encode(config)))
         func fresh(_ value: String?) -> Bool { value == fingerprint || value == legacyFingerprint }
         let ocrSignature = "vision-3:" + (config.ocrModel ?? "apple") + ":" + (config.ocrModel.flatMap { id in (AppConfiguration.current.ocr + AppConfiguration.current.inpainting).first { $0.id == id } }?.files.map(\.sha256).joined() ?? "document-2")
-        for index in chapter.pages.indices {
-            if let only, chapter.pages[index].id != only { continue }
+        let translationFingerprint = fingerprint + ":" + ocrSignature
+        let pending = chapter.pages.indices.filter { index in
+            let page = chapter.pages[index]
+            if let only, page.id != only { return false }
+            return force || !fresh(page.fingerprint) || page.ocrSignature != ocrSignature ||
+                page.textLayoutVersion != PageTypography.version ||
+                page.rendered.map { !FileManager.default.fileExists(atPath: disk.pageURL(id, $0).path) } != false
+        }
+        progressIndeterminate = false
+        await translator.unload()
+        // Persist OCR independently of translation/rendering, so a stopped or
+        // failed chapter request can reuse every page already scanned.
+        for (ordinal, index) in pending.enumerated() {
             try Task.checkCancellation()
-            if !force && fresh(chapter.pages[index].fingerprint),
-               chapter.pages[index].textLayoutVersion == PageTypography.version,
-               let file = chapter.pages[index].rendered, FileManager.default.fileExists(atPath: disk.pageURL(id, file).path) { continue }
-            status = "\(L("Translating")) \(index + 1)/\(chapter.pages.count)"
-            progress = Double(index) / Double(chapter.pages.count)
-            let source = disk.pageURL(id, chapter.pages[index].original)
-            var page = chapter.pages[index]
-            let rescanned = page.ocrSignature != ocrSignature
-            if rescanned {
-                guard !page.segments.contains(where: \.edited) else {
+            status = String(format: L("Scanning chapter · page %lld/%lld"), Int64(index + 1), Int64(chapter.pages.count))
+            progress = Double(ordinal) / Double(pending.count)
+            if chapter.pages[index].ocrSignature != ocrSignature {
+                guard !chapter.pages[index].segments.contains(where: \.edited) else {
                     throw AppError.message(L("This page has edits from a different OCR configuration. Make a new copy to rescan without losing them."))
                 }
-                status = "\(L("Recognizing text")) \(index + 1)/\(chapter.pages.count)"
-                await translator.unload()
-                page.segments = try await pipeline.recognize(source, modelID: config.ocrModel, modelRoot: disk.modelsURL)
-                page.ocrSignature = ocrSignature
+                chapter.pages[index].segments = try await pipeline.recognize(disk.pageURL(id, chapter.pages[index].original), modelID: config.ocrModel, modelRoot: disk.modelsURL)
+                chapter.pages[index].ocrSignature = ocrSignature
+                chapter.pages[index].translationFingerprint = nil
+                chapter.pages[index].fingerprint = nil
+                chapter.readPage = chapters.first { $0.id == id }?.readPage ?? chapter.readPage
+                try update(chapter, recordUndo: false)
             }
-            let targets = page.segments.filter { !$0.edited }
-            if !targets.isEmpty && (force || rescanned || !fresh(page.fingerprint) || targets.contains(where: { $0.text == nil })) {
-                status = "\(L("Translating")) \(index + 1)/\(chapter.pages.count)"
-                // A local GGUF needs the memory held by cached OCR/cleanup sessions.
-                if config.provider == .local { await pipeline.releaseCachedModels() }
-                let context = ticket.map { BackendAIContext(reservationID: $0) }
-                let texts = try await translator.translate(targets.map(\.source), config: config, model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog, batchSize: batchSize, backendContext: context)
-                for (segment, text) in zip(targets, texts) {
-                    if let i = page.segments.firstIndex(where: { $0.id == segment.id }) { page.segments[i].text = text }
+            progress = Double(ordinal + 1) / Double(pending.count)
+        }
+        let translationPages = pending.filter { index in
+            let page = chapter.pages[index]
+            return force || page.translationFingerprint != translationFingerprint || page.segments.contains { !$0.edited && $0.text == nil }
+        }.map { chapter.pages[$0] }
+        let plan = try ChapterTranslationPlan(pages: translationPages)
+        if !plan.targets.isEmpty {
+            await pipeline.releaseCachedModels()
+            let (events, continuation) = AsyncStream<TranslationProgress>.makeStream(bufferingPolicy: .bufferingNewest(1))
+            let reporting = Task { @MainActor in
+                for await event in events {
+                    guard !Task.isCancelled else { break }
+                    switch event {
+                    case .submitting(let total):
+                        progressIndeterminate = true
+                        status = String(format: L("Sending chapter · %lld text regions"), Int64(total))
+                    case .queued(let total):
+                        progressIndeterminate = true
+                        status = String(format: L("Chapter queued · %lld text regions"), Int64(total))
+                    case .translating(let value):
+                        progressIndeterminate = value.completed == 0
+                        progress = Double(value.completed) / Double(value.total)
+                        status = value.batches == 0 ? L("Translating chapter · waiting for the server") :
+                            String(format: L("Translating chapter · %lld/%lld regions · batch %lld/%lld"), Int64(value.completed), Int64(value.total), Int64(min(value.batch + 1, value.batches)), Int64(value.batches))
+                    case .received:
+                        progressIndeterminate = true
+                        status = L("Receiving chapter translation")
+                    }
                 }
             }
-            // Release the large GGUF allocation before inpainting takes the device lane.
-            if config.inpaint { await translator.unload() }
+            let texts: [String]
+            do {
+                defer { continuation.finish(); reporting.cancel() }
+                texts = try await translator.translate(plan.targets.map(\.source), config: config,
+                    model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog,
+                    batchSize: batchSize, backendContext: ticket.map { BackendAIContext(reservationID: $0) }) { continuation.yield($0) }
+            }
+            try Task.checkCancellation()
+            try plan.apply(texts, to: &chapter.pages, fingerprint: translationFingerprint)
+            chapter.readPage = chapters.first { $0.id == id }?.readPage ?? chapter.readPage
+            try update(chapter, recordUndo: false)
+        }
+        await translator.unload()
+        progressIndeterminate = false
+        for (ordinal, index) in pending.enumerated() {
+            try Task.checkCancellation()
+            let source = disk.pageURL(id, chapter.pages[index].original)
+            var page = chapter.pages[index]
             status = "\(L("Rendering page")) \(index + 1)/\(chapter.pages.count)"
+            progress = Double(ordinal) / Double(pending.count)
             let cleanupModel = config.cleanupModel ?? AppConfiguration.current.defaults.inpainting
             let cleanupName = AppConfiguration.current.inpainting.first { $0.id == cleanupModel }?.name ?? cleanupModel
             let output: Data
@@ -254,7 +299,7 @@ import UIKit
                         status = "\(L("Loading cleanup model")) \(index + 1)/\(chapter.pages.count) · \(cleanupName)"
                     case .tiles(let completed, let total):
                         status = "\(L("Cleaning background")) \(index + 1)/\(chapter.pages.count) · \(cleanupName) · \(completed)/\(total)"
-                        progress = (Double(index) + 0.4 + 0.5 * Double(completed) / Double(max(1, total))) / Double(chapter.pages.count)
+                        progress = (Double(ordinal) + 0.9 * Double(completed) / Double(max(1, total))) / Double(pending.count)
                     }
                 }
             }

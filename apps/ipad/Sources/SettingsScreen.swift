@@ -75,11 +75,11 @@ struct SettingsScreen: View {
                     ForEach(TargetLanguage.all) { Text($0.displayName).tag($0.tag) }
                 }
                 TextField(L("Additional instructions"), text: $library.preferences.instructions, axis: .vertical).lineLimit(3...6)
-                LabeledContent(L("Segments per request")) {
-                    TextField(L("Segments per request"), value: Binding(get: { library.translationBatchSize }, set: { library.translationBatchSize = min(100, max(1, $0)) }), format: .number)
+                LabeledContent(L("Text regions per batch")) {
+                    TextField(L("Text regions per batch"), value: Binding(get: { library.translationBatchSize }, set: { library.translationBatchSize = min(100, max(1, $0)) }), format: .number)
                         .keyboardType(.numberPad).multilineTextAlignment(.trailing).frame(width: 80)
                 }
-                Text(L("Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small.")).font(.caption).foregroundStyle(.secondary)
+                Text(L("Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small.")).font(.caption).foregroundStyle(.secondary)
             }
             if library.preferences.provider == .backend { BackendProviderSettings() }
             if library.preferences.provider == .lmStudio && AppConfiguration.current.providers.contains(.lmStudio) {

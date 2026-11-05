@@ -185,8 +185,6 @@
 "Rendering page" = "جارٍ رسم الصفحة";
 "Saving page" = "جارٍ حفظ الصفحة";
 "Failed" = "فشل";
-"Segments per request" = "المقاطع في كل طلب";
-"Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small." = "القيمة الافتراضية: 100. يكتمل التعرف على النص في كل صفحة قبل الترجمة. اختر من 1 إلى 100 مقطع لكل طلب؛ قلّل العدد إذا كانت نافذة السياق أو حد الإخراج للنموذج غير كافٍ.";
 "Delete all chapters" = "حذف جميع الفصول";
 "Delete all saved chapters?" = "هل تريد حذف جميع الفصول المحفوظة؟";
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "سيتم حذف الصور الأصلية والترجمات وسجل الفصول نهائيًا. ستبقى النماذج التي تم تنزيلها والإعدادات محفوظة.";
@@ -561,3 +559,23 @@
 "Enter a path on the configured Rawkuma website." = "أدخل مسارًا ضمن موقع Rawkuma المحدد في الإعدادات.";
 "Manga path" = "مسار المانغا";
 "This content is inappropriate and cannot be translated." = "هذا المحتوى غير مناسب ولا يمكن ترجمته.";
+
+"Scanning chapter · page %lld/%lld" = "مسح الفصل · الصفحة %lld/%lld";
+
+"Sending chapter · %lld text regions" = "إرسال الفصل · %lld منطقة نص";
+
+"Chapter queued · %lld text regions" = "الفصل في قائمة الانتظار · %lld منطقة نص";
+
+"Translating chapter · waiting for the server" = "ترجمة الفصل · انتظار معالجة الخادم";
+
+"Translating chapter · %lld/%lld regions · batch %lld/%lld" = "ترجمة الفصل · %lld/%lld منطقة · الدفعة %lld/%lld";
+
+"Receiving chapter translation" = "استلام ترجمة الفصل";
+
+"This chapter is too large for one server request. Split it into smaller chapters." = "هذا الفصل أكبر من أن يُرسل في طلب واحد. قسّمه إلى فصول أصغر.";
+
+"Sign in to the backend before using Backend API." = "سجّل الدخول إلى الخادم قبل استخدام Backend API.";
+
+"Text regions per batch" = "مناطق النص لكل دفعة";
+
+"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "الافتراضي: 100. يمسح OCR الفصل كاملاً قبل الترجمة. اختر من 1 إلى 100 منطقة لكل دفعة، وقلّل العدد إذا كان حد السياق أو الإخراج للنموذج صغيراً.";

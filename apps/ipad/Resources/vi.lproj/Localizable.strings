@@ -185,8 +185,6 @@
 "Rendering page" = "Đang dựng trang";
 "Saving page" = "Đang lưu trang";
 "Failed" = "Lỗi";
-"Segments per request" = "Số đoạn mỗi lượt dịch";
-"Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small." = "Mặc định: 100. OCR đọc xong từng trang rồi mới dịch. Chọn 1–100 đoạn mỗi lượt; giảm số này nếu context hoặc giới hạn đầu ra của model không đủ.";
 "Delete all chapters" = "Xóa tất cả chương";
 "Delete all saved chapters?" = "Xóa tất cả chương đã lưu?";
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "Ảnh gốc, bản dịch và lịch sử chương sẽ bị xóa vĩnh viễn. Model đã tải và cài đặt được giữ lại.";
@@ -561,3 +559,23 @@
 "Enter a path on the configured Rawkuma website." = "Hãy nhập phần đường dẫn trên trang Rawkuma đã cấu hình.";
 "Manga path" = "Đường dẫn truyện";
 "This content is inappropriate and cannot be translated." = "Không thể dịch do nội dung không phù hợp.";
+
+"Scanning chapter · page %lld/%lld" = "Đang quét chapter · trang %lld/%lld";
+
+"Sending chapter · %lld text regions" = "Đang gửi chapter · %lld vùng chữ";
+
+"Chapter queued · %lld text regions" = "Chapter đang chờ dịch · %lld vùng chữ";
+
+"Translating chapter · waiting for the server" = "Đang dịch chapter · chờ máy chủ xử lý";
+
+"Translating chapter · %lld/%lld regions · batch %lld/%lld" = "Đang dịch chapter · %lld/%lld vùng chữ · lô %lld/%lld";
+
+"Receiving chapter translation" = "Đang nhận bản dịch chapter";
+
+"This chapter is too large for one server request. Split it into smaller chapters." = "Chapter quá lớn để gửi trong một yêu cầu. Hãy chia thành các chapter nhỏ hơn.";
+
+"Sign in to the backend before using Backend API." = "Hãy đăng nhập máy chủ trước khi dùng API Backend.";
+
+"Text regions per batch" = "Số vùng chữ mỗi lô";
+
+"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "Mặc định: 100. OCR quét cả chapter trước khi dịch. Chọn 1–100 vùng chữ mỗi lô; giảm nếu giới hạn ngữ cảnh hoặc đầu ra của model quá nhỏ.";

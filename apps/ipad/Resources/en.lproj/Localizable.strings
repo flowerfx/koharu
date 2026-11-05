@@ -185,8 +185,6 @@
 "Rendering page" = "Rendering page";
 "Saving page" = "Saving page";
 "Failed" = "Failed";
-"Segments per request" = "Segments per request";
-"Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small." = "Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small.";
 "Delete all chapters" = "Delete all chapters";
 "Delete all saved chapters?" = "Delete all saved chapters?";
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept.";
@@ -561,3 +559,23 @@
 "Enter a path on the configured Rawkuma website." = "Enter a path on the configured Rawkuma website.";
 "Manga path" = "Manga path";
 "This content is inappropriate and cannot be translated." = "This content is inappropriate and cannot be translated.";
+
+"Scanning chapter · page %lld/%lld" = "Scanning chapter · page %lld/%lld";
+
+"Sending chapter · %lld text regions" = "Sending chapter · %lld text regions";
+
+"Chapter queued · %lld text regions" = "Chapter queued · %lld text regions";
+
+"Translating chapter · waiting for the server" = "Translating chapter · waiting for the server";
+
+"Translating chapter · %lld/%lld regions · batch %lld/%lld" = "Translating chapter · %lld/%lld regions · batch %lld/%lld";
+
+"Receiving chapter translation" = "Receiving chapter translation";
+
+"This chapter is too large for one server request. Split it into smaller chapters." = "This chapter is too large for one server request. Split it into smaller chapters.";
+
+"Sign in to the backend before using Backend API." = "Sign in to the backend before using Backend API.";
+
+"Text regions per batch" = "Text regions per batch";
+
+"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small.";

@@ -185,8 +185,6 @@
 "Rendering page" = "Seite wird gerendert";
 "Saving page" = "Seite wird gespeichert";
 "Failed" = "Fehlgeschlagen";
-"Segments per request" = "Textabschnitte pro Anfrage";
-"Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small." = "Standard: 100. Die Texterkennung wird für jede Seite vor der Übersetzung abgeschlossen. Wählen Sie 1–100 Textabschnitte pro Anfrage; verringern Sie den Wert, wenn Kontextfenster oder Ausgabelimit des Modells nicht ausreichen.";
 "Delete all chapters" = "Alle Kapitel löschen";
 "Delete all saved chapters?" = "Alle gespeicherten Kapitel löschen?";
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "Originalbilder, Übersetzungen und Kapitelverlauf werden dauerhaft gelöscht. Heruntergeladene Modelle und Einstellungen bleiben erhalten.";
@@ -561,3 +559,23 @@
 "Enter a path on the configured Rawkuma website." = "Gib einen Pfad auf der konfigurierten Rawkuma-Website ein.";
 "Manga path" = "Manga-Pfad";
 "This content is inappropriate and cannot be translated." = "Dieser Inhalt ist unangemessen und kann nicht übersetzt werden.";
+
+"Scanning chapter · page %lld/%lld" = "Kapitel scannen · Seite %lld/%lld";
+
+"Sending chapter · %lld text regions" = "Kapitel senden · %lld Textbereiche";
+
+"Chapter queued · %lld text regions" = "Kapitel wartet · %lld Textbereiche";
+
+"Translating chapter · waiting for the server" = "Kapitel übersetzen · Warten auf den Server";
+
+"Translating chapter · %lld/%lld regions · batch %lld/%lld" = "Kapitel übersetzen · %lld/%lld Bereiche · Stapel %lld/%lld";
+
+"Receiving chapter translation" = "Kapitelübersetzung empfangen";
+
+"This chapter is too large for one server request. Split it into smaller chapters." = "Dieses Kapitel ist zu groß für eine Serveranfrage. Teilen Sie es in kleinere Kapitel auf.";
+
+"Sign in to the backend before using Backend API." = "Melden Sie sich am Server an, bevor Sie Backend API verwenden.";
+
+"Text regions per batch" = "Textbereiche pro Stapel";
+
+"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "Standard: 100. OCR scannt das gesamte Kapitel vor der Übersetzung. Wählen Sie 1–100 Bereiche pro Stapel; reduzieren Sie die Anzahl bei kleinem Kontext- oder Ausgabelimit des Modells.";

@@ -91,6 +91,16 @@ enum TranslationContract {
     }
 }
 
+struct TranslationCounters: Codable, Sendable {
+    let completed: Int
+    let total: Int
+    let batch: Int
+    let batches: Int
+}
+enum TranslationProgress: Sendable {
+    case submitting(total: Int), queued(total: Int), translating(TranslationCounters), received(total: Int)
+}
+
 actor TranslationEngine {
     let local = LocalInference()
     let hosted: HostedTranslation
@@ -100,18 +110,27 @@ actor TranslationEngine {
          configuration: @escaping @Sendable () -> AppConfiguration = { .current }) {
         self.hosted = hosted; self.backend = backend; self.configuration = configuration
     }
-    func translate(_ texts: [String], config: Preferences, model: URL?, catalog: GGUFDownload? = nil, batchSize: Int, backendContext: BackendAIContext? = nil) async throws -> [String] {
+    func translate(_ texts: [String], config: Preferences, model: URL?, catalog: GGUFDownload? = nil, batchSize: Int, backendContext: BackendAIContext? = nil, onProgress: @escaping @Sendable (TranslationProgress) -> Void = { _ in }) async throws -> [String] {
         try configuration().requireProvider(config.provider)
         if config.provider == .local, let catalog {
             guard catalog.enable else { throw AppError.message(L("This provider or model is disabled in app-config.json. Choose another option in Settings.")) }
             guard config.contextSize <= catalog.maxTokens else { throw AppError.message(L("Context tokens exceed this GGUF model’s configured maximum.")) }
         }
         guard (1...100).contains(batchSize) else { throw AppError.message(L("Invalid translation request")) }
+        guard !texts.isEmpty else { return [] }
+        if config.provider == .backend {
+            guard let backend, let backendContext else { throw AppError.message(L("Sign in to the backend before using Backend API.")) }
+            let (system, user) = try TranslationContract.prompts(texts, preferences: config)
+            let data = try await backend.generate(system: system, user: user, task: .translate, context: backendContext, count: texts.count, batchSize: batchSize, onProgress: onProgress)
+            return try TranslationContract.decode(data, count: texts.count)
+        }
         var result: [String] = []
-        // Finish OCR for a page first; a failed batch never publishes a partial page.
-        for start in stride(from: 0, to: texts.count, by: batchSize) {
+        let limit = config.provider == .deepL ? min(batchSize, 50) : batchSize
+        // Batch across the chapter after every selected page has completed OCR.
+        for start in stride(from: 0, to: texts.count, by: limit) {
             try Task.checkCancellation()
-            let batch = Array(texts[start..<min(start + batchSize, texts.count)])
+            let batch = Array(texts[start..<min(start + limit, texts.count)])
+            onProgress(.translating(.init(completed: start, total: texts.count, batch: start / limit, batches: (texts.count + limit - 1) / limit)))
             let (system, user) = try TranslationContract.prompts(batch, preferences: config)
             let data: Data
             if config.provider == .deepL {
@@ -124,7 +143,9 @@ actor TranslationEngine {
                                                     config: config, model: model, catalog: catalog, backendContext: backendContext, backendTask: .translate, count: batch.count)
             }
             result += try TranslationContract.decode(data, count: batch.count)
+            onProgress(.translating(.init(completed: result.count, total: texts.count, batch: start / limit + 1, batches: (texts.count + limit - 1) / limit)))
         }
+        onProgress(.received(total: texts.count))
         return result
     }
     func generateStructured(_ input: StructuredTextRequest, config: Preferences, model: URL?, catalog: GGUFDownload? = nil,
@@ -133,7 +154,7 @@ actor TranslationEngine {
         switch config.provider {
         case .backend:
             guard let backend, let backendContext else { throw AppError.message(L("Could not open credit profile")) }
-            return try await backend.generate(input, task: backendTask, context: backendContext, count: count)
+            return try await backend.generate(system: input.system, user: input.user, task: backendTask, context: backendContext, count: count)
         case .local:
             guard let model else { throw AppError.message(L("Download or import a GGUF model and select it in Settings")) }
             if let catalog {

@@ -185,8 +185,6 @@
 "Rendering page" = "正在繪製頁面";
 "Saving page" = "正在儲存頁面";
 "Failed" = "失敗";
-"Segments per request" = "每次請求的文字段數";
-"Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small." = "預設：100。每頁 OCR 完成後再翻譯。每次請求可設定 1–100 段；若模型的上下文視窗或輸出上限不足，請調低此值。";
 "Delete all chapters" = "刪除所有章節";
 "Delete all saved chapters?" = "刪除所有已儲存的章節？";
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "原始圖片、譯文和章節歷程將永久刪除。已下載的模型與設定將保留。";
@@ -561,3 +559,23 @@
 "Enter a path on the configured Rawkuma website." = "請輸入已設定的 Rawkuma 網站內的路徑。";
 "Manga path" = "漫畫路徑";
 "This content is inappropriate and cannot be translated." = "內容不適宜，無法翻譯。";
+
+"Scanning chapter · page %lld/%lld" = "正在掃描章節 · 第 %lld/%lld 頁";
+
+"Sending chapter · %lld text regions" = "正在傳送章節 · %lld 個文字區域";
+
+"Chapter queued · %lld text regions" = "章節排隊中 · %lld 個文字區域";
+
+"Translating chapter · waiting for the server" = "正在翻譯章節 · 等待伺服器處理";
+
+"Translating chapter · %lld/%lld regions · batch %lld/%lld" = "正在翻譯章節 · %lld/%lld 個區域 · 第 %lld/%lld 批";
+
+"Receiving chapter translation" = "正在接收章節譯文";
+
+"This chapter is too large for one server request. Split it into smaller chapters." = "本章內容過大，無法一次傳送到伺服器。請拆分成較小的章節。";
+
+"Sign in to the backend before using Backend API." = "使用 Backend API 前請先登入伺服器。";
+
+"Text regions per batch" = "每批文字區域數";
+
+"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "預設：100。OCR 會先掃描整個章節，再進行翻譯。每批選擇 1–100 個區域；若模型的上下文或輸出上限較小，請減少此值。";

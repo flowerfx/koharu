@@ -109,6 +109,7 @@ struct MangaPage: Codable, Identifiable {
     var modified: String?
     var segments: [TextSegment] = []
     var ocrSignature: String?
+    var translationFingerprint: String?
     var rendered: String?
     var fingerprint: String?
     var textLayoutVersion: Int?
@@ -195,8 +196,12 @@ struct LibraryDisk {
         let folder = chapterURL(id)
         guard let current = try? load(Chapter.self, folder.appendingPathComponent("chapter.json")) else { return }
         var keep = Set(current.pages.compactMap(\.rendered))
+        keep.formUnion(current.pages.map(\.original))
         for name in ["undo.json", "redo.json"] {
-            if let snapshot = try? load(Chapter.self, folder.appendingPathComponent(name)) { keep.formUnion(snapshot.pages.compactMap(\.rendered)) }
+            if let snapshot = try? load(Chapter.self, folder.appendingPathComponent(name)) {
+                keep.formUnion(snapshot.pages.compactMap(\.rendered))
+                keep.formUnion(snapshot.pages.map(\.original))
+            }
         }
         let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
         for file in files where file.pathExtension == "png" && !keep.contains(file.lastPathComponent) {
@@ -205,7 +210,8 @@ struct LibraryDisk {
     }
     func clearDerived(_ id: UUID) throws {
         var chapter = try load(Chapter.self, chapterURL(id).appendingPathComponent("chapter.json"))
-        for file in try FileManager.default.contentsOfDirectory(at: chapterURL(id), includingPropertiesForKeys: nil) where file.pathExtension == "png" {
+        let originals = Set(chapter.pages.map(\.original))
+        for file in try FileManager.default.contentsOfDirectory(at: chapterURL(id), includingPropertiesForKeys: nil) where file.pathExtension == "png" && !originals.contains(file.lastPathComponent) {
             try FileManager.default.removeItem(at: file)
         }
         for i in chapter.pages.indices {

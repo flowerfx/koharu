@@ -185,8 +185,6 @@
 "Rendering page" = "A renderizar a página";
 "Saving page" = "A guardar a página";
 "Failed" = "Falha";
-"Segments per request" = "Segmentos por pedido";
-"Default: 100. OCR finishes each page before translation. Set 1–100 segments per request; reduce this value if the model context or output limit is too small." = "Predefinição: 100. O OCR termina cada página antes da tradução. Escolha de 1 a 100 segmentos por pedido; reduza este valor se o contexto ou o limite de saída do modelo for insuficiente.";
 "Delete all chapters" = "Apagar todos os capítulos";
 "Delete all saved chapters?" = "Apagar todos os capítulos guardados?";
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "As imagens originais, as traduções e o histórico dos capítulos serão apagados permanentemente. Os modelos descarregados e as definições serão mantidos.";
@@ -561,3 +559,23 @@
 "Enter a path on the configured Rawkuma website." = "Insira um caminho no site Rawkuma configurado.";
 "Manga path" = "Caminho do mangá";
 "This content is inappropriate and cannot be translated." = "Este conteúdo é inadequado e não pode ser traduzido.";
+
+"Scanning chapter · page %lld/%lld" = "Digitalizando capítulo · página %lld/%lld";
+
+"Sending chapter · %lld text regions" = "Enviando capítulo · %lld regiões de texto";
+
+"Chapter queued · %lld text regions" = "Capítulo na fila · %lld regiões de texto";
+
+"Translating chapter · waiting for the server" = "Traduzindo capítulo · aguardando o servidor";
+
+"Translating chapter · %lld/%lld regions · batch %lld/%lld" = "Traduzindo capítulo · %lld/%lld regiões · lote %lld/%lld";
+
+"Receiving chapter translation" = "Recebendo a tradução do capítulo";
+
+"This chapter is too large for one server request. Split it into smaller chapters." = "Este capítulo é grande demais para uma solicitação. Divida-o em capítulos menores.";
+
+"Sign in to the backend before using Backend API." = "Entre no servidor antes de usar Backend API.";
+
+"Text regions per batch" = "Regiões de texto por lote";
+
+"Default: 100. OCR scans the chapter before translation. Set 1–100 regions per batch; reduce this if the model context or output limit is too small." = "Padrão: 100. O OCR lê todo o capítulo antes da tradução. Escolha de 1 a 100 regiões por lote; reduza o valor se o contexto ou a saída do modelo for limitado.";
