@@ -5,7 +5,7 @@ import ImageIO
 enum ReadingMode: String, CaseIterable, Identifiable {
     case horizontal, vertical
     var id: String { rawValue }
-    var name: String { self == .horizontal ? L("Horizontal swipes (default)") : L("Vertical scrolling") }
+    var name: String { self == .horizontal ? L("Horizontal swipes") : L("Vertical scrolling") }
 }
 
 struct ContinuousReader: UIViewRepresentable {

@@ -190,7 +190,12 @@
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "Les images originales, les traductions et l’historique des chapitres seront définitivement supprimés. Les modèles téléchargés et les réglages sont conservés.";
 "Reading" = "Lecture";
 "Reading mode" = "Mode de lecture";
-"Horizontal swipes (default)" = "Balayage horizontal (par défaut)";
+"Horizontal swipes" = "Balayage horizontal";
+"Translation mode" = "Mode de traduction";
+"Entire chapter" = "Chapitre entier";
+"Page by page" = "Page par page";
+"Chapter mode scans all pages before translation. Page mode finishes one page at a time." = "Le mode chapitre analyse toutes les pages avant la traduction. Le mode page termine chaque page avant de passer à la suivante.";
+"Translating page %lld/%lld · %lld/%lld regions" = "Traduction de la page %lld/%lld · %lld/%lld zones";
 "Vertical scrolling" = "Défilement vertical";
 "Search chapters" = "Rechercher des chapitres";
 "Chapters" = "Chapitres";

@@ -14,8 +14,11 @@ import UIKit
     var showCreditProviderSettings = false
     var chapters: [Chapter] = []
     var preferences = Preferences()
-    var readingMode = ReadingMode(rawValue: UserDefaults.standard.string(forKey: "readingMode") ?? "horizontal") ?? .horizontal {
+    var readingMode = ReadingMode(rawValue: UserDefaults.standard.string(forKey: "readingMode") ?? "vertical") ?? .vertical {
         didSet { UserDefaults.standard.set(readingMode.rawValue, forKey: "readingMode") }
+    }
+    var translationMode = TranslationMode(rawValue: UserDefaults.standard.string(forKey: "translationMode") ?? "chapter") ?? .chapter {
+        didSet { UserDefaults.standard.set(translationMode.rawValue, forKey: "translationMode") }
     }
     // Request sizing is an execution preference, separate from page content/cache.
     private var savedTranslationBatchSize = min(1000, max(100, UserDefaults.standard.object(forKey: "translationBatchSize") as? Int ?? 300))
@@ -199,6 +202,7 @@ import UIKit
         _ = try AppConfiguration.current.requireVision(config.ocrModel ?? "apple")
         if config.inpaint { _ = try AppConfiguration.current.requireVision(config.cleanupModel ?? AppConfiguration.current.defaults.inpainting, inpainting: true) }
         let batchSize = translationBatchSize
+        let mode = translationMode
         let model = models.first { $0.id == config.localModel }
         let catalog = config.provider == .local ? try model.flatMap { try AppConfiguration.current.catalog(for: $0) } : nil
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
@@ -219,106 +223,115 @@ import UIKit
         }
         progressIndeterminate = false
         await translator.unload()
-        // Persist OCR independently of translation/rendering, so a stopped or
-        // failed chapter request can reuse every page already scanned.
-        for (ordinal, index) in pending.enumerated() {
-            try Task.checkCancellation()
-            status = String(format: L("Scanning chapter · page %lld/%lld"), Int64(index + 1), Int64(chapter.pages.count))
-            progress = Double(ordinal) / Double(pending.count)
-            if chapter.pages[index].ocrSignature != ocrSignature {
-                guard !chapter.pages[index].segments.contains(where: \.edited) else {
-                    throw AppError.message(L("This page has edits from a different OCR configuration. Make a new copy to rescan without losing them."))
+        let groups = mode == .chapter ? [pending] : pending.map { [$0] }
+        for (groupOffset, group) in groups.enumerated() {
+            // Persist OCR independently of translation/rendering, so a stopped or
+            // failed chapter request can reuse every page already scanned.
+            for (ordinal, index) in group.enumerated() {
+                try Task.checkCancellation()
+                status = String(format: L("Scanning chapter · page %lld/%lld"), Int64(index + 1), Int64(chapter.pages.count))
+                progress = mode == .chapter ? Double(ordinal) / Double(group.count) : Double(groupOffset) / Double(pending.count)
+                if chapter.pages[index].ocrSignature != ocrSignature {
+                    guard !chapter.pages[index].segments.contains(where: \.edited) else {
+                        throw AppError.message(L("This page has edits from a different OCR configuration. Make a new copy to rescan without losing them."))
+                    }
+                    chapter.pages[index].segments = try await pipeline.recognize(disk.pageURL(id, chapter.pages[index].original), modelID: config.ocrModel, modelRoot: disk.modelsURL)
+                    chapter.pages[index].ocrSignature = ocrSignature
+                    chapter.pages[index].translationFingerprint = nil
+                    chapter.pages[index].fingerprint = nil
+                    chapter.readPage = chapters.first { $0.id == id }?.readPage ?? chapter.readPage
+                    try update(chapter, recordUndo: false)
                 }
-                chapter.pages[index].segments = try await pipeline.recognize(disk.pageURL(id, chapter.pages[index].original), modelID: config.ocrModel, modelRoot: disk.modelsURL)
-                chapter.pages[index].ocrSignature = ocrSignature
-                chapter.pages[index].translationFingerprint = nil
-                chapter.pages[index].fingerprint = nil
+                progress = mode == .chapter ? Double(ordinal + 1) / Double(group.count) : (Double(groupOffset) + 0.2) / Double(pending.count)
+            }
+            let translationPages = group.filter { index in
+                let page = chapter.pages[index]
+                return force || page.translationFingerprint != translationFingerprint || page.segments.contains { !$0.edited && $0.text == nil }
+            }.map { chapter.pages[$0] }
+            let plan = try ChapterTranslationPlan(pages: translationPages)
+            func pageStatus(completed: Int, total: Int) -> String {
+                String(format: L("Translating page %lld/%lld · %lld/%lld regions"), Int64(group[0] + 1), Int64(chapter.pages.count), Int64(completed), Int64(total))
+            }
+            if !plan.targets.isEmpty {
+                await pipeline.releaseCachedModels()
+                let (events, continuation) = AsyncStream<TranslationProgress>.makeStream(bufferingPolicy: .bufferingNewest(1))
+                let reporting = Task { @MainActor in
+                    for await event in events {
+                        guard !Task.isCancelled else { break }
+                        switch event {
+                        case .submitting(let total):
+                            progressIndeterminate = true
+                            status = mode == .page ? pageStatus(completed: 0, total: total) : String(format: L("Sending chapter · %lld text regions"), Int64(total))
+                        case .queued(let total):
+                            progressIndeterminate = true
+                            status = mode == .page ? pageStatus(completed: 0, total: total) : String(format: L("Chapter queued · %lld text regions"), Int64(total))
+                        case .translating(let value):
+                            progressIndeterminate = value.completed == 0
+                            let fraction = Double(value.completed) / Double(value.total)
+                            progress = mode == .chapter ? fraction : (Double(groupOffset) + 0.2 + 0.5 * fraction) / Double(pending.count)
+                            status = mode == .page ? pageStatus(completed: value.completed, total: value.total) : value.batches == 0 ? L("Translating chapter · waiting for the server") :
+                                String(format: L("Translating chapter · %lld/%lld regions · batch %lld/%lld"), Int64(value.completed), Int64(value.total), Int64(min(value.batch + 1, value.batches)), Int64(value.batches))
+                        case .received(let total):
+                            progressIndeterminate = true
+                            status = mode == .page ? pageStatus(completed: total, total: total) : L("Receiving chapter translation")
+                        }
+                    }
+                }
+                let texts: [String]
+                do {
+                    defer { continuation.finish(); reporting.cancel() }
+                    texts = try await translator.translate(plan.targets.map(\.source), config: config,
+                        model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog,
+                        batchSize: batchSize, backendContext: ticket.map { BackendAIContext(reservationID: $0) }) { continuation.yield($0) }
+                }
+                try Task.checkCancellation()
+                try plan.apply(texts, to: &chapter.pages, fingerprint: translationFingerprint)
                 chapter.readPage = chapters.first { $0.id == id }?.readPage ?? chapter.readPage
                 try update(chapter, recordUndo: false)
             }
-            progress = Double(ordinal + 1) / Double(pending.count)
-        }
-        let translationPages = pending.filter { index in
-            let page = chapter.pages[index]
-            return force || page.translationFingerprint != translationFingerprint || page.segments.contains { !$0.edited && $0.text == nil }
-        }.map { chapter.pages[$0] }
-        let plan = try ChapterTranslationPlan(pages: translationPages)
-        if !plan.targets.isEmpty {
-            await pipeline.releaseCachedModels()
-            let (events, continuation) = AsyncStream<TranslationProgress>.makeStream(bufferingPolicy: .bufferingNewest(1))
-            let reporting = Task { @MainActor in
-                for await event in events {
-                    guard !Task.isCancelled else { break }
-                    switch event {
-                    case .submitting(let total):
-                        progressIndeterminate = true
-                        status = String(format: L("Sending chapter · %lld text regions"), Int64(total))
-                    case .queued(let total):
-                        progressIndeterminate = true
-                        status = String(format: L("Chapter queued · %lld text regions"), Int64(total))
-                    case .translating(let value):
-                        progressIndeterminate = value.completed == 0
-                        progress = Double(value.completed) / Double(value.total)
-                        status = value.batches == 0 ? L("Translating chapter · waiting for the server") :
-                            String(format: L("Translating chapter · %lld/%lld regions · batch %lld/%lld"), Int64(value.completed), Int64(value.total), Int64(min(value.batch + 1, value.batches)), Int64(value.batches))
-                    case .received:
-                        progressIndeterminate = true
-                        status = L("Receiving chapter translation")
+            await translator.unload()
+            progressIndeterminate = false
+            for (ordinal, index) in group.enumerated() {
+                try Task.checkCancellation()
+                let source = disk.pageURL(id, chapter.pages[index].original)
+                var page = chapter.pages[index]
+                status = "\(L("Rendering page")) \(index + 1)/\(chapter.pages.count)"
+                progress = mode == .chapter ? Double(ordinal) / Double(group.count) : (Double(groupOffset) + 0.7) / Double(pending.count)
+                let cleanupModel = config.cleanupModel ?? AppConfiguration.current.defaults.inpainting
+                let cleanupName = AppConfiguration.current.inpainting.first { $0.id == cleanupModel }?.name ?? cleanupModel
+                let output: Data
+                // Native inference reports into a bounded per-page stream. Cancel
+                // its UI consumer before saving so an obsolete tile cannot replace
+                // the next page's status or revive a stopped job.
+                let (events, continuation) = AsyncStream<CleanupProgress>.makeStream(bufferingPolicy: .bufferingNewest(1))
+                let reporting = Task { @MainActor in
+                    for await event in events {
+                        guard !Task.isCancelled else { break }
+                        switch event {
+                        case .loading:
+                            status = "\(L("Loading cleanup model")) \(index + 1)/\(chapter.pages.count) · \(cleanupName)"
+                        case .tiles(let completed, let total):
+                            status = "\(L("Cleaning background")) \(index + 1)/\(chapter.pages.count) · \(cleanupName) · \(completed)/\(total)"
+                            let fraction = Double(completed) / Double(max(1, total))
+                            progress = mode == .chapter ? (Double(ordinal) + 0.9 * fraction) / Double(group.count) : (Double(groupOffset) + 0.7 + 0.3 * fraction) / Double(pending.count)
+                        }
                     }
                 }
-            }
-            let texts: [String]
-            do {
-                defer { continuation.finish(); reporting.cancel() }
-                texts = try await translator.translate(plan.targets.map(\.source), config: config,
-                    model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog,
-                    batchSize: batchSize, backendContext: ticket.map { BackendAIContext(reservationID: $0) }) { continuation.yield($0) }
-            }
-            try Task.checkCancellation()
-            try plan.apply(texts, to: &chapter.pages, fingerprint: translationFingerprint)
-            chapter.readPage = chapters.first { $0.id == id }?.readPage ?? chapter.readPage
-            try update(chapter, recordUndo: false)
-        }
-        await translator.unload()
-        progressIndeterminate = false
-        for (ordinal, index) in pending.enumerated() {
-            try Task.checkCancellation()
-            let source = disk.pageURL(id, chapter.pages[index].original)
-            var page = chapter.pages[index]
-            status = "\(L("Rendering page")) \(index + 1)/\(chapter.pages.count)"
-            progress = Double(ordinal) / Double(pending.count)
-            let cleanupModel = config.cleanupModel ?? AppConfiguration.current.defaults.inpainting
-            let cleanupName = AppConfiguration.current.inpainting.first { $0.id == cleanupModel }?.name ?? cleanupModel
-            let output: Data
-            // Native inference reports into a bounded per-page stream. Cancel
-            // its UI consumer before saving so an obsolete tile cannot replace
-            // the next page's status or revive a stopped job.
-            let (events, continuation) = AsyncStream<CleanupProgress>.makeStream(bufferingPolicy: .bufferingNewest(1))
-            let reporting = Task { @MainActor in
-                for await event in events {
-                    guard !Task.isCancelled else { break }
-                    switch event {
-                    case .loading:
-                        status = "\(L("Loading cleanup model")) \(index + 1)/\(chapter.pages.count) · \(cleanupName)"
-                    case .tiles(let completed, let total):
-                        status = "\(L("Cleaning background")) \(index + 1)/\(chapter.pages.count) · \(cleanupName) · \(completed)/\(total)"
-                        progress = (Double(ordinal) + 0.9 * Double(completed) / Double(max(1, total))) / Double(pending.count)
-                    }
+                do {
+                    defer { continuation.finish(); reporting.cancel() }
+                    output = try await pipeline.render(source, segments: page.segments, inpaint: config.inpaint, modelID: cleanupModel, modelRoot: disk.modelsURL) { continuation.yield($0) }
                 }
+                try Task.checkCancellation()
+                status = "\(L("Saving page")) \(index + 1)/\(chapter.pages.count)"
+                let file = UUID().uuidString + ".png"
+                try output.write(to: disk.pageURL(id, file), options: .atomic)
+                page.rendered = file; page.fingerprint = fingerprint; page.textLayoutVersion = PageTypography.version
+                chapter.pages[index] = page
+                chapter.readPage = chapters.first { $0.id == id }?.readPage ?? chapter.readPage
+                try update(chapter)
+                progress = mode == .chapter ? Double(ordinal + 1) / Double(group.count) : Double(groupOffset + 1) / Double(pending.count)
+                onPageSaved()
             }
-            do {
-                defer { continuation.finish(); reporting.cancel() }
-                output = try await pipeline.render(source, segments: page.segments, inpaint: config.inpaint, modelID: cleanupModel, modelRoot: disk.modelsURL) { continuation.yield($0) }
-            }
-            try Task.checkCancellation()
-            status = "\(L("Saving page")) \(index + 1)/\(chapter.pages.count)"
-            let file = UUID().uuidString + ".png"
-            try output.write(to: disk.pageURL(id, file), options: .atomic)
-            page.rendered = file; page.fingerprint = fingerprint; page.textLayoutVersion = PageTypography.version
-            chapter.pages[index] = page
-            chapter.readPage = chapters.first { $0.id == id }?.readPage ?? chapter.readPage
-            try update(chapter)
-            onPageSaved()
         }
         status = L("Completed"); progress = 1
     }

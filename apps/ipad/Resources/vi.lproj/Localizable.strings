@@ -190,7 +190,12 @@
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "Ảnh gốc, bản dịch và lịch sử chương sẽ bị xóa vĩnh viễn. Model đã tải và cài đặt được giữ lại.";
 "Reading" = "Đọc truyện";
 "Reading mode" = "Cách đọc";
-"Horizontal swipes (default)" = "Vuốt trái/phải (mặc định)";
+"Horizontal swipes" = "Vuốt trái/phải";
+"Translation mode" = "Chế độ dịch";
+"Entire chapter" = "Dịch cả chapter";
+"Page by page" = "Dịch từng trang";
+"Chapter mode scans all pages before translation. Page mode finishes one page at a time." = "Dịch cả chapter quét hết các trang trước khi dịch. Dịch từng trang xử lý xong từng trang rồi mới sang trang tiếp theo.";
+"Translating page %lld/%lld · %lld/%lld regions" = "Đang dịch trang %lld/%lld · %lld/%lld vùng chữ";
 "Vertical scrolling" = "Cuộn dọc";
 "Search chapters" = "Tìm chương truyện";
 "Chapters" = "Chương";

@@ -190,7 +190,12 @@
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "原始图片、译文和章节历史将被永久删除。已下载的模型和设置将保留。";
 "Reading" = "阅读";
 "Reading mode" = "阅读模式";
-"Horizontal swipes (default)" = "左右滑动（默认）";
+"Horizontal swipes" = "左右滑动";
+"Translation mode" = "翻译模式";
+"Entire chapter" = "整章翻译";
+"Page by page" = "逐页翻译";
+"Chapter mode scans all pages before translation. Page mode finishes one page at a time." = "整章模式先识别所有页面，再进行翻译。逐页模式完成一页后再处理下一页。";
+"Translating page %lld/%lld · %lld/%lld regions" = "正在翻译第 %lld/%lld 页 · %lld/%lld 个区域";
 "Vertical scrolling" = "纵向滚动";
 "Search chapters" = "搜索章节";
 "Chapters" = "章节";

@@ -53,10 +53,10 @@ final class ContinuousReaderChecks: XCTestCase {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let disk = try LibraryDisk(root: root), library = MangaLibrary(disk: disk)
-        XCTAssertEqual(library.readingMode, .horizontal)
+        XCTAssertEqual(library.readingMode, .vertical)
         let preferences = library.preferences
-        library.readingMode = .vertical
-        XCTAssertEqual(MangaLibrary(disk: disk).readingMode, .vertical)
+        library.readingMode = .horizontal
+        XCTAssertEqual(MangaLibrary(disk: disk).readingMode, .horizontal)
         XCTAssertEqual(library.preferences, preferences)
     }
 }

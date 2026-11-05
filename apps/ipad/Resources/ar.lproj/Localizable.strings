@@ -190,7 +190,12 @@
 "Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept." = "سيتم حذف الصور الأصلية والترجمات وسجل الفصول نهائيًا. ستبقى النماذج التي تم تنزيلها والإعدادات محفوظة.";
 "Reading" = "القراءة";
 "Reading mode" = "وضع القراءة";
-"Horizontal swipes (default)" = "السحب أفقيًا (افتراضي)";
+"Horizontal swipes" = "السحب أفقيًا";
+"Translation mode" = "وضع الترجمة";
+"Entire chapter" = "الفصل بالكامل";
+"Page by page" = "صفحة بصفحة";
+"Chapter mode scans all pages before translation. Page mode finishes one page at a time." = "يفحص وضع الفصل جميع الصفحات قبل الترجمة. يُكمل وضع الصفحة معالجة كل صفحة قبل الانتقال إلى التالية.";
+"Translating page %lld/%lld · %lld/%lld regions" = "جارٍ ترجمة الصفحة %lld/%lld · %lld/%lld منطقة";
 "Vertical scrolling" = "التمرير العمودي";
 "Search chapters" = "البحث عن الفصول";
 "Chapters" = "الفصول";

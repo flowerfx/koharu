@@ -1,5 +1,11 @@
 import Foundation
 
+enum TranslationMode: String, CaseIterable, Identifiable {
+    case chapter, page
+    var id: String { rawValue }
+    var name: String { self == .chapter ? L("Entire chapter") : L("Page by page") }
+}
+
 struct ChapterTranslationPlan {
     struct Target {
         let pageID: UUID

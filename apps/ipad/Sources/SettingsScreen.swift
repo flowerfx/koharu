@@ -90,6 +90,10 @@ struct SettingsScreen: View {
                     ForEach(TargetLanguage.all) { Text($0.displayName).tag($0.tag) }
                 }
                 TextField(L("Additional instructions"), text: $library.preferences.instructions, axis: .vertical).lineLimit(3...6)
+                Picker(L("Translation mode"), selection: $library.translationMode) {
+                    ForEach(TranslationMode.allCases) { Text($0.name).tag($0) }
+                }.disabled(library.busy)
+                Text(L("Chapter mode scans all pages before translation. Page mode finishes one page at a time.")).font(.caption).foregroundStyle(.secondary)
                 TranslationBatchSizeControl(value: $library.translationBatchSize)
                 Text(L("Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits.")).font(.caption).foregroundStyle(.secondary)
             }

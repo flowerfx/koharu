@@ -6,23 +6,35 @@ private actor ChapterRPC {
     let disk: LibraryDisk
     let chapterID: UUID
     let missingSource: URL
+    let mode: TranslationMode
     var submissions = 0
     var request: [String: Any] = [:]
-    init(disk: LibraryDisk, chapterID: UUID, missingSource: URL) { self.disk = disk; self.chapterID = chapterID; self.missingSource = missingSource }
+    var reservationID: String?
+    init(disk: LibraryDisk, chapterID: UUID, missingSource: URL, mode: TranslationMode) { self.disk = disk; self.chapterID = chapterID; self.missingSource = missingSource; self.mode = mode }
     func call(_ name: String, _ body: String) throws -> String {
         let input = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(body.utf8)) as? [String: Any])
         if name == "ai_generate" {
             submissions += 1; request = input
             let chapter = try disk.load(Chapter.self, disk.chapterURL(chapterID).appendingPathComponent("chapter.json"))
             XCTAssertEqual(chapter.pages.count, 2)
-            XCTAssertTrue(chapter.pages.allSatisfy { $0.ocrSignature != nil && !$0.segments.isEmpty }, "Every page must finish OCR before the single chapter submission")
+            if mode == .chapter {
+                XCTAssertTrue(chapter.pages.allSatisfy { $0.ocrSignature != nil && !$0.segments.isEmpty }, "Every page must finish OCR before the single chapter submission")
+            } else if submissions == 1 {
+                XCTAssertFalse(chapter.pages[0].segments.isEmpty)
+                XCTAssertNil(chapter.pages[1].ocrSignature, "Do not OCR the next page before translating this one")
+            } else {
+                XCTAssertNotNil(chapter.pages[0].rendered, "Finish rendering the previous page before translating the next")
+                XCTAssertFalse(chapter.pages[1].segments.isEmpty)
+            }
+            if let reservationID { XCTAssertEqual(input["reservation_id"] as? String, reservationID) }
+            else { reservationID = input["reservation_id"] as? String }
         }
         let count = request["count"] as? Int ?? 0
         var value: [String: Any] = ["request_id":request["request_id"] ?? "", "reservation_id":request["reservation_id"] ?? "", "status":name == "ai_generate" ? "queued" : "succeeded"]
         if name == "ai_result" {
             value["result"] = ["provider":"anthropic","model":"fixture","output":["translations":(0..<count).reversed().map { ["id":$0,"text":"Translation \($0)"] as [String:Any] }]]
             // Simulate a render failure after the complete chapter response.
-            try FileManager.default.moveItem(at: missingSource, to: missingSource.appendingPathExtension("held"))
+            if mode == .chapter || submissions == 2 { try FileManager.default.moveItem(at: missingSource, to: missingSource.appendingPathExtension("held")) }
         }
         return String(decoding: try JSONSerialization.data(withJSONObject: value), as: UTF8.self)
     }
@@ -31,6 +43,17 @@ private actor ChapterRPC {
 
 final class ChapterTranslationChecks: XCTestCase {
     @MainActor func testAllOCRBeforeSingleSubmissionAndRenderFailureResume() async throws {
+        try await checkProcessing(mode: .chapter)
+    }
+    @MainActor func testPageModeFinishesFirstPageBeforeSecondOCRAndResumesRender() async throws {
+        try await checkProcessing(mode: .page)
+    }
+    @MainActor private func checkProcessing(mode: TranslationMode) async throws {
+        let previous = UserDefaults.standard.object(forKey: "translationMode")
+        defer {
+            if let previous { UserDefaults.standard.set(previous, forKey: "translationMode") }
+            else { UserDefaults.standard.removeObject(forKey: "translationMode") }
+        }
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let disk = try LibraryDisk(root: root)
@@ -47,9 +70,10 @@ final class ChapterTranslationChecks: XCTestCase {
             chapter.pages.append(MangaPage(source:"imported://\(index)",original:file))
         }
         let missing = disk.pageURL(chapter.id,chapter.pages[1].original)
-        let fixture = ChapterRPC(disk:disk,chapterID:chapter.id,missingSource:missing)
+        let fixture = ChapterRPC(disk:disk,chapterID:chapter.id,missingSource:missing,mode:mode)
         let backend = BackendAI(rpc:{ try await fixture.call($0,$1) },pause:{})
         let library = MangaLibrary(disk:disk,translator:TranslationEngine(backend:backend))
+        library.translationMode = mode
         var settings = Preferences(); settings.provider = .backend; settings.target = "en-US"; settings.ocrModel = nil; settings.inpaint = false
         try library.update(chapter)
         let reservation = UUID().uuidString
@@ -60,9 +84,26 @@ final class ChapterTranslationChecks: XCTestCase {
         XCTAssertTrue(first.pages.allSatisfy { $0.translationFingerprint != nil && $0.segments.allSatisfy { $0.text != nil } })
         try FileManager.default.moveItem(at:missing.appendingPathExtension("held"),to:missing)
         try await library.processChapter(chapter.id,config:settings,ticket:reservation,force:false)
-        let submissions = await fixture.count(); XCTAssertEqual(submissions,1,"Resume rendering without paying for another translation")
+        let submissions = await fixture.count(); XCTAssertEqual(submissions,mode == .chapter ? 1 : 2,"Resume rendering without paying for another translation")
         let saved = try XCTUnwrap(disk.chapters().first)
         XCTAssertTrue(saved.pages.allSatisfy { $0.rendered.map { FileManager.default.fileExists(atPath:disk.pageURL(saved.id,$0).path) } == true })
+    }
+
+    @MainActor func testTranslationModeDefaultsToChapterAndPersistsWithoutInvalidatingPreferences() throws {
+        let previous = UserDefaults.standard.object(forKey: "translationMode")
+        defer {
+            if let previous { UserDefaults.standard.set(previous, forKey: "translationMode") }
+            else { UserDefaults.standard.removeObject(forKey: "translationMode") }
+        }
+        UserDefaults.standard.removeObject(forKey: "translationMode")
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at:root) }
+        let disk = try LibraryDisk(root:root), library = MangaLibrary(disk:disk)
+        let preferences = library.preferences
+        XCTAssertEqual(library.translationMode,.chapter)
+        library.translationMode = .page
+        XCTAssertEqual(MangaLibrary(disk:disk).translationMode,.page)
+        XCTAssertEqual(library.preferences,preferences)
     }
 
     @MainActor func testProcessingIndicatorLongLabels() async throws {
