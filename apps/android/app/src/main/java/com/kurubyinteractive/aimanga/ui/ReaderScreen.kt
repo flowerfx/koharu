@@ -1,5 +1,9 @@
 package com.kurubyinteractive.aimanga.ui
 
+import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
@@ -24,6 +28,9 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -135,12 +142,12 @@ fun ReaderScreen(
                     }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.retranslate_chapter)) },
+                            text = { CostText(stringResource(R.string.retranslate_chapter), creditCostLabel(model, CreditKind.RERUN)) },
                             leadingIcon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
                             onClick = { menu = false; creditGate(CreditKind.RERUN) { model.translate(chapter, force = true, onChapter = switchTo) } },
                         )
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.retranslate_page, currentPage + 1)) },
+                            text = { CostText(stringResource(R.string.retranslate_page, currentPage + 1), creditCostLabel(model, CreditKind.RERUN)) },
                             leadingIcon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
                             onClick = {
                                 menu = false
@@ -150,7 +157,7 @@ fun ReaderScreen(
                         )
                         if (backendOffered) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.enhanced_translation)) },
+                                text = { CostText(stringResource(R.string.enhanced_translation), creditCostLabel(model, CreditKind.ENHANCED)) },
                                 leadingIcon = { Icon(Icons.Rounded.AutoAwesome, contentDescription = null) },
                                 onClick = { menu = false; creditGate(CreditKind.ENHANCED) { model.translate(chapter, enhanced = true, onChapter = switchTo) } },
                             )
@@ -198,47 +205,72 @@ fun ReaderScreen(
             AnimatedVisibility(running) {
                 ProgressCard(run?.progress, onCancel = model::cancel)
             }
-            // Floating reader toolbar.
+            // Floating reader toolbar: page view switch, then Translate and Enhanced with their prices.
+            // Tablets get one compact centered row so more of the page stays visible.
+            val wide = LocalConfiguration.current.screenWidthDp >= 600
+            val buttonPadding = if (wide) PaddingValues(horizontal = 14.dp, vertical = 4.dp) else PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+            val pageSwitch: @Composable (Modifier) -> Unit = { modifier ->
+                SingleChoiceSegmentedButtonRow(modifier) {
+                    SegmentedButton(
+                        selected = !showTranslated,
+                        onClick = { showTranslated = false },
+                        shape = SegmentedButtonDefaults.itemShape(0, 2),
+                        icon = {},
+                    ) { Text(stringResource(R.string.original), maxLines = 1) }
+                    SegmentedButton(
+                        selected = showTranslated,
+                        onClick = { showTranslated = true },
+                        shape = SegmentedButtonDefaults.itemShape(1, 2),
+                        icon = {},
+                    ) { Text(stringResource(R.string.translated), maxLines = 1) }
+                }
+            }
+            val actions: @Composable (Modifier) -> Unit = { modifier ->
+                val translateKind = if (translatedAll) CreditKind.RERUN else CreditKind.TRANSLATE
+                Button(
+                    onClick = {
+                        if (translatedAll) creditGate(CreditKind.RERUN) { model.translate(chapter, force = true, onChapter = switchTo) }
+                        else creditGate(CreditKind.TRANSLATE) { model.translate(chapter, onChapter = switchTo) }
+                    },
+                    enabled = idle,
+                    shapes = ButtonDefaults.shapes(),
+                    contentPadding = buttonPadding,
+                    modifier = modifier,
+                ) {
+                    ActionLabel(Icons.Rounded.Translate, stringResource(if (translatedAll) R.string.retranslate else R.string.translate), creditCostLabel(model, translateKind))
+                }
+                if (backendOffered) {
+                    FilledTonalButton(
+                        onClick = { creditGate(CreditKind.ENHANCED) { model.translate(chapter, enhanced = true, onChapter = switchTo) } },
+                        enabled = idle,
+                        shapes = ButtonDefaults.shapes(),
+                        contentPadding = buttonPadding,
+                        modifier = modifier,
+                    ) {
+                        ActionLabel(Icons.Rounded.AutoAwesome, stringResource(R.string.enhanced_short), creditCostLabel(model, CreditKind.ENHANCED))
+                    }
+                }
+            }
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = CircleShape,
+                shape = RoundedCornerShape(if (wide) 24.dp else 28.dp),
                 shadowElevation = 6.dp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(horizontal = 12.dp, vertical = if (wide) 6.dp else 10.dp)
+                    .wrapContentWidth(Alignment.CenterHorizontally)
+                    .widthIn(max = if (wide) 760.dp else Dp.Infinity),
             ) {
-                Row(
-                    Modifier.padding(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    SingleChoiceSegmentedButtonRow(Modifier.weight(1f)) {
-                        SegmentedButton(
-                            selected = !showTranslated,
-                            onClick = { showTranslated = false },
-                            shape = SegmentedButtonDefaults.itemShape(0, 2),
-                            icon = {},
-                        ) { Text(stringResource(R.string.original), maxLines = 1) }
-                        SegmentedButton(
-                            selected = showTranslated,
-                            onClick = { showTranslated = true },
-                            shape = SegmentedButtonDefaults.itemShape(1, 2),
-                            icon = {},
-                        ) { Text(stringResource(R.string.translated), maxLines = 1) }
+                if (wide) {
+                    Row(Modifier.padding(6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        pageSwitch(Modifier.weight(1f).height(40.dp))
+                        actions(Modifier.height(40.dp))
                     }
-                    Button(
-                        onClick = {
-                            if (translatedAll) creditGate(CreditKind.RERUN) { model.translate(chapter, force = true, onChapter = switchTo) }
-                            else creditGate(CreditKind.TRANSLATE) { model.translate(chapter, onChapter = switchTo) }
-                        },
-                        enabled = idle,
-                        shapes = ButtonDefaults.shapes(),
-                        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
-                    ) {
-                        Icon(Icons.Rounded.Translate, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(if (translatedAll) R.string.retranslate else R.string.translate), maxLines = 1)
+                } else {
+                    Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        pageSwitch(Modifier.fillMaxWidth())
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { actions(Modifier.weight(1f)) }
                     }
                 }
             }
@@ -285,5 +317,16 @@ private fun ProgressCard(progress: Progress?, onCancel: () -> Unit) {
                 Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel))
             }
         }
+    }
+}
+
+/** Button content: icon, action name and its credit price on a second line. */
+@Composable
+private fun ActionLabel(icon: ImageVector, title: String, cost: String) {
+    Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+    Spacer(Modifier.width(8.dp))
+    Column(horizontalAlignment = Alignment.Start) {
+        Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelLarge)
+        Text(cost, maxLines = 1, style = MaterialTheme.typography.labelSmall)
     }
 }

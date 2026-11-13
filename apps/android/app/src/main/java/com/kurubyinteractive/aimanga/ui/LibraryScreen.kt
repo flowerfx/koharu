@@ -1,5 +1,16 @@
 package com.kurubyinteractive.aimanga.ui
 
+import android.text.format.Formatter
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Checklist
+import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Close
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -89,6 +100,23 @@ fun LibraryScreen(
     var byManga by rememberSaveable { mutableStateOf(true) }
     var creatingProject by remember { mutableStateOf(false) }
     val groups = remember(chapters, projects) { shelves(chapters, projects) }
+    val prefs by model.prefs.collectAsStateWithLifecycle()
+    val list = prefs.listLayout
+    val sizes by model.chapterSizes.collectAsStateWithLifecycle()
+    val totalSize = Formatter.formatShortFileSize(context, sizes.values.sum())
+    val shelfBytes = { shelf: Shelf -> shelf.chapters.sumOf { sizes[it.id] ?: 0L } }
+    // Selection mode: shelf keys in "By manga", chapter ids in "All chapters".
+    var selecting by rememberSaveable { mutableStateOf(false) }
+    var selected by remember { mutableStateOf(setOf<String>()) }
+    var confirm by remember { mutableStateOf<Confirm?>(null) }
+    var moreMenu by remember { mutableStateOf(false) }
+    val keys = if (byManga) groups.map { it.key } else chapters.map { it.id }
+    val toggle = { key: String -> selected = if (key in selected) selected - key else selected + key }
+    val stopSelecting = { selecting = false; selected = emptySet() }
+    val mark = { key: String -> if (selecting) key in selected else null }
+    LaunchedEffect(byManga) { selected = emptySet() }
+    LaunchedEffect(keys) { selected = selected intersect keys.toSet() }
+    BackHandler(enabled = selecting) { stopSelecting() }
 
     LaunchedEffect(Unit) { model.errors.collect { snackbar.showSnackbar(errorText(context, it)) } }
 
@@ -97,28 +125,57 @@ fun LibraryScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(stringResource(R.string.library_title), fontWeight = FontWeight.SemiBold) },
+                title = {
+                    if (selecting) Text(pluralStringResource(R.plurals.selected_count, selected.size, selected.size), fontWeight = FontWeight.SemiBold)
+                    else Text(stringResource(R.string.library_title), fontWeight = FontWeight.SemiBold)
+                },
                 subtitle = {
                     Text(
-                        if (byManga) pluralStringResource(R.plurals.library_manga, groups.size, groups.size)
-                        else pluralStringResource(R.plurals.library_subtitle, chapters.size, chapters.size),
+                        (if (byManga) pluralStringResource(R.plurals.library_manga, groups.size, groups.size)
+                        else pluralStringResource(R.plurals.library_subtitle, chapters.size, chapters.size)) + " · " + stringResource(R.string.library_size, totalSize),
                     )
                 },
                 navigationIcon = {
-                    Image(
+                    if (selecting) IconButton(onClick = stopSelecting) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel)) }
+                    else Image(
                         painterResource(R.drawable.app_icon_art),
                         contentDescription = null,
                         modifier = Modifier.padding(start = 12.dp, end = 4.dp).size(40.dp).clip(RoundedCornerShape(12.dp)),
                     )
                 },
                 actions = {
+                    if (selecting) {
+                        TextButton(onClick = { selected = if (selected.size == keys.size) emptySet() else keys.toSet() }) {
+                            Text(stringResource(if (selected.size == keys.size && keys.isNotEmpty()) R.string.deselect_all else R.string.select_all))
+                        }
+                        IconButton(onClick = { confirm = Confirm.SELECTED }, enabled = selected.isNotEmpty()) {
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete_selected))
+                        }
+                        return@LargeFlexibleTopAppBar
+                    }
+                    LayoutToggle(model)
                     if (onBrowse != null) {
                         FilledTonalIconButton(onClick = onBrowse) {
                             Icon(Icons.Rounded.Language, contentDescription = stringResource(R.string.open_rawkuma))
                         }
                     }
-                    FilledTonalIconButton(onClick = { creatingProject = true }, modifier = Modifier.padding(end = 8.dp)) {
+                    FilledTonalIconButton(onClick = { creatingProject = true }) {
                         Icon(Icons.Rounded.CreateNewFolder, contentDescription = stringResource(R.string.new_project))
+                    }
+                    if (chapters.isNotEmpty() || projects.isNotEmpty()) {
+                        IconButton(onClick = { moreMenu = true }) { Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.more_actions)) }
+                        DropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.select)) },
+                                leadingIcon = { Icon(Icons.Rounded.Checklist, contentDescription = null) },
+                                onClick = { moreMenu = false; selecting = true },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.delete_all), color = MaterialTheme.colorScheme.error) },
+                                leadingIcon = { Icon(Icons.Rounded.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                                onClick = { moreMenu = false; confirm = Confirm.EVERYTHING },
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -129,7 +186,7 @@ fun LibraryScreen(
             )
         },
         floatingActionButton = {
-            if (chapters.isNotEmpty() || projects.isNotEmpty()) {
+            if ((chapters.isNotEmpty() || projects.isNotEmpty()) && !selecting) {
                 ExtendedFloatingActionButton(
                     onClick = onImport,
                     icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
@@ -145,7 +202,7 @@ fun LibraryScreen(
             EmptyLibrary(Modifier.padding(padding), onImport = onImport, onBrowse = onBrowse)
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(160.dp),
+                columns = GridCells.Adaptive(if (list) 340.dp else 160.dp),
                 contentPadding = PaddingValues(16.dp, padding.calculateTopPadding() + 4.dp, 16.dp, 112.dp),
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -163,17 +220,52 @@ fun LibraryScreen(
                 if (byManga) {
                     items(groups, key = { it.key }) { shelf ->
                         when (shelf) {
-                            is Shelf.Series -> ShelfCard(model.cover(shelf.chapters.lastOrNull()), shelf.name, shelf.chapters.size, project = false) { onOpenShelf(shelf.key) }
-                            is Shelf.Folder -> ShelfCard(model.cover(shelf.chapters.lastOrNull()), shelf.project.name, shelf.chapters.size, project = true) { onOpenShelf(shelf.key) }
-                            is Shelf.Loose -> ChapterCard(model, shelf.chapter, run?.chapterId == shelf.chapter.id, { onOpen(shelf.chapter) }, onOpenSource)
+                            is Shelf.Series -> ShelfCard(
+                                model.cover(shelf.chapters.lastOrNull()), shelf.name, shelf.chapters.size, project = false,
+                                onClick = { if (selecting) toggle(shelf.key) else onOpenShelf(shelf.key) },
+                                list = list, pages = shelf.chapters.sumOf { it.pages.size }, detail = shelf.url, selected = mark(shelf.key), bytes = shelfBytes(shelf),
+                            )
+                            is Shelf.Folder -> ShelfCard(
+                                model.cover(shelf.chapters.lastOrNull()), shelf.project.name, shelf.chapters.size, project = true,
+                                onClick = { if (selecting) toggle(shelf.key) else onOpenShelf(shelf.key) },
+                                list = list, pages = shelf.chapters.sumOf { it.pages.size }, detail = shelf.project.note, selected = mark(shelf.key), bytes = shelfBytes(shelf),
+                            )
+                            is Shelf.Loose -> ChapterCard(
+                                model, shelf.chapter, run?.chapterId == shelf.chapter.id,
+                                { if (selecting) toggle(shelf.key) else onOpen(shelf.chapter) }, onOpenSource, list = list, selected = mark(shelf.key),
+                            )
                         }
                     }
                 } else {
                     items(chapters, key = { it.id }) { chapter ->
-                        ChapterCard(model, chapter, run?.chapterId == chapter.id, { onOpen(chapter) }, onOpenSource)
+                        ChapterCard(
+                            model, chapter, run?.chapterId == chapter.id,
+                            { if (selecting) toggle(chapter.id) else onOpen(chapter) }, onOpenSource, list = list, showsOrigin = true, selected = mark(chapter.id),
+                        )
                     }
                 }
             }
+        }
+    }
+
+    confirm?.let { kind ->
+        val shelvesChosen = groups.filter { it.key in selected }
+        val count = when (kind) {
+            Confirm.EVERYTHING -> chapters.size
+            Confirm.SELECTED -> if (byManga) shelvesChosen.sumOf { it.chapters.size } else selected.size
+        }
+        DeleteDialog(
+            title = stringResource(if (kind == Confirm.EVERYTHING) R.string.delete_library_title else R.string.delete_selected_title),
+            body = if (kind == Confirm.EVERYTHING) pluralStringResource(R.plurals.delete_library_body, count, count, projects.size)
+            else pluralStringResource(R.plurals.delete_chapters_body, count, count),
+            onDismiss = { confirm = null },
+        ) {
+            when (kind) {
+                Confirm.EVERYTHING -> model.deleteAll()
+                Confirm.SELECTED -> if (byManga) model.deleteShelves(shelvesChosen) else model.deleteChapters(selected)
+            }
+            confirm = null
+            stopSelecting()
         }
     }
 
@@ -225,3 +317,5 @@ private fun EmptyLibrary(modifier: Modifier, onImport: () -> Unit, onBrowse: (()
         Spacer(Modifier.height(48.dp))
     }
 }
+
+private enum class Confirm { SELECTED, EVERYTHING }

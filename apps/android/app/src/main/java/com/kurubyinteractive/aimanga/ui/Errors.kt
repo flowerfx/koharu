@@ -3,6 +3,7 @@ package com.kurubyinteractive.aimanga.ui
 import android.content.Context
 import com.kurubyinteractive.aimanga.AnimeBlock
 import com.kurubyinteractive.aimanga.AnimeBlockedException
+import com.kurubyinteractive.aimanga.AnimeStorageException
 import com.kurubyinteractive.aimanga.ProviderDisabledException
 import com.kurubyinteractive.aimanga.R
 import uniffi.koharu_core.AnimeException
@@ -20,8 +21,18 @@ fun errorText(context: Context, error: Throwable): String = when (error) {
         when (error.reason) {
             AnimeBlock.UNSUPPORTED_ABI -> R.string.anime_unsupported
             AnimeBlock.MEMORY -> R.string.anime_memory
-            AnimeBlock.CONTENT_REVIEW -> R.string.anime_review_required
+            AnimeBlock.PROVIDER -> R.string.anime_prompt_provider
+            AnimeBlock.UPSCALER -> R.string.anime_upscaler_missing
+            AnimeBlock.SIGN_IN -> R.string.anime_sign_in
+            AnimeBlock.RESTRICTED -> R.string.anime_restricted
+            AnimeBlock.REVIEW_UNAVAILABLE -> R.string.anime_review_unavailable
+            AnimeBlock.CONSENT -> R.string.anime_review_consent_needed
         },
+    )
+    is com.kurubyinteractive.aimanga.data.RewardedAdUnavailableException -> context.getString(R.string.ads_unavailable)
+    is AnimeStorageException -> context.getString(
+        R.string.anime_error_storage, error.file,
+        android.text.format.Formatter.formatFileSize(context, error.needed), android.text.format.Formatter.formatFileSize(context, error.free),
     )
     is AnimeException.Download -> context.getString(R.string.anime_error_download, error.file)
     is AnimeException.Checksum -> context.getString(R.string.anime_error_checksum, error.file)

@@ -35,7 +35,7 @@ android {
         applicationId = "com.kurubyInteractive.aimanga"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
+        versionCode = 3
         // Also the remote configuration path: env/<environment>/<versionName>/configs/app-config.json.
         versionName = "1.0.1"
         // Staging has no 1.0.1 configuration, so every variant reads production.
@@ -102,6 +102,9 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.6.3")
     implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
     implementation("androidx.webkit:webkit:1.17.1")
+    implementation("com.android.billingclient:billing:8.3.0")
+    implementation("com.google.android.gms:play-services-ads:25.3.0")
+    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
     implementation(platform("com.google.firebase:firebase-bom:35.2.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-crashlytics")
@@ -158,10 +161,13 @@ fun CargoTask.configureCore() {
 }
 
 // stable-diffusion-native, pinned to the release the iPad app uses (scripts/bootstrap.py).
-val sdVersion = "v0.3.0"
+val sdVersion = "v0.3.0-3"
 val sdArchive = "stable-diffusion-native-runtime-android-arm64-$sdVersion.tar.gz"
-val sdSha256 = "a505480ada6a5f8af1fb1195b60320c5b263d86e9e320e46b97dd5d1c00b7bb0"
-val sdRuntimeDir = rootProject.file("Vendor/sd-android-$sdVersion")
+val sdSha256 = "0ba2a126bed223e2783736791ddcacaec2545c34d55b6358eea4afc7827889db"
+// A Vulkan build made by scripts/build-sd-vulkan.sh (same sources, -DSD_VULKAN=ON,
+// tri_f16 guard passed) replaces the CPU-only release runtime when present.
+val sdVulkanDir = rootProject.file("Vendor/sd-android-vulkan-v0.3.0-3")
+val sdRuntimeDir = if (sdVulkanDir.resolve("lib/libstable-diffusion.so").exists()) sdVulkanDir else rootProject.file("Vendor/sd-android-$sdVersion")
 
 /**
  * Downloads and verifies the prebuilt Android runtime once into `Vendor/`

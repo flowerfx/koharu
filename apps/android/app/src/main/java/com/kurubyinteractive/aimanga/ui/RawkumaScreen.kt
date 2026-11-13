@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
+import android.webkit.WebResourceResponse
 import android.webkit.WebViewClient
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -163,6 +164,18 @@ class RawkumaBrowser(context: Context) {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val allowed = site?.let { rawkumaContains(it, request.url.toString()) } == true
                 return !(allowed && (mode != "half-safe" || acceptedWarning))
+            }
+
+            /**
+             * Only content from hosts with "rawkuma" in the name is shown (the
+             * site and cdn.rawkuma.com); ads, trackers, frames and any other
+             * third-party request get an empty response.
+             */
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                val url = request.url
+                if (url.scheme != "http" && url.scheme != "https") return null
+                val host = url.host?.lowercase().orEmpty()
+                return if ("rawkuma" in host) null else WebResourceResponse("text/plain", "utf-8", 204, "Blocked", emptyMap(), null)
             }
 
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {

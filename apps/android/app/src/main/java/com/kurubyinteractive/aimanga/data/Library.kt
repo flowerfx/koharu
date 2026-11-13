@@ -63,6 +63,10 @@ class Library(context: Context) {
     private val projectState = MutableStateFlow(loadProjects())
     val projects: StateFlow<List<Project>> = projectState.asStateFlow()
 
+    /** Bytes on disk of a chapter: its JSON plus original and translated pages. */
+    fun bytes(chapter: Chapter): Long =
+        File(root, chapter.id).walkTopDown().filter { it.isFile }.sumOf { it.length() }
+
     /** Creates or renames a project; returns null for an empty name. */
     fun saveProject(project: Project): Project? {
         val value = project.copy(name = project.name.trim(), note = project.note.trim())

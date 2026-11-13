@@ -116,6 +116,38 @@ class BackendAccount(context: Context, private val settings: SettingsStore) {
         state.update { it.copy(credits = credits) }
     }
 
+    /** Opens a rewarded-video ticket; see [RewardedAds]. */
+    suspend fun startVideo(purpose: String, action: String, provider: String, rerun: Boolean): String {
+        val client = client ?: throw BackendException.NotConfigured()
+        try {
+            return client.startVideo(purpose, action, provider, rerun)
+        } finally {
+            afterCall()
+        }
+    }
+
+    /** Records an earned reward and refreshes the balance and video passes. */
+    suspend fun completeVideo(videoId: String) {
+        val client = client ?: throw BackendException.NotConfigured()
+        val credits = try {
+            client.completeVideo(videoId)
+        } finally {
+            afterCall()
+        }
+        state.update { it.copy(credits = credits) }
+    }
+
+    /** Nakama verifies a Play purchase (its `originalJson`) and returns the updated tier. */
+    suspend fun validateGoogleSubscription(purchaseJson: String) {
+        val client = client ?: throw BackendException.NotConfigured()
+        val credits = try {
+            client.validateGoogleSubscription(purchaseJson)
+        } finally {
+            afterCall()
+        }
+        state.update { it.copy(credits = credits) }
+    }
+
     /** Persists tokens refreshed during a backend call; a rejected session signs out. */
     fun afterCall() {
         val session = client?.session()

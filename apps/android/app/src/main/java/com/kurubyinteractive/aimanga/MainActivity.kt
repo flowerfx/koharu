@@ -1,10 +1,27 @@
 package com.kurubyinteractive.aimanga
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRail
+import com.kurubyinteractive.aimanga.data.DailyReminder
+import androidx.activity.result.contract.ActivityResultContracts
+import android.os.Build
+import android.content.pm.PackageManager
+import android.content.Intent
+import android.Manifest
 import android.graphics.Color
 import android.content.Context
 import android.os.Bundle
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 import com.kurubyinteractive.aimanga.data.AppLanguage
 import com.kurubyinteractive.aimanga.data.CloudServices
+import com.kurubyinteractive.aimanga.ui.SubscriptionOffer
+import com.kurubyinteractive.aimanga.ui.DailyRewardScreen
 import com.kurubyinteractive.aimanga.ui.UpdateRequired
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -67,6 +84,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         cloud.configure()
+        if (savedInstanceState == null) lifecycleScope.launch { model.subscriptions.newLaunch() }
+        if (intent?.getBooleanExtra(DailyReminder.EXTRA_OPEN_DAILY, false) == true) model.openDaily.value = true
+        requestNotificationsOnce()
         enableEdgeToEdge()
         setContent {
             val prefs by model.prefs.collectAsStateWithLifecycle()
@@ -83,6 +103,25 @@ class MainActivity : ComponentActivity() {
                 if (required != null) UpdateRequired(required, onCheckAgain = cloud::refresh) else App(model, studio, cloud)
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.getBooleanExtra(DailyReminder.EXTRA_OPEN_DAILY, false)) model.openDaily.value = true
+    }
+
+    /** Android 13+: ask once for notifications, used only by the daily-reset reminder. */
+    private fun requestNotificationsOnce() {
+        if (Build.VERSION.SDK_INT < 33) return
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        val prefs = getSharedPreferences("daily_reminder", MODE_PRIVATE)
+        if (prefs.getBoolean("asked", false)) return
+        prefs.edit().putBoolean("asked", true).apply()
+        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        DailyReminder.schedule(this)
     }
 
     override fun onStart() {
@@ -127,6 +166,8 @@ private fun App(model: AppViewModel, studio: AnimeStudioModel, cloud: CloudServi
     BackHandler(enabled = stack.isEmpty() && tab == "rawkuma" && browser.canGoBack) { browser.back() }
     BackHandler(enabled = stack.isEmpty() && tab != "library" && !(tab == "rawkuma" && browser.canGoBack)) { tab = "library" }
     val overlay = stack.lastOrNull()
+    // Material 3 expanded width (tablets in landscape, foldables open).
+    val wide = LocalConfiguration.current.screenWidthDp >= 840
     val screen = overlay?.substringBefore(':') ?: tab
     LaunchedEffect(screen) { cloud.trackScreen(screen) }
 
@@ -155,7 +196,8 @@ private fun App(model: AppViewModel, studio: AnimeStudioModel, cloud: CloudServi
                 )
                 else -> Scaffold(
                     bottomBar = {
-                        NavigationBar {
+                        // Tablets and other wide windows use a navigation rail instead.
+                        if (!wide) NavigationBar {
                             tabs.forEach { (id, label, icon) ->
                                 NavigationBarItem(
                                     selected = tab == id,
@@ -168,13 +210,27 @@ private fun App(model: AppViewModel, studio: AnimeStudioModel, cloud: CloudServi
                     },
                     contentWindowInsets = WindowInsets(0),
                 ) { padding ->
-                    Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
+                    Row(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
+                    if (wide) NavigationRail(Modifier.fillMaxHeight(), containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+                        Spacer(Modifier.weight(1f))
+                        tabs.forEach { (id, label, icon) ->
+                            NavigationRailItem(
+                                selected = tab == id,
+                                onClick = { tab = id },
+                                icon = { Icon(icon, contentDescription = null) },
+                                label = { Text(stringResource(label)) },
+                                modifier = Modifier.padding(vertical = 6.dp),
+                            )
+                        }
+                        Spacer(Modifier.weight(1f))
+                    }
+                    Box(Modifier.weight(1f).fillMaxHeight()) {
                         when (tab) {
                             "rawkuma" -> RawkumaScreen(model, browser, onOpenChapter = { push("reader:${it.id}") })
                             "settings" -> SettingsScreen(model, onBack = null)
                             "anime" -> {
                                 val run by model.run.collectAsStateWithLifecycle()
-                                AnimeStudioScreen(studio, config.config.contentSafetyMode, translating = run != null)
+                                AnimeStudioScreen(studio, model, config.config.contentSafetyMode, translating = run != null)
                             }
                             else -> LibraryScreen(
                                 model,
@@ -187,8 +243,12 @@ private fun App(model: AppViewModel, studio: AnimeStudioModel, cloud: CloudServi
                             )
                         }
                     }
+                    }
                 }
             }
         }
+        SubscriptionOffer(model)
+        val openDaily by model.openDaily.collectAsStateWithLifecycle()
+        if (openDaily) DailyRewardScreen(model) { model.openDaily.value = false }
     }
 }

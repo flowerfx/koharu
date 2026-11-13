@@ -1,10 +1,17 @@
 package com.kurubyinteractive.aimanga
 
+import com.kurubyinteractive.aimanga.data.DailyReminder
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import uniffi.koharu_core.TranslatorConfig
+import com.kurubyinteractive.aimanga.data.Shelf
 import android.app.Application
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.kurubyinteractive.aimanga.data.SubscriptionStore
+import com.kurubyinteractive.aimanga.data.RewardedAds
 import com.kurubyinteractive.aimanga.data.AccountState
 import com.kurubyinteractive.aimanga.data.BackendAccount
 import com.kurubyinteractive.aimanga.data.Chapter
@@ -85,6 +92,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val configVersion: String get() = configStore.version
     val account = BackendAccount(application, settings)
     val accountState: StateFlow<AccountState> = account.current
+    val subscriptions = SubscriptionStore(application, account, viewModelScope)
+    val rewardedAds = RewardedAds()
+
+    /** Disk usage per chapter ID, recomputed off the main thread whenever the library changes. */
+    val chapterSizes: StateFlow<Map<String, Long>> = library.chapters
+        .map { list -> withContext(Dispatchers.IO) { list.associate { it.id to library.bytes(it) } } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
     val enabledProviders: StateFlow<List<ProviderInfo>> = combine(configStore.current, account.current) { config, state ->
         config.config.enabledProviders(state.available)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, configStore.current.value.config.enabledProviders(account.hasIdentity))
@@ -93,10 +107,33 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefsState = MutableStateFlow(settings.load(configStore.current.value.config.defaultProvider(account.hasIdentity)))
 
+    /** Set when a daily-reset notification is opened; the app shows the daily reward screen. */
+    val openDaily = MutableStateFlow(false)
+
     init {
+        // Keep the daily-reset reminder in step with the signed-in account's daily amount.
+        viewModelScope.launch {
+            account.current.map { state ->
+                state.credits?.let { (if (it.accountType == "premium") it.dailyPremiumUser else it.dailyFreeUser).toInt() }
+                    ?: if (state.user == null) -1 else null
+            }.distinctUntilChanged().collect { daily ->
+                when (daily) {
+                    null -> {}
+                    -1 -> DailyReminder.remember(getApplication(), null)
+                    else -> DailyReminder.remember(getApplication(), daily)
+                }
+            }
+        }
         viewModelScope.launch {
             configStore.current.map { it.config.serverActive to it.config.serverEndpoint }.distinctUntilChanged().collect { (active, endpoint) ->
                 runCatching { account.configure(active, endpoint) }
+            }
+        }
+        // The Premium offer follows the signed-in account once its credit profile loads.
+        viewModelScope.launch {
+            account.current.map { it.user?.id to (it.credits != null) }.distinctUntilChanged().collect { (user, loaded) ->
+                if (user == null) subscriptions.resetAccount()
+                else if (loaded) runCatching { subscriptions.prepareLaunchOffer() }
             }
         }
     }
@@ -136,6 +173,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val errorChannel = Channel<Throwable>(Channel.BUFFERED)
     val errors = errorChannel.receiveAsFlow()
+
+    /** Shows a failure from a screen-level action (e.g. a rewarded video) in the current snackbar. */
+    fun reportError(error: Throwable) {
+        errorChannel.trySend(error)
+    }
 
     /** Checks for a newer app-config.json; deferred while a chapter is translating. */
     fun refreshConfig() {
@@ -197,11 +239,33 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun saveProject(project: Project) = library.saveProject(project)
     fun deleteProject(id: String) = library.deleteProject(id)
+    /** The Settings provider configuration, for Anime Studio prompt assistance. */
+    fun translatorConfig(): TranslatorConfig = settings.config(prefs.value)
     fun move(chapter: Chapter, projectId: String?) = library.move(chapter, projectId)
 
     fun delete(chapter: Chapter) {
         if (runState.value?.chapterId == chapter.id) cancel()
         library.delete(chapter)
+    }
+
+    /** Deletes the chapters with these ids. */
+    fun deleteChapters(ids: Collection<String>) {
+        val chosen = ids.toSet()
+        library.chapters.value.filter { it.id in chosen }.forEach(::delete)
+    }
+
+    /** Deletes whole shelves: a manga's chapters, a project together with its chapters, or a loose chapter. */
+    fun deleteShelves(shelves: Collection<Shelf>) {
+        shelves.forEach { shelf ->
+            shelf.chapters.forEach(::delete)
+            if (shelf is Shelf.Folder) library.deleteProject(shelf.project.id)
+        }
+    }
+
+    /** Empties the library: every chapter and every project. */
+    fun deleteAll() {
+        library.chapters.value.forEach(::delete)
+        library.projects.value.forEach { library.deleteProject(it.id) }
     }
 
     /**

@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <android/log.h>
+
 #include "sd_dart_wrapper.h"
 #include "stable-diffusion.h"
 
@@ -88,9 +90,27 @@ int koharu_anima_generate(void *opaque, const char *diffusion, const char *text,
     job->sequence = latest;
     atomic_store(&job->progress_ready, true);
 
+    // Like the iPad port (Metal + "vae=cpu"): with a Vulkan runtime the
+    // diffusion model and the text encoder run on the GPU and the VAE decode
+    // stays on the CPU. A CPU-only runtime reports no GPU and runs everything
+    // on the CPU.
+    char device[64] = {0};
+    for (int32_t i = 0, n = sd_dart_gpu_device_count(); i < n; ++i) {
+        sd_dart_gpu_device_memory_t info;
+        memset(&info, 0, sizeof info);
+        if (sd_dart_gpu_device_memory(i, &info) == SD_DART_GPU_OK && strncmp(info.name, "Vulkan", 6) == 0) {
+            snprintf(device, sizeof device, "%s", info.name);
+            break;
+        }
+    }
+    char backend[96] = {0};
+    if (device[0]) snprintf(backend, sizeof backend, "*=%s,vae=cpu", device);
+    __android_log_print(ANDROID_LOG_INFO, "KoharuAnima", "backend %s", device[0] ? backend : "cpu");
+
     sd_ctx_params_t context;
     sd_ctx_params_init(&context);
     context.diffusion_model_path = diffusion; context.llm_path = text; context.vae_path = vae;
+    if (device[0]) context.backend = backend;
     context.enable_mmap = true; context.n_threads = threads > 0 ? threads : sd_get_num_physical_cores();
     context.flash_attn = true;
     sd_ctx_t *runtime = sd_dart_new_sd_ctx(&context);
@@ -135,6 +155,39 @@ int koharu_anima_generate(void *opaque, const char *diffusion, const char *text,
     job->context = NULL;
     pthread_mutex_unlock(&job->mutex);
     sd_dart_exit_free(runtime);
+    if (valid) atomic_store(&job->phase, 3);
+    return valid ? 1 : 0;
+}
+
+// RealESRGAN ×4 after Anima (iPad koharu_anima_upscale), on the CPU runtime.
+// Anima's context is already freed. Fixed 128px tiles bound the working set;
+// the upstream upscaler has no abort hook, so Stop discards the result after
+// the current pass.
+int koharu_anima_upscale(void *opaque, const char *model, const uint8_t *rgb, int width, int height,
+                         int scale, int threads, uint8_t *output, size_t output_capacity, char *error, size_t capacity) {
+    anima_job *job = opaque;
+    if (!job || !model || !rgb || !output || width < 1 || height < 1 || width > 1024 || height > 1280 ||
+        scale != 4 || output_capacity != (size_t)width * height * scale * scale * 3) {
+        report(error, capacity, "Invalid upscale request"); return 0;
+    }
+    if (atomic_load(&job->cancelled)) return 0;
+    atomic_store(&job->phase, 4);
+    upscaler_ctx_t *runtime = new_upscaler_ctx(model, false, threads > 0 ? threads : sd_get_num_physical_cores(), 128, NULL, NULL);
+    if (!runtime || get_upscale_factor(runtime) != scale) {
+        if (runtime) free_upscaler_ctx(runtime);
+        report(error, capacity, "Could not load the selected upscaler"); return 0;
+    }
+    if (atomic_load(&job->cancelled)) { free_upscaler_ctx(runtime); return 0; }
+    sd_image_t input = {(uint32_t)width, (uint32_t)height, 3, (uint8_t *)rgb};
+    sd_image_generation_result_t *result = NULL;
+    bool ok = upscale(runtime, input, (uint32_t)scale, &result);
+    const sd_image_t *image = result && result->count == 1 && result->items ? &result->items[0].image : NULL;
+    bool valid = ok && !atomic_load(&job->cancelled) && image && image->data && image->channel == 3 &&
+                 image->width == (uint32_t)(width * scale) && image->height == (uint32_t)(height * scale);
+    if (valid) memcpy(output, image->data, output_capacity);
+    else if (!atomic_load(&job->cancelled)) report(error, capacity, "Could not upscale image");
+    if (result) free_sd_image_generation_result(result);
+    free_upscaler_ctx(runtime);
     if (valid) atomic_store(&job->phase, 3);
     return valid ? 1 : 0;
 }

@@ -26,6 +26,8 @@ data class Preferences(
     val dynamicColor: Boolean,
     val theme: ThemeMode,
     val reading: ReadingMode,
+    /** Chapter and manga lists as rows with full titles instead of cover grids. */
+    val listLayout: Boolean = false,
 )
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
@@ -56,7 +58,8 @@ class SettingsStore(context: Context) {
             theme = prefs.getString("theme", null)
                 ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
             reading = prefs.getString("reading", null)
-                ?.let { runCatching { ReadingMode.valueOf(it) }.getOrNull() } ?: ReadingMode.HORIZONTAL,
+                ?.let { runCatching { ReadingMode.valueOf(it) }.getOrNull() } ?: ReadingMode.VERTICAL,
+            listLayout = prefs.getBoolean("listLayout", false),
         )
     }
 
@@ -72,6 +75,7 @@ class SettingsStore(context: Context) {
         putBoolean("dynamicColor", p.dynamicColor)
         putString("theme", p.theme.name)
         putString("reading", p.reading.name)
+        putBoolean("listLayout", p.listLayout)
     }
 
     fun apiKey(provider: Provider): String = secret("key.${provider.name}")

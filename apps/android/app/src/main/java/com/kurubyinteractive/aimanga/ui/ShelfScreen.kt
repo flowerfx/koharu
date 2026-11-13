@@ -1,5 +1,12 @@
 package com.kurubyinteractive.aimanga.ui
 
+import androidx.compose.ui.platform.LocalContext
+import android.text.format.Formatter
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material.icons.rounded.Checklist
+import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.material.icons.rounded.Close
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -80,7 +87,6 @@ fun ShelfScreen(
     // Chapter-number orders apply to manga; a project starts in date order.
     var sort by rememberSaveable { mutableStateOf(if (isSeries) ShelfSort.CHAPTER_DESCENDING else ShelfSort.NEWEST) }
     var sortMenu by remember { mutableStateOf(false) }
-    var projectMenu by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
     val name = when (shelf) {
@@ -90,23 +96,50 @@ fun ShelfScreen(
     }
     val series = shelf.chapters.firstNotNullOfOrNull { it.series }
 
+    val prefs by model.prefs.collectAsStateWithLifecycle()
+    val list = prefs.listLayout
+    val sizes by model.chapterSizes.collectAsStateWithLifecycle()
+    var selecting by rememberSaveable { mutableStateOf(false) }
+    var selected by remember { mutableStateOf(setOf<String>()) }
+    var confirmSelected by remember { mutableStateOf(false) }
+    var confirmAll by remember { mutableStateOf(false) }
+    var moreMenu by remember { mutableStateOf(false) }
+    val ids = shelf.chapters.map { it.id }
+    LaunchedEffect(ids) { selected = selected intersect ids.toSet() }
+    val stopSelecting = { selecting = false; selected = emptySet() }
+    BackHandler(enabled = selecting) { stopSelecting() }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text(name, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
                         Text(
-                            pluralStringResource(R.plurals.shelf_chapters, shelf.chapters.size, shelf.chapters.size),
+                            if (selecting) pluralStringResource(R.plurals.selected_count, selected.size, selected.size) else name,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold,
+                        )
+                        if (!selecting) Text(
+                            pluralStringResource(R.plurals.shelf_chapters, shelf.chapters.size, shelf.chapters.size) + " · " +
+                                Formatter.formatShortFileSize(LocalContext.current, shelf.chapters.sumOf { sizes[it.id] ?: 0L }),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back)) }
+                    if (selecting) IconButton(onClick = stopSelecting) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel)) }
+                    else IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back)) }
                 },
                 actions = {
+                    if (selecting) {
+                        TextButton(onClick = { selected = if (selected.size == ids.size) emptySet() else ids.toSet() }) {
+                            Text(stringResource(if (selected.size == ids.size && ids.isNotEmpty()) R.string.deselect_all else R.string.select_all))
+                        }
+                        IconButton(onClick = { confirmSelected = true }, enabled = selected.isNotEmpty()) {
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete_selected))
+                        }
+                        return@TopAppBar
+                    }
+                    LayoutToggle(model)
                     IconButton(onClick = { sortMenu = true }) { Icon(Icons.AutoMirrored.Rounded.Sort, contentDescription = stringResource(R.string.sort)) }
                     DropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
                         listOf(
@@ -118,18 +151,30 @@ fun ShelfScreen(
                             DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = { sort = value; sortMenu = false })
                         }
                     }
-                    if (shelf is Shelf.Folder) {
-                        IconButton(onClick = { projectMenu = true }) { Icon(Icons.Rounded.MoreVert, contentDescription = null) }
-                        DropdownMenu(expanded = projectMenu, onDismissRequest = { projectMenu = false }) {
+                    IconButton(onClick = { moreMenu = true }) { Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.more_actions)) }
+                    DropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
+                        if (shelf.chapters.isNotEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.select)) },
+                                leadingIcon = { Icon(Icons.Rounded.Checklist, contentDescription = null) },
+                                onClick = { moreMenu = false; selecting = true },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.delete_all_chapters), color = MaterialTheme.colorScheme.error) },
+                                leadingIcon = { Icon(Icons.Rounded.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                                onClick = { moreMenu = false; confirmAll = true },
+                            )
+                        }
+                        if (shelf is Shelf.Folder) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.edit_project)) },
                                 leadingIcon = { Icon(Icons.Rounded.Edit, contentDescription = null) },
-                                onClick = { projectMenu = false; editing = true },
+                                onClick = { moreMenu = false; editing = true },
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.delete_project)) },
                                 leadingIcon = { Icon(Icons.Rounded.Delete, contentDescription = null) },
-                                onClick = { projectMenu = false; deleting = true },
+                                onClick = { moreMenu = false; deleting = true },
                             )
                         }
                     }
@@ -139,7 +184,7 @@ fun ShelfScreen(
         },
     ) { padding ->
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(160.dp),
+            columns = GridCells.Adaptive(if (list) 340.dp else 160.dp),
             contentPadding = PaddingValues(16.dp, padding.calculateTopPadding() + 4.dp, 16.dp, 32.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -191,8 +236,28 @@ fun ShelfScreen(
                 }
             }
             items(sort.apply(shelf.chapters), key = { it.id }) { chapter ->
-                ChapterCard(model, chapter, run?.chapterId == chapter.id, { onOpen(chapter) }, onOpenSource)
+                ChapterCard(
+                    model, chapter, run?.chapterId == chapter.id,
+                    {
+                        if (selecting) selected = if (chapter.id in selected) selected - chapter.id else selected + chapter.id
+                        else onOpen(chapter)
+                    },
+                    onOpenSource, list = list, selected = if (selecting) chapter.id in selected else null,
+                )
             }
+        }
+    }
+
+    if (confirmSelected || confirmAll) {
+        val count = if (confirmAll) ids.size else selected.size
+        DeleteDialog(
+            title = stringResource(if (confirmAll) R.string.delete_all_chapters_title else R.string.delete_selected_title),
+            body = pluralStringResource(R.plurals.delete_chapters_body, count, count),
+            onDismiss = { confirmSelected = false; confirmAll = false },
+        ) {
+            model.deleteChapters(if (confirmAll) ids else selected)
+            confirmSelected = false; confirmAll = false
+            stopSelecting()
         }
     }
 

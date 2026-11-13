@@ -1,5 +1,22 @@
 package com.kurubyinteractive.aimanga.ui
 
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
+import com.kurubyinteractive.aimanga.UpscaleState
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.rounded.VerifiedUser
+import androidx.compose.material.icons.rounded.Casino
+import androidx.compose.material.icons.rounded.AutoFixHigh
+import androidx.compose.ui.res.pluralStringResource
+import uniffi.koharu_core.animeActionCost
+import uniffi.koharu_core.Provider
+import uniffi.koharu_core.PromptOperation
+import com.kurubyinteractive.aimanga.PromptSuggestion
+import com.kurubyinteractive.aimanga.AppViewModel
 import android.text.format.Formatter
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -44,6 +61,9 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import uniffi.koharu_core.AnimaConfig
+import com.kurubyinteractive.aimanga.AnimaModelState
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -85,7 +105,7 @@ private val SIZES = listOf(512 to 512, 768 to 1024, 720 to 1280, 1024 to 1024, 1
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun AnimeStudioScreen(studio: AnimeStudioModel, safetyMode: String, translating: Boolean) {
+fun AnimeStudioScreen(studio: AnimeStudioModel, app: AppViewModel, safetyMode: String, translating: Boolean) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val model by studio.model.collectAsStateWithLifecycle()
@@ -99,8 +119,28 @@ fun AnimeStudioScreen(studio: AnimeStudioModel, safetyMode: String, translating:
     var confirmDeleteModel by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(Unit) { studio.errors.collect { snackbar.showSnackbar(errorText(context, it)) } }
-    val busy = generation != null
-    val block = studio.deviceBlock ?: AnimeBlock.CONTENT_REVIEW.takeIf { safetyMode != "none-safe" }
+    val assisting by studio.assisting.collectAsStateWithLifecycle()
+    val upscale by studio.upscale.collectAsStateWithLifecycle()
+    val suggestion by studio.suggestion.collectAsStateWithLifecycle()
+    val needsConsent by studio.needsConsent.collectAsStateWithLifecycle()
+    val account by app.accountState.collectAsStateWithLifecycle()
+    val prefs by app.prefs.collectAsStateWithLifecycle()
+    val enabledProviders by app.enabledProviders.collectAsStateWithLifecycle()
+    val busy = generation != null || assisting
+    val block = studio.deviceBlock
+    // half-safe and full-safe review every prompt with Kuruby before use (iPad ContentSafety).
+    val safe = safetyMode != "none-safe"
+    val providerName = enabledProviders.firstOrNull { it.provider == prefs.provider }?.name ?: prefs.provider.name
+    val credits = account.credits
+    @Composable
+    fun price(action: String): String {
+        val cost = credits?.let { animeActionCost(it, action, prefs.provider == Provider.BACKEND).toInt() }
+        return if (cost == null) stringResource(R.string.cost_uses_credits) else pluralStringResource(R.plurals.cost_credits, cost, cost)
+    }
+    val imagePrice = price("image")
+    val creditGate = rememberCreditGate(app)
+    val enhancePrice = price("enhance")
+    val promptPrice = price("generatePrompt")
 
     Box(Modifier.fillMaxSize()) {
         LazyVerticalGrid(
@@ -108,7 +148,8 @@ fun AnimeStudioScreen(studio: AnimeStudioModel, safetyMode: String, translating:
             contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 24.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize(),
+            // On tablets the studio keeps a readable width, centered.
+            modifier = Modifier.fillMaxSize().wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = 1000.dp),
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column(Modifier.statusBarsPadding().padding(top = 20.dp, bottom = 4.dp)) {
@@ -124,7 +165,7 @@ fun AnimeStudioScreen(studio: AnimeStudioModel, safetyMode: String, translating:
                             when (block) {
                                 AnimeBlock.UNSUPPORTED_ABI -> R.string.anime_unsupported
                                 AnimeBlock.MEMORY -> R.string.anime_memory
-                                AnimeBlock.CONTENT_REVIEW -> R.string.anime_review_required
+                                else -> R.string.anime_unsupported
                             },
                         ),
                     )
@@ -133,12 +174,8 @@ fun AnimeStudioScreen(studio: AnimeStudioModel, safetyMode: String, translating:
             if (config != null) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     ModelCard(
-                        name = config.name,
-                        size = Formatter.formatFileSize(context, studio.totalBytes),
-                        ready = model.ready,
-                        downloading = model.downloading,
-                        done = model.done,
-                        total = model.total,
+                        config = config,
+                        state = model,
                         onDownload = studio::download,
                         onCancel = studio::cancelDownload,
                         onDelete = { confirmDeleteModel = true },
@@ -162,6 +199,26 @@ fun AnimeStudioScreen(studio: AnimeStudioModel, safetyMode: String, translating:
                             shape = MaterialTheme.shapes.medium,
                             modifier = Modifier.fillMaxWidth(),
                         )
+                        Text(stringResource(R.string.anime_assist_title, providerName), style = MaterialTheme.typography.labelLarge)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledTonalButton(
+                                onClick = { creditGate(CreditKind.PROMPT_ENHANCE) { studio.assist(PromptOperation.ENHANCE, prompt, app.account, app.translatorConfig(), safe) } },
+                                enabled = !busy && prompt.isNotBlank() && !translating,
+                                modifier = Modifier.weight(1f),
+                            ) { AssistLabel(Icons.Rounded.AutoFixHigh, stringResource(R.string.anime_assist_enhance), enhancePrice) }
+                            FilledTonalButton(
+                                onClick = { creditGate(CreditKind.PROMPT_GENERATE) { studio.assist(PromptOperation.RANDOM_ORIGINAL, "", app.account, app.translatorConfig(), safe) } },
+                                enabled = !busy && !translating,
+                                modifier = Modifier.weight(1f),
+                            ) { AssistLabel(Icons.Rounded.Casino, stringResource(R.string.anime_assist_original), promptPrice) }
+                        }
+                        if (assisting) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                LoadingIndicator(Modifier.size(32.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(R.string.anime_assisting, providerName), style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
                         Text(stringResource(R.string.anime_size), style = MaterialTheme.typography.labelLarge)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             SIZES.forEachIndexed { index, (w, h) ->
@@ -173,13 +230,22 @@ fun AnimeStudioScreen(studio: AnimeStudioModel, safetyMode: String, translating:
                             Text("$steps", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                         }
                         Slider(value = steps.toFloat(), onValueChange = { steps = it.toInt() }, valueRange = 5f..20f, steps = 14)
+                        UpscaleSection(
+                            studio = studio,
+                            state = upscale,
+                            size = SIZES[size],
+                            enabled = !busy && !model.downloading,
+                            sizeText = { Formatter.formatFileSize(context, it) },
+                        )
                         AnimatedVisibility(generation != null) {
                             val g = generation
                             GenerationProgress(
                                 text = when {
                                     g == null -> ""
+                                    g.phase == 0 -> stringResource(R.string.anime_reviewing)
                                     g.phase == 1 -> stringResource(R.string.anime_loading)
                                     g.phase == 3 -> stringResource(R.string.anime_saving)
+                                    g.phase == 4 -> stringResource(R.string.anime_upscaling)
                                     g.steps > 0 -> stringResource(R.string.anime_generating_step, g.step, g.steps)
                                     else -> stringResource(R.string.anime_generating)
                                 },
@@ -190,16 +256,16 @@ fun AnimeStudioScreen(studio: AnimeStudioModel, safetyMode: String, translating:
                         Button(
                             onClick = {
                                 val (w, h) = SIZES[size]
-                                studio.generate(prompt, w, h, steps, safetyMode, translating)
+                                creditGate(CreditKind.IMAGE) { studio.generate(prompt, w, h, steps, safe, translating, app.account) }
                             },
-                            enabled = model.ready && !busy && prompt.isNotBlank() && block == null && !translating,
+                            enabled = model.ready && !busy && prompt.isNotBlank() && block == null && !translating && (!upscale.enabled || upscale.selectedReady),
                             shapes = ButtonDefaults.shapes(),
                             contentPadding = PaddingValues(vertical = 16.dp),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Icon(Icons.Rounded.AutoAwesome, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.anime_generate), style = MaterialTheme.typography.titleSmall)
+                            Text(stringResource(R.string.anime_generate) + " · " + imagePrice, style = MaterialTheme.typography.titleSmall)
                         }
                     }
                 }
@@ -239,6 +305,37 @@ fun AnimeStudioScreen(studio: AnimeStudioModel, safetyMode: String, translating:
             onDelete = { studio.delete(image); viewing = null },
         )
     }
+    suggestion?.let { current ->
+        SuggestionDialog(
+            suggestion = current,
+            providerName = providerName,
+            generatePrice = imagePrice,
+            canGenerate = model.ready && block == null && !translating && (!upscale.enabled || upscale.selectedReady),
+            onDismiss = studio::dismissSuggestion,
+        ) { text, generate ->
+            prompt = text
+            studio.dismissSuggestion()
+            if (generate) {
+                val (w, h) = SIZES[size]
+                creditGate(CreditKind.IMAGE) { studio.generate(text, w, h, steps, safe, translating, app.account) }
+            }
+        }
+    }
+    if (needsConsent) {
+        AlertDialog(
+            onDismissRequest = { studio.resolveConsent(false) },
+            icon = { Icon(Icons.Rounded.VerifiedUser, contentDescription = null) },
+            title = { Text(stringResource(R.string.anime_review_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.anime_review_body))
+                    Text(stringResource(R.string.anime_review_privacy), style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = { Button(onClick = { studio.resolveConsent(true) }) { Text(stringResource(R.string.anime_review_allow)) } },
+            dismissButton = { TextButton(onClick = { studio.resolveConsent(false) }) { Text(stringResource(R.string.anime_review_decline)) } },
+        )
+    }
     if (confirmDeleteModel) {
         AlertDialog(
             onDismissRequest = { confirmDeleteModel = false },
@@ -269,20 +366,23 @@ private fun Notice(icon: ImageVector, text: String) {
     }
 }
 
+/**
+ * The Anima download card (iPad `AnimeStudioScreen` model section): the
+ * diffusion model, text encoder and VAE each with size, file name, status and
+ * their own download button; then the total, "Download all" and delete.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ModelCard(
-    name: String,
-    size: String,
-    ready: Boolean,
-    downloading: Boolean,
-    done: Long,
-    total: Long,
-    onDownload: () -> Unit,
+    config: AnimaConfig,
+    state: AnimaModelState,
+    onDownload: (String?) -> Unit,
     onCancel: () -> Unit,
     onDelete: () -> Unit,
     sizeText: (Long) -> String,
 ) {
+    val total = config.components.sumOf { it.file.bytes.toLong() }
+    val missing = config.components.filter { state.parts[it.role] != true }.sumOf { it.file.bytes.toLong() }
     Card(
         shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -294,36 +394,88 @@ private fun ModelCard(
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(stringResource(R.string.anime_model_files, size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(config.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(R.string.anime_model_files, sizeText(total)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                if (ready) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                if (state.ready) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            }
+            config.components.forEach { component ->
+                ComponentRow(
+                    title = stringResource(
+                        when (component.role) {
+                            "diffusion" -> R.string.anime_part_diffusion
+                            "textEncoder" -> R.string.anime_part_text_encoder
+                            else -> R.string.anime_part_vae
+                        },
+                    ),
+                    file = component.file.path,
+                    size = sizeText(component.file.bytes.toLong()),
+                    ready = state.parts[component.role] == true,
+                    active = state.active == component.role,
+                    busy = state.downloading,
+                    done = state.done,
+                    total = state.total,
+                    sizeText = sizeText,
+                    onDownload = { onDownload(component.role) },
+                    onCancel = onCancel,
+                )
+            }
+            HorizontalDivider()
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.anime_total_download), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                Text(sizeText(total), style = MaterialTheme.typography.titleSmall)
             }
             when {
-                downloading -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                stringResource(R.string.anime_downloading, sizeText(done), sizeText(total)),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            LinearWavyProgressIndicator(progress = { if (total > 0) done.toFloat() / total else 0f }, modifier = Modifier.fillMaxWidth())
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        FilledTonalIconButton(onClick = onCancel) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel)) }
-                    }
-                }
-                ready -> TextButton(onClick = onDelete) {
+                state.ready -> TextButton(onClick = onDelete, enabled = !state.downloading) {
                     Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.anime_delete_model))
+                    Text(stringResource(R.string.anime_delete_models))
                 }
-                else -> FilledTonalButton(onClick = onDownload, modifier = Modifier.fillMaxWidth()) {
+                else -> FilledTonalButton(onClick = { onDownload(null) }, enabled = !state.downloading, modifier = Modifier.fillMaxWidth()) {
                     Icon(Icons.Rounded.Download, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.anime_download_model, size))
+                    Text(stringResource(R.string.anime_download_all, sizeText(missing)))
                 }
             }
+            Text(stringResource(R.string.anime_sha_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** One Anima file: name, size, and its download/progress/ready state. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ComponentRow(
+    title: String,
+    file: String,
+    size: String,
+    ready: Boolean,
+    active: Boolean,
+    busy: Boolean,
+    done: Long,
+    total: Long,
+    sizeText: (Long) -> String,
+    onDownload: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text("$size · $file", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Spacer(Modifier.width(8.dp))
+            when {
+                ready -> Icon(Icons.Rounded.CheckCircle, contentDescription = stringResource(R.string.anime_part_ready), tint = MaterialTheme.colorScheme.primary)
+                active -> FilledTonalIconButton(onClick = onCancel) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel)) }
+                else -> FilledTonalIconButton(onClick = onDownload, enabled = !busy) {
+                    Icon(Icons.Rounded.Download, contentDescription = stringResource(R.string.anime_download_part, title))
+                }
+            }
+        }
+        if (active) {
+            Text(stringResource(R.string.anime_downloading, sizeText(done), sizeText(total)), style = MaterialTheme.typography.bodySmall)
+            LinearWavyProgressIndicator(progress = { if (total > 0) done.toFloat() / total else 0f }, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -381,6 +533,125 @@ private fun ImageViewer(
                     Spacer(Modifier.height(4.dp))
                     FilledTonalButton(onClick = onReuse) { Text(stringResource(R.string.anime_reuse_prompt)) }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AssistLabel(icon: ImageVector, title: String, price: String) {
+    Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+    Spacer(Modifier.width(6.dp))
+    Column {
+        Text(title, style = MaterialTheme.typography.labelLarge, maxLines = 2)
+        Text(price, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+/**
+ * Review of a provider-written prompt (iPad `AnimePromptReview`): editable;
+ * the user's own prompt stays unchanged until "Use prompt".
+ */
+@Composable
+private fun SuggestionDialog(
+    suggestion: PromptSuggestion,
+    providerName: String,
+    generatePrice: String,
+    canGenerate: Boolean,
+    onDismiss: () -> Unit,
+    onApply: (String, Boolean) -> Unit,
+) {
+    var draft by rememberSaveable(suggestion) { mutableStateOf(suggestion.prompt) }
+    val valid = draft.isNotBlank() && draft.length <= 4096
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.anime_suggestion_title)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(stringResource(R.string.anime_suggestion_provider, providerName), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                if (suggestion.character.isNotBlank()) Text(suggestion.character, style = MaterialTheme.typography.titleMedium)
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { if (it.length <= 4096) draft = it },
+                    label = { Text(stringResource(R.string.anime_suggestion_label)) },
+                    minLines = 6,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(stringResource(R.string.anime_suggestion_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Button(onClick = { onApply(draft.trim(), true) }, enabled = valid && canGenerate, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.anime_suggestion_generate, generatePrice))
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { onApply(draft.trim(), false) }, enabled = valid) { Text(stringResource(R.string.anime_suggestion_use)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
+}
+
+/**
+ * Upscale on/off and the RealESRGAN choice (iPad Anime Studio upscaler
+ * section). Off keeps the generated size; on needs the selected model.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun UpscaleSection(studio: AnimeStudioModel, state: UpscaleState, size: Pair<Int, Int>, enabled: Boolean, sizeText: (Long) -> String) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.anime_upscale), style = MaterialTheme.typography.labelLarge)
+                val factor = if (state.enabled) 4 else 1
+                Text(
+                    stringResource(R.string.anime_upscale_output, size.first * factor, size.second * factor),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(checked = state.enabled, onCheckedChange = studio::setUpscale, enabled = enabled)
+        }
+        if (!state.enabled) return@Column
+        Text(stringResource(R.string.anime_upscale_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        studio.upscalers.forEach { upscaler ->
+            val selected = state.selected == upscaler.id
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable(enabled = enabled) { studio.selectUpscaler(upscaler.id) }.padding(vertical = 4.dp),
+            ) {
+                RadioButton(selected = selected, onClick = { studio.selectUpscaler(upscaler.id) }, enabled = enabled)
+                Column(Modifier.weight(1f)) {
+                    Text(upscaler.name, style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        sizeText(upscaler.file.bytes.toLong()) + " · " + stringResource(if (upscaler.id == "anime4") R.string.anime_upscaler_anime else R.string.anime_upscaler_general),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (state.ready[upscaler.id] == true) Icon(Icons.Rounded.CheckCircle, contentDescription = stringResource(R.string.anime_part_ready), tint = MaterialTheme.colorScheme.primary)
+            }
+        }
+        val chosen = studio.upscalers.first { it.id == state.selected }
+        when {
+            state.downloading != null -> Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(stringResource(R.string.anime_downloading, sizeText(state.done), sizeText(state.total)), style = MaterialTheme.typography.bodySmall)
+                    LinearWavyProgressIndicator(progress = { if (state.total > 0) state.done.toFloat() / state.total else 0f }, modifier = Modifier.fillMaxWidth())
+                }
+                Spacer(Modifier.width(8.dp))
+                FilledTonalIconButton(onClick = studio::cancelDownload) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel)) }
+            }
+            !state.selectedReady -> {
+                Text(stringResource(R.string.anime_upscaler_missing), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                FilledTonalButton(onClick = studio::downloadUpscaler, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Rounded.Download, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.anime_upscaler_download, sizeText(chosen.file.bytes.toLong())))
+                }
+            }
+            else -> TextButton(onClick = studio::deleteUpscalers, enabled = enabled) {
+                Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.anime_upscaler_delete))
             }
         }
     }

@@ -1,5 +1,14 @@
 package com.kurubyinteractive.aimanga.ui
 
+import androidx.compose.ui.platform.LocalContext
+import android.text.format.Formatter
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.automirrored.rounded.ViewList
+import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.ui.draw.clip
+import com.kurubyinteractive.aimanga.data.seriesName
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -84,12 +93,14 @@ private fun PosterCard(
     placeholder: ImageVector? = null,
     progress: Float? = null,
     overlay: @Composable (Modifier) -> Unit = {},
+    selected: Boolean? = null,
 ) {
     Card(
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        border = if (selected == true) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
+        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick.takeIf { selected == null }),
     ) {
         Box(Modifier.fillMaxWidth().aspectRatio(0.68f).background(MaterialTheme.colorScheme.surfaceContainerHighest)) {
             if (cover != null) {
@@ -102,15 +113,74 @@ private fun PosterCard(
             }
             // Scrim keeps the title readable over any cover.
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.78f))))
-            badge(Modifier.align(Alignment.TopEnd).padding(10.dp))
+            if (selected != null) SelectionMark(selected, Modifier.align(Alignment.TopEnd).padding(10.dp), onImage = true)
+            else badge(Modifier.align(Alignment.TopEnd).padding(10.dp))
             overlay(Modifier.align(Alignment.Center))
             Column(Modifier.align(Alignment.BottomStart).padding(14.dp)) {
                 Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f), maxLines = 1)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f), maxLines = 2)
             }
         }
         if (progress != null) LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
     }
+}
+
+/**
+ * List layout (iPad `LibraryChapterRow` / `SeriesRow` / `ProjectRow`): a small
+ * cover, the full title and info lines, with an optional progress bar.
+ */
+@Composable
+private fun PosterRow(
+    cover: File?,
+    title: String,
+    lines: List<Pair<String, Boolean>>,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)?,
+    placeholder: ImageVector? = null,
+    progress: Float? = null,
+    trailing: @Composable () -> Unit = {},
+    selected: Boolean? = null,
+) {
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = if (selected == true) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
+        modifier = Modifier.fillMaxWidth().combinedClickable(onClick = onClick, onLongClick = onLongClick.takeIf { selected == null }),
+    ) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(width = 60.dp, height = 88.dp).clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            ) {
+                if (cover != null) AsyncImage(model = cover, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                else if (placeholder != null) Icon(placeholder, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.align(Alignment.Center).size(32.dp))
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                lines.forEach { (text, accent) ->
+                    Text(
+                        text,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (progress != null) LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+            }
+            if (selected != null) SelectionMark(selected, Modifier) else trailing()
+        }
+    }
+}
+
+/** Selection-mode check: filled when chosen, an empty circle otherwise. */
+@Composable
+private fun SelectionMark(selected: Boolean, modifier: Modifier, onImage: Boolean = false) {
+    Icon(
+        if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
+        contentDescription = null,
+        tint = if (selected) MaterialTheme.colorScheme.primary else if (onImage) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.size(28.dp).background(if (onImage) Color.Black.copy(alpha = 0.35f) else Color.Transparent, CircleShape),
+    )
 }
 
 @Composable
@@ -138,6 +208,11 @@ fun ChapterCard(
     running: Boolean,
     onOpen: () -> Unit,
     onOpenSource: (String) -> Unit,
+    list: Boolean = false,
+    /** In flat lists, also name the manga or project the chapter belongs to. */
+    showsOrigin: Boolean = false,
+    /** Selection mode: null when off, otherwise whether this chapter is chosen; taps then toggle via [onOpen]. */
+    selected: Boolean? = null,
 ) {
     var menu by remember { mutableStateOf(false) }
     var moving by remember { mutableStateOf(false) }
@@ -147,16 +222,45 @@ fun ChapterCard(
     var deleting by remember { mutableStateOf(false) }
     val total = chapter.pages.size
     val done = chapter.translatedPages
+    val projects by model.library.projects.collectAsStateWithLifecycle()
+    val sizes by model.chapterSizes.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val size = sizes[chapter.id]?.let { " · " + Formatter.formatShortFileSize(context, it) }.orEmpty()
     Box {
-        PosterCard(
+        if (list) {
+            val origin = when {
+                !showsOrigin -> null
+                chapter.isImported -> projects.firstOrNull { it.id == chapter.projectId }
+                    ?.let { stringResource(R.string.imported_in, it.name) } ?: stringResource(R.string.imported)
+                else -> chapter.seriesName
+            }
+            val language = chapter.target?.let { java.util.Locale.forLanguageTag(it).getDisplayName(java.util.Locale.getDefault()) }
+            PosterRow(
+                cover = model.cover(chapter),
+                title = chapter.title,
+                lines = listOfNotNull(
+                    origin?.let { it to !chapter.isImported },
+                    (pluralStringResource(R.plurals.chapter_progress, total, total, done) + size + (language?.let { " · $it" } ?: "")) to false,
+                ),
+                onClick = onOpen,
+                onLongClick = { menu = true },
+                progress = if (total > 0) done.toFloat() / total else null,
+                trailing = {
+                    if (running) LoadingIndicator(Modifier.size(40.dp))
+                    else if (total > 0 && done == total) Icon(Icons.Rounded.CheckCircle, contentDescription = stringResource(R.string.translated), tint = MaterialTheme.colorScheme.primary)
+                },
+                selected = selected,
+            )
+        } else PosterCard(
             cover = model.cover(chapter),
             title = chapter.title,
-            subtitle = pluralStringResource(R.plurals.chapter_progress, total, total, done),
+            subtitle = pluralStringResource(R.plurals.chapter_progress, total, total, done) + size,
             onClick = onOpen,
             onLongClick = { menu = true },
             badge = { if (total > 0 && done == total) Pill(Icons.Rounded.CheckCircle, stringResource(R.string.translated), it) },
             progress = if (total > 0 && done in 1 until total) done.toFloat() / total else null,
             overlay = { if (running) LoadingIndicator(it.size(64.dp)) },
+            selected = selected,
         )
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             chapter.source?.let { source ->
@@ -168,7 +272,7 @@ fun ChapterCard(
             }
             if (run == null && total > 0) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(if (done > 0) R.string.retranslate_chapter else R.string.translate)) },
+                    text = { CostText(stringResource(if (done > 0) R.string.retranslate_chapter else R.string.translate), creditCostLabel(model, if (done > 0) CreditKind.RERUN else CreditKind.TRANSLATE)) },
                     leadingIcon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
                     onClick = {
                         menu = false
@@ -178,7 +282,7 @@ fun ChapterCard(
                 )
                 if (enabledProviders.any { it.provider == Provider.BACKEND }) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.enhanced_translation)) },
+                        text = { CostText(stringResource(R.string.enhanced_translation), creditCostLabel(model, CreditKind.ENHANCED)) },
                         leadingIcon = { Icon(Icons.Rounded.AutoAwesome, contentDescription = null) },
                         onClick = { menu = false; creditGate(CreditKind.ENHANCED) { model.translate(chapter, enhanced = true) } },
                     )
@@ -215,17 +319,35 @@ fun ChapterCard(
     }
 }
 
-/** A Rawkuma manga or a project in the "By manga" library. */
+/** A Rawkuma manga or a project in the "By manga" library; [detail] is the series address or project note. */
 @Composable
-fun ShelfCard(cover: File?, name: String, chapters: Int, project: Boolean, onClick: () -> Unit) {
+fun ShelfCard(cover: File?, name: String, chapters: Int, project: Boolean, onClick: () -> Unit, list: Boolean = false, pages: Int = 0, detail: String? = null, selected: Boolean? = null, bytes: Long? = null) {
+    val size = bytes?.let { " · " + Formatter.formatShortFileSize(LocalContext.current, it) }.orEmpty()
+    if (list) {
+        PosterRow(
+            cover = cover,
+            title = name,
+            lines = listOfNotNull(
+                (pluralStringResource(R.plurals.shelf_chapters, chapters, chapters) + " · " + pluralStringResource(R.plurals.rawkuma_pages, pages, pages) + size) to false,
+                detail?.takeIf { it.isNotBlank() }?.let { it to false },
+            ),
+            onClick = onClick,
+            onLongClick = null,
+            placeholder = if (project) Icons.Rounded.Folder else Icons.Rounded.Language,
+            trailing = { Icon(if (project) Icons.Rounded.Folder else Icons.Rounded.Language, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            selected = selected,
+        )
+        return
+    }
     PosterCard(
         cover = cover,
         title = name,
-        subtitle = pluralStringResource(R.plurals.shelf_chapters, chapters, chapters),
+        subtitle = pluralStringResource(R.plurals.shelf_chapters, chapters, chapters) + size,
         onClick = onClick,
         onLongClick = null,
         badge = { Pill(if (project) Icons.Rounded.Folder else Icons.Rounded.Language, null, it) },
         placeholder = Icons.Rounded.Folder,
+        selected = selected,
     )
 }
 
@@ -273,6 +395,34 @@ fun ProjectDialog(project: Project?, onDismiss: () -> Unit, onSave: (String, Str
             }
         },
         confirmButton = { Button(enabled = name.isNotBlank(), onClick = { onSave(name, note); onDismiss() }) { Text(stringResource(R.string.save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
+}
+
+/** Switches chapter and manga lists between cover grid and rows; the choice is saved. */
+@Composable
+fun LayoutToggle(model: AppViewModel) {
+    val prefs by model.prefs.collectAsStateWithLifecycle()
+    IconButton(onClick = { model.update { it.copy(listLayout = !it.listLayout) } }) {
+        if (prefs.listLayout) Icon(Icons.Rounded.GridView, contentDescription = stringResource(R.string.layout_grid))
+        else Icon(Icons.AutoMirrored.Rounded.ViewList, contentDescription = stringResource(R.string.layout_list))
+    }
+}
+
+/** Confirmation for deleting chapters, manga or projects; the action cannot be undone. */
+@Composable
+fun DeleteDialog(title: String, body: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Rounded.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+        title = { Text(title) },
+        text = { Text(body) },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
+            ) { Text(stringResource(R.string.delete)) }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }

@@ -282,6 +282,45 @@ pub struct AnimaPaths {
     pub vae: String,
 }
 
+/// Optional ×4 upscalers after Anima (iPad `AnimeUpscaler`): only RGB RRDB
+/// models the pinned runtime supports, each with an immutable download.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct AnimeUpscaler {
+    /// `anime4` or `general4`.
+    pub id: String,
+    pub name: String,
+    pub scale: u32,
+    pub file: AnimaFile,
+}
+
+#[uniffi::export]
+pub fn anime_upscalers() -> Vec<AnimeUpscaler> {
+    vec![
+        AnimeUpscaler {
+            id: "anime4".into(),
+            name: "RealESRGAN anime 6B · 4×".into(),
+            scale: 4,
+            file: AnimaFile {
+                path: "RealESRGAN_x4plus_anime_6B.pth".into(),
+                url: "https://huggingface.co/amd/realesrgan-x4plus-anime-6b/resolve/b14ff5f8ecb5a4b56ce4049a58d0bca1f8814690/RealESRGAN_x4plus_anime_6B.pth".into(),
+                bytes: 17_938_799,
+                sha256: "f872d837d3c90ed2e05227bed711af5671a6fd1c9f7d7e91c911a61f155e99da".into(),
+            },
+        },
+        AnimeUpscaler {
+            id: "general4".into(),
+            name: "RealESRGAN x4plus · 4×".into(),
+            scale: 4,
+            file: AnimaFile {
+                path: "RealESRGAN_x4plus.pth".into(),
+                url: "https://huggingface.co/lllyasviel/Annotators/resolve/982e7edaec38759d914a963c48c4726685de7d96/RealESRGAN_x4plus.pth".into(),
+                bytes: 67_040_989,
+                sha256: "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1".into(),
+            },
+        },
+    ]
+}
+
 #[uniffi::export]
 pub fn anima_available() -> bool {
     cfg!(anima_native)
@@ -299,6 +338,10 @@ mod native {
             job: *mut c_void, diffusion: *const c_char, text: *const c_char, vae: *const c_char,
             prompt: *const c_char, width: c_int, height: c_int, steps: c_int, seed: i64, threads: c_int,
             output: *mut u8, error: *mut c_char, capacity: usize,
+        ) -> c_int;
+        pub fn koharu_anima_upscale(
+            job: *mut c_void, model: *const c_char, rgb: *const u8, width: c_int, height: c_int, scale: c_int,
+            threads: c_int, output: *mut u8, output_capacity: usize, error: *mut c_char, capacity: usize,
         ) -> c_int;
     }
 }
@@ -345,6 +388,36 @@ impl AnimaJob {
         }
         #[cfg(not(anima_native))]
         AnimaProgress { phase: 0, step: 0, steps: 0 }
+    }
+
+    /// Blocking. Upscales `width × height × 3` RGB with a RealESRGAN model;
+    /// returns `(width·scale) × (height·scale) × 3` RGB bytes.
+    pub fn upscale(&self, model: String, rgb: Vec<u8>, width: u32, height: u32, scale: u32, threads: u32) -> Result<Vec<u8>, AnimeError> {
+        if scale != 4 || width == 0 || height == 0 || width > 1024 || height > 1280 || rgb.len() != (width * height * 3) as usize {
+            return Err(AnimeError::InvalidSettings);
+        }
+        #[cfg(anima_native)]
+        {
+            let model = std::ffi::CString::new(model).map_err(|_| AnimeError::InvalidSettings)?;
+            let mut output = vec![0u8; (width * scale * height * scale * 3) as usize];
+            let mut error = vec![0 as std::ffi::c_char; 8192];
+            let ok = unsafe {
+                native::koharu_anima_upscale(
+                    self.pointer, model.as_ptr(), rgb.as_ptr(), width as i32, height as i32, scale as i32, threads as i32,
+                    output.as_mut_ptr(), output.len(), error.as_mut_ptr(), error.len(),
+                )
+            };
+            if ok != 0 {
+                return Ok(output);
+            }
+            let detail = unsafe { std::ffi::CStr::from_ptr(error.as_ptr()) }.to_string_lossy().into_owned();
+            if detail.is_empty() { Err(AnimeError::Cancelled) } else { Err(AnimeError::Native { detail }) }
+        }
+        #[cfg(not(anima_native))]
+        {
+            let _ = (model, threads);
+            Err(AnimeError::Unavailable)
+        }
     }
 
     /// Blocking. Returns `width × height × 3` RGB bytes.

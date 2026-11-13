@@ -18,5 +18,6 @@ fn main() {
         .compile("koharu_anima");
     println!("cargo::rustc-link-search=native={dir}/lib");
     println!("cargo::rustc-link-lib=dylib=stable-diffusion");
+    println!("cargo::rustc-link-lib=dylib=log");
     println!("cargo::rustc-cfg=anima_native");
 }

@@ -1,5 +1,9 @@
 package com.kurubyinteractive.aimanga.ui
 
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
+import com.kurubyinteractive.aimanga.data.DailyReminder
+import androidx.compose.material.icons.rounded.Redeem
 import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.LaunchedEffect
@@ -88,6 +92,7 @@ import com.kurubyinteractive.aimanga.AppViewModel
 import com.kurubyinteractive.aimanga.BuildConfig
 import com.kurubyinteractive.aimanga.ModelState
 import com.kurubyinteractive.aimanga.R
+import com.kurubyinteractive.aimanga.data.SubscriptionStore
 import com.kurubyinteractive.aimanga.data.ConfigStatus
 import com.kurubyinteractive.aimanga.data.AppLanguage
 import com.kurubyinteractive.aimanga.data.ReadingMode
@@ -99,6 +104,10 @@ import uniffi.koharu_core.targetLanguages
 @Composable
 fun SettingsScreen(model: AppViewModel, onBack: (() -> Unit)?) {
     val context = LocalContext.current
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
+    var dailyOpen by remember { mutableStateOf(false) }
+    var reminder by remember { mutableStateOf(DailyReminder.enabled(context)) }
+    if (dailyOpen) DailyRewardScreen(model) { dailyOpen = false }
     val prefs by model.prefs.collectAsStateWithLifecycle()
     val key by model.apiKey.collectAsStateWithLifecycle()
     val models by model.models.collectAsStateWithLifecycle()
@@ -135,6 +144,9 @@ fun SettingsScreen(model: AppViewModel, onBack: (() -> Unit)?) {
                 .fillMaxSize()
                 .padding(padding)
                 .imePadding()
+                // On tablets the settings form keeps a readable width, centered.
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = 840.dp)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .navigationBarsPadding(),
@@ -168,10 +180,31 @@ fun SettingsScreen(model: AppViewModel, onBack: (() -> Unit)?) {
                                 ),
                             )
                             Detail(stringResource(R.string.account_cost), stringResource(R.string.account_cost_value, backendTranslateCost(credits)))
-                            if (credits.canClaimDaily) {
-                                Button(onClick = model::claimDaily, shapes = ButtonDefaults.shapes(), modifier = Modifier.fillMaxWidth()) {
-                                    Text(stringResource(R.string.account_claim_daily))
+                            Button(onClick = { dailyOpen = true }, shapes = ButtonDefaults.shapes(), modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Rounded.Redeem, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(if (credits.canClaimDaily || credits.dailyVideoAvailable) R.string.daily_open_ready else R.string.daily_title))
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.reminder_setting), style = MaterialTheme.typography.bodyLarge)
+                                    Text(
+                                        stringResource(R.string.reminder_setting_hint, DailyReminder.localResetTime()),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
                                 }
+                                Switch(checked = reminder, onCheckedChange = { reminder = it; DailyReminder.setEnabled(context, it) })
+                            }
+                        }
+                        if (account.credits?.accountType == "premium") {
+                            OutlinedButton(
+                                onClick = { uri.openUri("https://play.google.com/store/account/subscriptions?sku=${SubscriptionStore.PRODUCT_ID}&package=${context.packageName}") },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) { Text(stringResource(R.string.sub_manage)) }
+                        } else if (account.credits != null) {
+                            Button(onClick = model.subscriptions::showOffer, shapes = ButtonDefaults.shapes(), modifier = Modifier.fillMaxWidth()) {
+                                Text(stringResource(R.string.sub_view))
                             }
                         }
                         if (account.offline) StatusLine(Icons.Rounded.ErrorOutline, stringResource(R.string.account_offline), error = true)
@@ -314,7 +347,7 @@ fun SettingsScreen(model: AppViewModel, onBack: (() -> Unit)?) {
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Text(stringResource(R.string.reading_mode), style = MaterialTheme.typography.labelLarge)
-                val readings = listOf(ReadingMode.HORIZONTAL to R.string.reading_horizontal, ReadingMode.VERTICAL to R.string.reading_vertical)
+                val readings = listOf(ReadingMode.VERTICAL to R.string.reading_vertical, ReadingMode.HORIZONTAL to R.string.reading_horizontal)
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     readings.forEachIndexed { index, (mode, label) ->
                         SegmentedButton(

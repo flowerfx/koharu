@@ -69,6 +69,18 @@ pub struct CreditStatus {
     pub cost_backend_surcharge: i64,
     /// Price of translating a saved chapter again through Backend API.
     pub cost_rerun_backend: i64,
+    pub cost_image_free: i64,
+    pub cost_image_premium: i64,
+    pub cost_enhance_free: i64,
+    pub cost_enhance_premium: i64,
+    pub cost_gen_prompt: i64,
+    /// Daily reward multiplier when the daily video is watched (×2).
+    pub reward_video_multiplier: f64,
+    /// Whether today's daily video bonus can still be earned, and how many credits it adds.
+    pub daily_video_available: bool,
+    pub daily_video_bonus: i64,
+    /// Unused video passes by operation fingerprint `action:provider:rerun`.
+    pub video_access: std::collections::HashMap<String, i64>,
 }
 
 impl CreditStatus {
@@ -85,6 +97,19 @@ pub fn backend_translate_cost(status: CreditStatus) -> i64 {
 }
 
 /// Enhanced translation runs Backend API twice: translate, then review (iPad `CreditConfiguration.cost`).
+/// Credits of one Anime Studio action, mirroring `profile_reserve` pricing:
+/// `image`, `enhance` (plus the backend surcharge with Backend API) or `generatePrompt`.
+#[uniffi::export]
+pub fn anime_action_cost(status: CreditStatus, action: String, backend: bool) -> i64 {
+    let premium = status.account_type == "premium";
+    match action.as_str() {
+        "image" => if premium { status.cost_image_premium } else { status.cost_image_free },
+        "enhance" => (if premium { status.cost_enhance_premium } else { status.cost_enhance_free })
+            + if backend { status.cost_backend_surcharge } else { 0 },
+        _ => status.cost_gen_prompt,
+    }
+}
+
 #[uniffi::export]
 pub fn backend_enhanced_cost(status: CreditStatus) -> i64 {
     2 * status.translate_cost()
@@ -191,6 +216,63 @@ impl BackendClient {
 
     pub async fn claim_daily(&self) -> Result<CreditStatus> {
         self.profile("profile_daily", json!({"operation_id": uuid()})).await
+    }
+
+    /// Prompt review (`content_moderate`): false when the text is restricted.
+    /// Any other answer than the expected policy is treated as unavailable.
+    pub async fn moderate(&self, text: String) -> Result<bool> {
+        if text.trim().is_empty() || text.chars().count() > 24_000 {
+            return Err(BackendError::TooLarge);
+        }
+        let response = self.rpc("content_moderate", &json!({"text": text})).await?;
+        let verdict: Value = serde_json::from_str(&response).map_err(|_| BackendError::InvalidResponse)?;
+        if verdict["policy"] != "sexual-prompt-v1" {
+            return Err(BackendError::InvalidResponse);
+        }
+        verdict["allowed"].as_bool().ok_or(BackendError::InvalidResponse)
+    }
+
+    /// Reserves the credits of one `image`, `enhance` or `generatePrompt`
+    /// action for [provider] (profile policy id such as `local`, `backend`,
+    /// `openAI`). Returns null when the action is free for this account.
+    pub async fn reserve(&self, action: String, provider: String) -> Result<Option<String>> {
+        if !["image", "enhance", "generatePrompt"].contains(&action.as_str()) {
+            return Err(BackendError::TooLarge);
+        }
+        let value = self
+            .profile_value("profile_reserve", json!({"operation_id": uuid(), "action": action, "provider": provider, "rerun": false}))
+            .await?;
+        Ok(value["reservation_id"].as_str().map(str::to_owned))
+    }
+
+    /// Starts a rewarded-video ticket (iPad `startVideo`): `daily` for the ×2
+    /// daily bonus, or `action` for one pass of `action:provider:rerun`.
+    pub async fn start_video(&self, purpose: String, action: String, provider: String, rerun: bool) -> Result<String> {
+        let value = self
+            .profile_value("profile_video_start", json!({"purpose": purpose, "action": action, "provider": provider, "rerun": rerun}))
+            .await?;
+        value["video_id"].as_str().map(str::to_owned).ok_or(BackendError::InvalidResponse)
+    }
+
+    /// Records the reward after the ad SDK reported it earned.
+    pub async fn complete_video(&self, video_id: String) -> Result<CreditStatus> {
+        self.profile("profile_video_complete", json!({"operation_id": video_id})).await
+    }
+
+    /// Settles a client-owned reservation: failure refunds it.
+    pub async fn settle(&self, reservation: String, success: bool) -> Result<CreditStatus> {
+        self.profile("profile_settle", json!({"operation_id": reservation, "success": success})).await
+    }
+
+    /// Settles a Backend API (server-owned) reservation.
+    pub async fn finish_backend(&self, reservation: String) {
+        self.finish(&reservation).await
+    }
+
+    /// Sends a Play Billing purchase (`Purchase.originalJson`) to Nakama, which
+    /// reads it from Google Play and binds it to this account before Premium.
+    pub async fn validate_google_subscription(&self, purchase_json: String) -> Result<CreditStatus> {
+        self.profile("profile_subscription_google", json!({"receipt": purchase_json})).await
     }
 }
 
@@ -299,6 +381,11 @@ impl BackendClient {
         let _ = self.rpc("ai_finish", &json!({"reservation_id": reservation.to_lowercase()})).await;
     }
 
+    /// Prompt tasks (`enhance`, `generatePrompt`) return `{prompt, character}`.
+    pub(crate) async fn generate_task(&self, reservation: &str, task: &str, system: &str, user: &str) -> Result<Value> {
+        self.submit(reservation, task, system, user, None, None).await
+    }
+
     /// Submits one structured-output job and polls it (iPad `BackendAI.generate`).
     /// With `review_system`, the server translates and then reviews the draft
     /// against the source (`translateEnhanced`).
@@ -316,11 +403,29 @@ impl BackendClient {
         {
             return Err(BackendError::TooLarge);
         }
+        let task = if review_system.is_some() { "translateEnhanced" } else { "translate" };
+        self.submit(reservation, task, system, user, Some(count), review_system).await
+    }
+
+    async fn submit(
+        &self,
+        reservation: &str,
+        task: &str,
+        system: &str,
+        user: &str,
+        count: Option<usize>,
+        review_system: Option<&str>,
+    ) -> Result<Value> {
+        if system.is_empty() || user.is_empty() || system.encode_utf16().count() > 8192 {
+            return Err(BackendError::TooLarge);
+        }
         let request_id = uuid();
         let reservation = reservation.to_lowercase();
-        let task = if review_system.is_some() { "translateEnhanced" } else { "translate" };
         let mut payload = json!({"request_id": request_id, "reservation_id": reservation, "task": task,
-                                 "system": system, "user": user, "count": count});
+                                 "system": system, "user": user});
+        if let Some(count) = count {
+            payload["count"] = json!(count);
+        }
         if let Some(review) = review_system {
             payload["review_system"] = json!(review);
         }
@@ -380,6 +485,15 @@ fn status(value: &Value) -> Result<CreditStatus> {
         cost_translate_premium: int(&policy["cost_translate_premium"])?,
         cost_backend_surcharge: int(&policy["cost_backend_surcharge"])?,
         cost_rerun_backend: int(&policy["cost_rerun_backend"])?,
+        cost_image_free: int(&policy["cost_image_free"])?,
+        cost_image_premium: int(&policy["cost_image_premium"])?,
+        cost_enhance_free: int(&policy["cost_enhance_free"])?,
+        cost_enhance_premium: int(&policy["cost_enhance_premium"])?,
+        cost_gen_prompt: int(&policy["cost_gen_prompt"])?,
+        reward_video_multiplier: policy["reward_video_multiplier"].as_f64().ok_or(BackendError::InvalidResponse)?,
+        daily_video_available: value["daily_video_available"].as_bool().unwrap_or(false),
+        daily_video_bonus: value["daily_video_bonus"].as_i64().unwrap_or(0),
+        video_access: value["video_access"].as_object().map(|m| m.iter().filter_map(|(k, v)| Some((k.clone(), v.as_i64()?))).collect()).unwrap_or_default(),
     })
 }
 
@@ -412,7 +526,9 @@ mod tests {
     fn credit_status_parses_profile_response() {
         let value = json!({"profile": {"credit": 7, "account_type": "free"}, "can_claim_daily": true,
             "policy": {"daily_free_user": 10, "daily_premium_user": 100, "cost_translate_free": 1,
-                       "cost_translate_premium": 0, "cost_backend_surcharge": 1, "cost_rerun_backend": 1}});
+                       "cost_translate_premium": 0, "cost_backend_surcharge": 1, "cost_rerun_backend": 1,
+                       "cost_image_free": 3, "cost_image_premium": 0, "cost_enhance_free": 1, "cost_enhance_premium": 0, "cost_gen_prompt": 1,
+                       "reward_video_multiplier": 2}});
         let status = status(&value).unwrap();
         assert_eq!(status.translate_cost(), 2);
         assert!(status.can_claim_daily);
