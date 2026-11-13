@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hosted providers are HTTPS. Cleartext is allowed only so an LM Studio
+     server on the user's own network (http://192.168.x.x:1234) can be reached. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

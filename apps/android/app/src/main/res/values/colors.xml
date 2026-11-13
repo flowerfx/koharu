@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Background pink of the app icon artwork. -->
+    <color name="brand_pink">#FF47B4</color>
+    <color name="window_light">#FFFFF8F9</color>
+    <color name="window_dark">#FF191113</color>
+</resources>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "160035722399",
+    "project_id": "kuruby-aimanga-production",
+    "storage_bucket": "kuruby-aimanga-production.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:160035722399:android:7a55a912e05b591208feaa",
+        "android_client_info": {
+          "package_name": "com.kurubyInteractive.aimanga"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJgdbyzhpP-B9afnXSeD9zOIzI46jQm9k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

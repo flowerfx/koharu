@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The iOS app icon artwork. An 80dp square covers the launcher mask
+     (at most 72dp of the 108dp layer is visible), so the whole art shows. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/app_icon_art"
+    android:inset="14dp" />
