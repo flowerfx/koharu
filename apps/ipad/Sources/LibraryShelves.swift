@@ -139,13 +139,24 @@ extension MangaLibrary {
         do { try disk.save(updated, to: disk.projectsURL); projects = updated; return value }
         catch { self.error = error.localizedDescription; return nil }
     }
-    /// Deleting a project keeps its chapters; they return to the loose imports.
-    func deleteProject(_ id: UUID) {
+    /// Deleting a project either deletes its chapters too, or keeps them as loose imports.
+    func deleteProject(_ id: UUID, deletingChapters: Bool = false) {
+        guard !busy else { return }
+        if deletingChapters { delete(chapters.filter { $0.isImported && $0.projectID == id }.map(\.id)) }
         let updated = projects.filter { $0.id != id }
         do {
             for chapter in chapters where chapter.projectID == id { var value = chapter; value.projectID = nil; try update(value, recordUndo: false) }
             try disk.save(updated, to: disk.projectsURL); projects = updated
         } catch { self.error = error.localizedDescription }
+    }
+    /// Deletes every chapter of a Rawkuma series or a project; the project itself stays.
+    func deleteChapters(in kind: ShelfScreen.Kind) {
+        delete(chapters.filter { chapter in
+            switch kind {
+            case .series(let url, _): return chapter.seriesURL == url
+            case .project(let id): return chapter.isImported && chapter.projectID == id
+            }
+        }.map(\.id))
     }
     /// Only imported chapters belong to projects; Rawkuma chapters group by series.
     func move(_ chapterID: UUID, to project: UUID?) {

@@ -45,6 +45,30 @@ final class LibraryShelfTests: XCTestCase {
         XCTAssertEqual(ShelfSort.chapterAscending.apply(chapters).map(\.number), [2, 5, 10])
     }
 
+    func testDeletingAMangaOrProjectRemovesOnlyItsChapters() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let library = MangaLibrary(disk: try LibraryDisk(root: root))
+        let project = try XCTUnwrap(library.saveProject(MangaProject(name: "Scans")))
+        let other = try XCTUnwrap(library.saveProject(MangaProject(name: "Other")))
+        let a1 = rawkuma("a", "1"), a2 = rawkuma("a", "2"), b1 = rawkuma("b", "1")
+        let p1 = imported("p1", project: project.id), p2 = imported("p2", project: project.id), o1 = imported("o1", project: other.id), loose = imported("loose")
+        for chapter in [a1, a2, b1, p1, p2, o1, loose] { try library.update(chapter, recordUndo: false) }
+
+        library.deleteChapters(in: .series(url: "https://rawkuma.net/manga/a/", name: "A"))
+        XCTAssertEqual(Set(library.chapters.map(\.id)), Set([b1, p1, p2, o1, loose].map(\.id)))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: library.disk.chapterURL(a1.id).path))
+
+        library.deleteChapters(in: .project(project.id))
+        XCTAssertEqual(Set(library.chapters.map(\.id)), Set([b1, o1, loose].map(\.id)))
+        XCTAssertNotNil(library.project(project.id), "emptying a project keeps the project")
+
+        library.deleteProject(other.id, deletingChapters: true)
+        XCTAssertEqual(Set(library.chapters.map(\.id)), Set([b1, loose].map(\.id)))
+        XCTAssertNil(library.project(other.id))
+        XCTAssertEqual(try library.disk.projects().map(\.id), [project.id])
+    }
+
     func testOldChapterJSONWithoutSeriesOrProjectStillDecodes() throws {
         let json = #"{"id":"6F9F4E4E-1C1B-4E54-9E1A-6A1C3E0B9F11","title":"T","sourceURL":"imported://x","created":0,"target":"vi-VN","pages":[],"readPage":0}"#
         let chapter = try JSONDecoder().decode(Chapter.self, from: Data(json.utf8))

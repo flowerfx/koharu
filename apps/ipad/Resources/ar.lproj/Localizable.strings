@@ -622,3 +622,10 @@
 "Oldest first" = "الأقدم أولاً";
 "Latest chapter first" = "أحدث فصل أولاً";
 "First chapter first" = "أول فصل أولاً";
+"Delete manga" = "حذف المانغا";
+"Delete this manga?" = "حذف هذه المانغا؟";
+"All its chapters, original images and translations will be permanently deleted." = "سيتم حذف جميع فصولها وصورها الأصلية وترجماتها نهائيًا.";
+"Delete all chapters here?" = "حذف جميع الفصول هنا؟";
+"Delete project and its chapters" = "حذف المشروع وفصوله";
+"Delete project, keep chapters" = "حذف المشروع مع الإبقاء على الفصول";
+"Kept chapters move back to Imported chapters. Deleted chapters cannot be recovered." = "تعود الفصول المحتفظ بها إلى الفصول المستوردة. لا يمكن استعادة الفصول المحذوفة.";

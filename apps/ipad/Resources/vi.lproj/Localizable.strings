@@ -622,3 +622,10 @@
 "Oldest first" = "Cũ nhất → mới nhất";
 "Latest chapter first" = "Chương mới nhất → chương cũ nhất";
 "First chapter first" = "Chương cũ nhất → chương mới nhất";
+"Delete manga" = "Xoá manga";
+"Delete this manga?" = "Xoá manga này?";
+"All its chapters, original images and translations will be permanently deleted." = "Toàn bộ chương, ảnh gốc và bản dịch trong đó sẽ bị xoá vĩnh viễn.";
+"Delete all chapters here?" = "Xoá tất cả chương ở đây?";
+"Delete project and its chapters" = "Xoá project và các chương";
+"Delete project, keep chapters" = "Xoá project, giữ chương";
+"Kept chapters move back to Imported chapters. Deleted chapters cannot be recovered." = "Chương được giữ sẽ trở về mục Chương đã nhập. Chương đã xoá không thể khôi phục.";

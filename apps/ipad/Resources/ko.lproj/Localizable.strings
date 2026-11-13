@@ -622,3 +622,10 @@
 "Oldest first" = "오래된순";
 "Latest chapter first" = "최신 챕터순";
 "First chapter first" = "첫 챕터순";
+"Delete manga" = "만화 삭제";
+"Delete this manga?" = "이 만화를 삭제할까요?";
+"All its chapters, original images and translations will be permanently deleted." = "모든 챕터, 원본 이미지와 번역이 영구적으로 삭제됩니다.";
+"Delete all chapters here?" = "여기 있는 모든 챕터를 삭제할까요?";
+"Delete project and its chapters" = "프로젝트와 챕터 삭제";
+"Delete project, keep chapters" = "프로젝트만 삭제, 챕터 유지";
+"Kept chapters move back to Imported chapters. Deleted chapters cannot be recovered." = "유지한 챕터는 가져온 챕터로 돌아갑니다. 삭제한 챕터는 복구할 수 없습니다.";

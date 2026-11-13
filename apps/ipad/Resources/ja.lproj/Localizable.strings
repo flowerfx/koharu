@@ -622,3 +622,10 @@
 "Oldest first" = "古い順";
 "Latest chapter first" = "最新チャプター順";
 "First chapter first" = "最初のチャプター順";
+"Delete manga" = "マンガを削除";
+"Delete this manga?" = "このマンガを削除しますか？";
+"All its chapters, original images and translations will be permanently deleted." = "すべてのチャプター、元画像、翻訳が完全に削除されます。";
+"Delete all chapters here?" = "ここにあるすべてのチャプターを削除しますか？";
+"Delete project and its chapters" = "プロジェクトとチャプターを削除";
+"Delete project, keep chapters" = "プロジェクトのみ削除（チャプターは残す）";
+"Kept chapters move back to Imported chapters. Deleted chapters cannot be recovered." = "残したチャプターは「インポートしたチャプター」に戻ります。削除したチャプターは復元できません。";

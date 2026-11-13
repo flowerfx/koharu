@@ -622,3 +622,10 @@
 "Oldest first" = "Más antiguos primero";
 "Latest chapter first" = "Último capítulo primero";
 "First chapter first" = "Primer capítulo primero";
+"Delete manga" = "Eliminar manga";
+"Delete this manga?" = "¿Eliminar este manga?";
+"All its chapters, original images and translations will be permanently deleted." = "Todos sus capítulos, imágenes originales y traducciones se eliminarán de forma permanente.";
+"Delete all chapters here?" = "¿Eliminar todos los capítulos de aquí?";
+"Delete project and its chapters" = "Eliminar proyecto y sus capítulos";
+"Delete project, keep chapters" = "Eliminar proyecto, conservar capítulos";
+"Kept chapters move back to Imported chapters. Deleted chapters cannot be recovered." = "Los capítulos conservados vuelven a Capítulos importados. Los capítulos eliminados no se pueden recuperar.";

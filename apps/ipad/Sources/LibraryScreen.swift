@@ -15,6 +15,8 @@ struct LibraryScreen: View {
     @State private var deleting: Chapter?
     @State private var deletingAll = false
     @State private var editingProject: MangaProject?
+    @State private var deletingSeries: (url: String, name: String, count: Int)?
+    @State private var deletingProject: MangaProject?
     @State private var searchText = ""
     private var query: String { searchText.trimmingCharacters(in: .whitespacesAndNewlines) }
     private func matches(_ chapter: Chapter) -> Bool {
@@ -65,10 +67,23 @@ struct LibraryScreen: View {
                                         .buttonStyle(.borderless).accessibilityLabel(L("Manga page"))
                                         .disabled(!AppConfiguration.current.allowsRawkuma)
                                 }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(L("Delete"), systemImage: "trash", role: .destructive) { deletingSeries = (url, name, chapters.count) }.disabled(library.busy)
+                                }
+                                .contextMenu {
+                                    Button(L("Manga page"), systemImage: "globe") { openSource(url) }.disabled(!AppConfiguration.current.allowsRawkuma)
+                                    Divider()
+                                    Button(L("Delete manga"), systemImage: "trash", role: .destructive) { deletingSeries = (url, name, chapters.count) }.disabled(library.busy)
+                                }
                             case .project(let project, let chapters):
                                 NavigationLink(value: LibraryRoute.shelf(.project(project.id))) { ProjectRow(project: project, chapters: chapters) }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(L("Delete"), systemImage: "trash", role: .destructive) { deletingProject = project }.disabled(library.busy)
+                                }
                                 .contextMenu {
                                     Button(L("Edit project"), systemImage: "pencil") { editingProject = project }
+                                    Divider()
+                                    Button(L("Delete project"), systemImage: "trash", role: .destructive) { deletingProject = project }.disabled(library.busy)
                                 }
                             case .chapter: EmptyView()
                             }
@@ -99,6 +114,11 @@ struct LibraryScreen: View {
         }
         .sheet(item: $editingProject) { project in ProjectEditor(project: project) }
         .chapterDeletion($deleting)
+        .confirmationDialog(L("Delete this manga?"), isPresented: Binding(get: { deletingSeries != nil }, set: { if !$0 { deletingSeries = nil } }), titleVisibility: .visible, presenting: deletingSeries) { series in
+            Button("\(L("Delete manga")) · \(series.count) \(L("chapters"))", role: .destructive) { library.deleteChapters(in: .series(url: series.url, name: series.name)) }
+            Button(L("Cancel"), role: .cancel) {}
+        } message: { series in Text("\(series.name)\n" + L("All its chapters, original images and translations will be permanently deleted.")) }
+        .projectDeletion($deletingProject)
         .confirmationDialog(L("Delete all saved chapters?"), isPresented: $deletingAll, titleVisibility: .visible) {
             Button(L("Delete all chapters"), role: .destructive) { library.delete(library.chapters.map(\.id)) }
             Button(L("Cancel"), role: .cancel) {}
@@ -117,7 +137,8 @@ struct ShelfScreen: View {
     var openSource: (String) -> Void
     @State private var deleting: Chapter?
     @State private var editing: MangaProject?
-    @State private var deletingProject = false
+    @State private var deletingProject: MangaProject?
+    @State private var deletingAll = false
     @AppStorage("shelfSort") private var savedSort = ShelfSort.chapterAscending
     private var isSeries: Bool { if case .series = kind { true } else { false } }
     /// Chapter-number orders apply to manga only; a project falls back to date order.
@@ -173,21 +194,27 @@ struct ShelfScreen: View {
                     ForEach(ShelfSort.allCases.filter { isSeries || !$0.byChapter }) { Label($0.title, systemImage: $0.symbol).tag($0) }
                 }
             } label: { Image(systemName: "arrow.up.arrow.down") }.accessibilityLabel(L("Sort"))
-            if case .project(let id) = kind, let project = library.project(id) {
-                Menu {
+            Menu {
+                if case .project(let id) = kind, let project = library.project(id) {
                     Button(L("Edit project"), systemImage: "pencil") { editing = project }
-                    Button(L("Delete project"), systemImage: "trash", role: .destructive) { deletingProject = true }
-                } label: { Image(systemName: "ellipsis.circle") }
-            }
+                    Button(L("Delete project"), systemImage: "trash", role: .destructive) { deletingProject = project }.disabled(library.busy)
+                    Divider()
+                }
+                Button(L("Delete all chapters"), systemImage: "trash", role: .destructive) { deletingAll = true }
+                    .disabled(library.busy || chapters.isEmpty)
+            } label: { Image(systemName: "ellipsis.circle") }
         }
         .sheet(item: $editing) { ProjectEditor(project: $0) }
         .chapterDeletion($deleting)
-        .confirmationDialog(L("Delete this project?"), isPresented: $deletingProject, titleVisibility: .visible) {
-            Button(L("Delete project"), role: .destructive) {
-                if case .project(let id) = kind { library.deleteProject(id); dismiss() }
+        .projectDeletion($deletingProject) { dismiss() }
+        .confirmationDialog(L("Delete all chapters here?"), isPresented: $deletingAll, titleVisibility: .visible) {
+            Button("\(L("Delete all chapters")) · \(chapters.count)", role: .destructive) {
+                library.deleteChapters(in: kind)
+                // A manga with no chapters no longer exists; an empty project stays.
+                if isSeries { dismiss() }
             }
             Button(L("Cancel"), role: .cancel) {}
-        } message: { Text(L("Its chapters are kept and move back to Imported chapters.")) }
+        } message: { Text(L("All its chapters, original images and translations will be permanently deleted.")) }
     }
     private var title: String {
         switch kind {
@@ -315,7 +342,25 @@ private struct ChapterDeletion: ViewModifier {
     }
 }
 
+private struct ProjectDeletion: ViewModifier {
+    @Environment(MangaLibrary.self) private var library
+    @Binding var project: MangaProject?
+    var onDelete: () -> Void
+    func body(content: Content) -> some View {
+        content.confirmationDialog(L("Delete this project?"), isPresented: Binding(get: { project != nil }, set: { if !$0 { project = nil } }), titleVisibility: .visible, presenting: project) { project in
+            Button(L("Delete project and its chapters"), role: .destructive) { library.deleteProject(project.id, deletingChapters: true); onDelete() }
+            Button(L("Delete project, keep chapters")) { library.deleteProject(project.id); onDelete() }
+            Button(L("Cancel"), role: .cancel) {}
+        } message: { project in
+            Text("\(project.name)\n" + L("Kept chapters move back to Imported chapters. Deleted chapters cannot be recovered."))
+        }
+    }
+}
+
 extension View {
+    func projectDeletion(_ project: Binding<MangaProject?>, onDelete: @escaping () -> Void = {}) -> some View {
+        modifier(ProjectDeletion(project: project, onDelete: onDelete))
+    }
     func chapterActions(_ chapter: Chapter, openSource: @escaping (String) -> Void, deleting: Binding<Chapter?>) -> some View {
         modifier(ChapterActions(chapter: chapter, openSource: openSource, deleting: deleting))
     }

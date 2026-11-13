@@ -622,3 +622,10 @@
 "Oldest first" = "最早优先";
 "Latest chapter first" = "最新章节优先";
 "First chapter first" = "第一章优先";
+"Delete manga" = "删除漫画";
+"Delete this manga?" = "删除这部漫画？";
+"All its chapters, original images and translations will be permanently deleted." = "其中所有章节、原图和翻译将被永久删除。";
+"Delete all chapters here?" = "删除这里的所有章节？";
+"Delete project and its chapters" = "删除项目及其章节";
+"Delete project, keep chapters" = "删除项目，保留章节";
+"Kept chapters move back to Imported chapters. Deleted chapters cannot be recovered." = "保留的章节会回到“导入的章节”。已删除的章节无法恢复。";
