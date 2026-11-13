@@ -50,7 +50,7 @@ final class BackendAITests: XCTestCase {
             XCTAssertNil(p["provider"])
             XCTAssertEqual(p["task"] as? String, "translate")
             XCTAssertEqual(p["count"] as? Int, 1005)
-            XCTAssertEqual(p["batch_size"] as? Int, 1000)
+            XCTAssertNil(p["batch_size"])
             let payload = try JSONDecoder().decode(TranslationPayload.self, from: Data(try XCTUnwrap(p["user"] as? String).utf8))
             XCTAssertEqual(payload.segments.map(\.text), input)
             XCTAssertEqual(p["system"] as? String, try TranslationContract.prompts(["Bonjour"], preferences: config).0)

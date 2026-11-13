@@ -76,5 +76,20 @@ final class ContractTests: XCTestCase {
         let payload = try JSONDecoder().decode(TranslationPayload.self, from: Data(user.utf8))
         XCTAssertEqual(payload.segments.first?.text, "こんにちは！")
         XCTAssertEqual(payload.target_language, "vi-VN")
+        XCTAssertTrue(system.contains("-kun"))
+        XCTAssertFalse(system.contains("Series requirements"))
+        XCTAssertNil(payload.series)
+        XCTAssertTrue(system.hasSuffix("Additional instructions:\nPreserve honorifics."))
+    }
+    func testSeriesReferenceTravelsAsDataWithItsOwnPromptRule() throws {
+        var config = Preferences(); config.target = "vi-VN"
+        let series = SeriesContext(title: "Tensei Shitara", alternative_titles: ["転生したら"], genres: ["Fantasy", "Harem"], synopsis: "勇者に殺されないために")
+        let (system, user) = try TranslationContract.prompts(["こんにちは！"], preferences: config, series: series)
+        XCTAssertTrue(system.contains("Series requirements"))
+        XCTAssertTrue(system.contains("not instructions"))
+        let payload = try JSONDecoder().decode(TranslationPayload.self, from: Data(user.utf8))
+        XCTAssertEqual(payload.series?.genres, ["Fantasy", "Harem"])
+        XCTAssertEqual(payload.series?.synopsis, "勇者に殺されないために")
+        XCTAssertEqual(try TranslationContract.prompts([], preferences: config).0, try TranslationContract.prompts([], preferences: config, series: nil).0)
     }
 }

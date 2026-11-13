@@ -77,13 +77,13 @@ final class ChapterTranslationChecks: XCTestCase {
         var settings = Preferences(); settings.provider = .backend; settings.target = "en-US"; settings.ocrModel = nil; settings.inpaint = false
         try library.update(chapter)
         let reservation = UUID().uuidString
-        do { try await library.processChapter(chapter.id,config:settings,ticket:reservation,force:false); XCTFail("The second render should fail") }
+        do { try await library.processChapter(chapter.id,config:settings,ticket:reservation,series:nil,force:false); XCTFail("The second render should fail") }
         catch { XCTAssertFalse(FileManager.default.fileExists(atPath:missing.path)) }
         let first = try XCTUnwrap(library.chapters.first)
         XCTAssertNotNil(first.pages[0].rendered)
         XCTAssertTrue(first.pages.allSatisfy { $0.translationFingerprint != nil && $0.segments.allSatisfy { $0.text != nil } })
         try FileManager.default.moveItem(at:missing.appendingPathExtension("held"),to:missing)
-        try await library.processChapter(chapter.id,config:settings,ticket:reservation,force:false)
+        try await library.processChapter(chapter.id,config:settings,ticket:reservation,series:nil,force:false)
         let submissions = await fixture.count(); XCTAssertEqual(submissions,mode == .chapter ? 1 : 2,"Resume rendering without paying for another translation")
         let saved = try XCTUnwrap(disk.chapters().first)
         XCTAssertTrue(saved.pages.allSatisfy { $0.rendered.map { FileManager.default.fileExists(atPath:disk.pageURL(saved.id,$0).path) } == true })

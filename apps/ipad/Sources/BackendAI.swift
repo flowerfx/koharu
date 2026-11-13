@@ -37,14 +37,14 @@ actor BackendAI {
     }
     private var invalidResponse: AppError { .message(L("The AI service returned an invalid response. Please try again.")) }
     private func cancel(_ requestID: String) async { _ = try? await call("ai_cancel", ["request_id": requestID]) }
-    func generate(system: String, user: String, task: BackendAITask, context: BackendAIContext, count: Int? = nil, batchSize: Int = 300, onProgress: @escaping @Sendable (TranslationProgress) -> Void = { _ in }) async throws -> Data {
-        guard let reservation = UUID(uuidString: context.reservationID), !system.isEmpty, !user.isEmpty, system.utf16.count <= 8192, user.utf16.count <= (task == .translate ? 196608 : 32768), (1...1000).contains(batchSize),
+    func generate(system: String, user: String, task: BackendAITask, context: BackendAIContext, count: Int? = nil, onProgress: @escaping @Sendable (TranslationProgress) -> Void = { _ in }) async throws -> Data {
+        guard let reservation = UUID(uuidString: context.reservationID), !system.isEmpty, !user.isEmpty, system.utf16.count <= 8192, user.utf16.count <= (task == .translate ? 196608 : 32768),
               task == .translate ? count.map({ (1...2000).contains($0) }) == true : count == nil else {
             throw AppError.message(L("The AI request is too large or invalid. Reduce segments per request or shorten the instructions."))
         }
         let requestID = UUID().uuidString.lowercased(), reservationID = reservation.uuidString.lowercased()
         var payload: [String: Any] = ["request_id": requestID, "reservation_id": reservationID, "task": task.rawValue, "system": system, "user": user]
-        if let count { payload["count"] = count; payload["batch_size"] = batchSize; onProgress(.submitting(total: count)) }
+        if let count { payload["count"] = count; onProgress(.submitting(total: count)) }
         return try await withTaskCancellationHandler {
             do {
                 try Task.checkCancellation()

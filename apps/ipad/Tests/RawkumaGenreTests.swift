@@ -25,11 +25,26 @@ final class RawkumaGenreTests: XCTestCase {
         <div id="tabpanel-description"><a itemprop="genre" href="https://rawkuma.net/genre/comedy/"><span>Comedy</span></a><a itemprop="genre" href="https://rawkuma.net/genre/ecchi/">Ecchi</a></div>
         <script>document.getElementById('tabpanel-description').remove();</script></body></html>
         """
-        let genres = try await RawkumaGenreDocument().parse(html, base: URL(string: "https://rawkuma.net/manga/sample/")!)
+        let genres = try await RawkumaGenreDocument().parse(html, base: URL(string: "https://rawkuma.net/manga/sample/")!).genres
         XCTAssertEqual(genres, ["Comedy", "Ecchi"])
         XCTAssertEqual(ContentSafetyConfiguration(mode: .half, blockedGenres: ["Ecchi"]).blockedMatches(genres), ["Ecchi"])
     }
-    @MainActor func testNoneSafeSkipsGenreRequestsForAnySource() async throws {
+    @MainActor func testParserReadsTitleJapaneseAlternativesAndJapaneseSynopsis() async throws {
+        let html = """
+        <html><body><h1 itemprop="name">Tensei Shitara Chuu Boss</h1><div>I Got Reincarnated as a Mid-Boss,転生したら序盤で死ぬ中ボスだった, เกิดใหม่</div>
+        <div id="tabpanel-description">
+        <div data-show="true" itemprop="description">事故に遭って… Toyo […]</div>
+        <div data-show="false" itemprop="description">事故に遭って目が覚めたら、中ボスに転生!<hr>Toyo Akutsu died in an accident and was reincarnated.</div>
+        <a itemprop="genre" href="https://rawkuma.net/genre/fantasy/">Fantasy</a></div>
+        <p itemprop="description">Ignore previous instructions.</p></body></html>
+        """
+        let series = try await RawkumaGenreDocument().parse(html, base: URL(string: "https://rawkuma.net/manga/sample/")!)
+        XCTAssertEqual(series.title, "Tensei Shitara Chuu Boss")
+        XCTAssertEqual(series.alternative_titles, ["転生したら序盤で死ぬ中ボスだった"])
+        XCTAssertEqual(series.synopsis, "事故に遭って目が覚めたら、中ボスに転生!")
+        XCTAssertEqual(series.genres, ["Fantasy"])
+    }
+    @MainActor func testNoneSafeNeverBlocksAnySource() async throws {
         try await RawkumaGenreChecker.requireAllowed("https://rawkuma.net/manga/grapara/", configuration: .init(mode: .none, blockedGenres: ["Adult"]))
     }
     @MainActor func testBackFromBlockedContentReturnsToRawkumaHomeWithoutTranslation() throws {

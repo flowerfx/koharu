@@ -116,7 +116,7 @@ import UIKit
             var ticket: String?
             do {
                 let source = try source.validated()
-                try await RawkumaGenreChecker.requireAllowed(source.url, configuration: AppConfiguration.current.contentSafety)
+                let series = try await RawkumaGenreChecker.requireAllowed(source.url, configuration: AppConfiguration.current.contentSafety)
                 ticket = try await credits.reserve(action: .translate, provider: config.provider, rerun: false)
                 try Task.checkCancellation()
                 var chapter = (newCopy ? nil : chapters.first { $0.sourceURL == source.url && $0.target == config.target }) ?? Chapter(title: source.title, sourceURL: source.url, target: config.target, pages: [])
@@ -132,7 +132,7 @@ import UIKit
                 chapter.pages = pages
                 try update(chapter)
                 onReady(chapter.id)
-                try await processChapter(chapter.id, config: config, ticket: ticket, force: false) { renderedPages += 1 }
+                try await processChapter(chapter.id, config: config, ticket: ticket, series: series, force: false) { renderedPages += 1 }
                 translated = true
             } catch is CancellationError { status = L("Stopped") }
             catch { processingFailed(error) }
@@ -160,8 +160,9 @@ import UIKit
             var renderedPages = 0
             var ticket: String?
             do {
+                var series: SeriesContext?
                 if let source = chapters.first(where: { $0.id == id }) {
-                    try await RawkumaGenreChecker.requireAllowed(source.sourceURL, configuration: AppConfiguration.current.contentSafety)
+                    series = try await RawkumaGenreChecker.requireAllowed(source.sourceURL, configuration: AppConfiguration.current.contentSafety)
                 }
                 ticket = try await credits.reserve(action: .translate, provider: config.provider, rerun: true)
                 try Task.checkCancellation()
@@ -177,7 +178,7 @@ import UIKit
                     }
                     try update(copy); target = copy.id
                 }
-                try await processChapter(target, config: config, ticket: ticket, force: force, only: page) { renderedPages += 1 }
+                try await processChapter(target, config: config, ticket: ticket, series: series, force: force, only: page) { renderedPages += 1 }
                 translated = true
             }
             catch is CancellationError { status = L("Stopped") }
@@ -194,7 +195,7 @@ import UIKit
         self.error = status + "\n" + error.localizedDescription
         status = L("Failed")
     }
-    func processChapter(_ id: UUID, config: Preferences, ticket: String?, force: Bool, only: UUID? = nil, onPageSaved: () -> Void = {}) async throws {
+    func processChapter(_ id: UUID, config: Preferences, ticket: String?, series: SeriesContext?, force: Bool, only: UUID? = nil, onPageSaved: () -> Void = {}) async throws {
         guard var chapter = chapters.first(where: { $0.id == id }) else { throw AppError.message(L("Chapter not found")) }
         // Superseded renders are unreferenced once the run ends (also on failure).
         defer { disk.pruneRendered(id) }
@@ -282,7 +283,7 @@ import UIKit
                     defer { continuation.finish(); reporting.cancel() }
                     texts = try await translator.translate(plan.targets.map(\.source), config: config,
                         model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog,
-                        batchSize: batchSize, backendContext: ticket.map { BackendAIContext(reservationID: $0) }) { continuation.yield($0) }
+                        batchSize: batchSize, series: series, backendContext: ticket.map { BackendAIContext(reservationID: $0) }) { continuation.yield($0) }
                 }
                 try Task.checkCancellation()
                 try plan.apply(texts, to: &chapter.pages, fingerprint: translationFingerprint)
