@@ -521,7 +521,7 @@
 "Could not verify this manga's genres. Translation is blocked. Please try again." = "無法驗證此漫畫的類型。翻譯被阻擋，請再試一次。";
 "External content warning" = "外部內容警告";
 "Files" = "檔案";
-"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "資料夾內的圖片依檔名與頁碼排序。匯入免費；打開章節並選擇執行以翻譯。";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Translate." = "資料夾內的圖片依檔名與頁碼排序。匯入免費；打開章節並選擇翻譯。";
 "Import images or an image folder from Files, then translate them in your library." = "從檔案匯入圖片或資料夾，然後在您的資料庫中翻譯。";
 "Import images or folder" = "匯入圖片或資料夾";
 "Import manga" = "匯入漫畫";
@@ -584,3 +584,41 @@
 "Text regions per batch" = "每批文字區域數";
 
 "Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "預設：300。每批設定 100–1,000 個文字區域。系統可能根據模型限制使用更小的批次。";
+
+"Enhanced translation" = "增強翻譯";
+"Reviewing chapter translation" = "正在校對章節翻譯";
+"Enhanced translation uses Backend API twice: it translates the chapter, then reviews every line against the original to fix mistakes and keep names consistent." = "增強翻譯會使用兩次 Backend API：先翻譯章節，再逐行對照原文修正錯誤並統一名稱。";
+"Translate" = "翻譯";
+
+"All chapters" = "全部章節";
+"By manga" = "依漫畫";
+"Library view" = "書庫檢視";
+"Manga and projects" = "漫畫和專案";
+"Imported chapters" = "匯入的章節";
+"Manga page" = "漫畫頁面";
+"Edit project" = "編輯專案";
+"New project" = "新增專案";
+"Manga" = "漫畫";
+"Project" = "專案";
+"Pages" = "頁數";
+"Continue reading" = "繼續閱讀";
+"No chapters yet. Move imported chapters here from the library." = "尚無章節。請從書庫將匯入的章節移到這裡。";
+"Delete project" = "刪除專案";
+"Delete this project?" = "刪除此專案？";
+"Its chapters are kept and move back to Imported chapters." = "章節會保留，並回到「匯入的章節」。";
+"Imported" = "已匯入";
+"Read" = "已讀";
+"chapters" = "章";
+"Last read" = "最近閱讀";
+"Chapter" = "章節";
+"Project name" = "專案名稱";
+"Note (optional)" = "備註（選填）";
+"Move to project" = "移到專案";
+"No project" = "不屬於專案";
+"Chapters in a project are grouped together when the library is shown by manga." = "依漫畫檢視書庫時，同一專案的章節會歸在一起。";
+"Enter a project name." = "請輸入專案名稱。";
+"Sort" = "排序";
+"Newest first" = "最新優先";
+"Oldest first" = "最早優先";
+"Latest chapter first" = "最新章節優先";
+"First chapter first" = "第一章優先";

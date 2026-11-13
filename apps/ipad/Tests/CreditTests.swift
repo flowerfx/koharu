@@ -43,6 +43,9 @@ final class CreditTests: XCTestCase {
             XCTAssertEqual(config.cost(.enhance, tier: .free, provider: provider), backend ? 2 : 1)
             XCTAssertEqual(config.cost(.enhance, tier: .premium, provider: provider), backend ? 1 : 0)
             for tier in CreditTier.allCases { XCTAssertEqual(config.cost(.generatePrompt, tier: tier, provider: provider), 1) }
+            // Enhanced translation is always two backend passes, whatever provider is selected.
+            XCTAssertEqual(config.cost(.translateEnhanced, tier: .free, provider: provider), 4)
+            XCTAssertEqual(config.cost(.translateEnhanced, tier: .premium, provider: provider), 2)
         }
         XCTAssertTrue(CreditTier.free.allows(.local))
         XCTAssertTrue(CreditTier.free.allows(.backend))

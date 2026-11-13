@@ -521,7 +521,7 @@
 "Could not verify this manga's genres. Translation is blocked. Please try again." = "تعذر التحقق من أنواع هذه المانجا. الترجمة محظورة. يرجى المحاولة مرة أخرى.";
 "External content warning" = "تحذير من محتوى خارجي";
 "Files" = "الملفات";
-"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "يتم ترتيب الصور في المجلد حسب اسم الملف ورقم الصفحة. الاستيراد مجاني؛ افتح الفصل واختر تشغيل للترجمة.";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Translate." = "يتم ترتيب الصور في المجلد حسب اسم الملف ورقم الصفحة. الاستيراد مجاني؛ افتح الفصل واختر ترجمة.";
 "Import images or an image folder from Files, then translate them in your library." = "استورد الصور أو مجلد الصور من الملفات، ثم ترجمها في مكتبتك.";
 "Import images or folder" = "استيراد صور أو مجلد";
 "Import manga" = "استيراد المانجا";
@@ -584,3 +584,41 @@
 "Text regions per batch" = "مناطق النص لكل دفعة";
 
 "Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "الافتراضي: 300. اختر من 100 إلى 1,000 منطقة نصية لكل دفعة. قد تُستخدم دفعات أصغر لتناسب حدود النموذج.";
+
+"Enhanced translation" = "ترجمة محسّنة";
+"Reviewing chapter translation" = "جارٍ مراجعة ترجمة الفصل";
+"Enhanced translation uses Backend API twice: it translates the chapter, then reviews every line against the original to fix mistakes and keep names consistent." = "تستخدم الترجمة المحسّنة Backend API مرتين: تترجم الفصل ثم تراجع كل سطر مقابل النص الأصلي لتصحيح الأخطاء والحفاظ على اتساق الأسماء.";
+"Translate" = "ترجمة";
+
+"All chapters" = "كل الفصول";
+"By manga" = "حسب المانغا";
+"Library view" = "عرض المكتبة";
+"Manga and projects" = "المانغا والمشاريع";
+"Imported chapters" = "الفصول المستوردة";
+"Manga page" = "صفحة المانغا";
+"Edit project" = "تعديل المشروع";
+"New project" = "مشروع جديد";
+"Manga" = "مانغا";
+"Project" = "مشروع";
+"Pages" = "الصفحات";
+"Continue reading" = "متابعة القراءة";
+"No chapters yet. Move imported chapters here from the library." = "لا توجد فصول بعد. انقل الفصول المستوردة إلى هنا من المكتبة.";
+"Delete project" = "حذف المشروع";
+"Delete this project?" = "حذف هذا المشروع؟";
+"Its chapters are kept and move back to Imported chapters." = "تبقى الفصول وتعود إلى الفصول المستوردة.";
+"Imported" = "مستورد";
+"Read" = "تمت قراءة";
+"chapters" = "فصول";
+"Last read" = "آخر قراءة";
+"Chapter" = "الفصل";
+"Project name" = "اسم المشروع";
+"Note (optional)" = "ملاحظة (اختياري)";
+"Move to project" = "نقل إلى مشروع";
+"No project" = "بدون مشروع";
+"Chapters in a project are grouped together when the library is shown by manga." = "تُجمع فصول المشروع معًا عند عرض المكتبة حسب المانغا.";
+"Enter a project name." = "أدخل اسم المشروع.";
+"Sort" = "ترتيب";
+"Newest first" = "الأحدث أولاً";
+"Oldest first" = "الأقدم أولاً";
+"Latest chapter first" = "أحدث فصل أولاً";
+"First chapter first" = "أول فصل أولاً";

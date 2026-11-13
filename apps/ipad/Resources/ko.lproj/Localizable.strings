@@ -521,7 +521,7 @@
 "Could not verify this manga's genres. Translation is blocked. Please try again." = "이 망가의 장르를 확인할 수 없습니다. 번역이 차단되었습니다. 다시 시도하세요.";
 "External content warning" = "외부 콘텐츠 경고";
 "Files" = "파일";
-"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "폴더 내 이미지는 파일명과 페이지 번호로 정렬됩니다. 가져오기는 무료이며, 챕터를 열고 실행을 선택해 번역하세요.";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Translate." = "폴더 내 이미지는 파일명과 페이지 번호로 정렬됩니다. 가져오기는 무료이며, 챕터를 열고 번역을 선택하세요.";
 "Import images or an image folder from Files, then translate them in your library." = "파일에서 이미지 또는 이미지 폴더를 가져온 다음 라이브러리에서 번역하세요.";
 "Import images or folder" = "이미지 또는 폴더 가져오기";
 "Import manga" = "망가 가져오기";
@@ -584,3 +584,41 @@
 "Text regions per batch" = "배치당 텍스트 영역 수";
 
 "Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "기본값: 300. 배치당 텍스트 영역을 100~1,000개로 설정하세요. 모델 제한에 맞춰 더 작은 배치로 나눌 수 있습니다.";
+
+"Enhanced translation" = "고급 번역";
+"Reviewing chapter translation" = "챕터 번역 검토 중";
+"Enhanced translation uses Backend API twice: it translates the chapter, then reviews every line against the original to fix mistakes and keep names consistent." = "고급 번역은 Backend API를 두 번 사용합니다. 챕터를 번역한 뒤 모든 줄을 원문과 대조해 오류를 고치고 이름을 일관되게 맞춥니다.";
+"Translate" = "번역";
+
+"All chapters" = "전체 챕터";
+"By manga" = "만화별";
+"Library view" = "라이브러리 보기";
+"Manga and projects" = "만화와 프로젝트";
+"Imported chapters" = "가져온 챕터";
+"Manga page" = "만화 페이지";
+"Edit project" = "프로젝트 편집";
+"New project" = "새 프로젝트";
+"Manga" = "만화";
+"Project" = "프로젝트";
+"Pages" = "페이지";
+"Continue reading" = "이어 읽기";
+"No chapters yet. Move imported chapters here from the library." = "아직 챕터가 없습니다. 라이브러리에서 가져온 챕터를 여기로 옮기세요.";
+"Delete project" = "프로젝트 삭제";
+"Delete this project?" = "이 프로젝트를 삭제할까요?";
+"Its chapters are kept and move back to Imported chapters." = "챕터는 유지되며 가져온 챕터로 돌아갑니다.";
+"Imported" = "가져옴";
+"Read" = "읽음";
+"chapters" = "챕터";
+"Last read" = "마지막으로 읽음";
+"Chapter" = "챕터";
+"Project name" = "프로젝트 이름";
+"Note (optional)" = "메모(선택)";
+"Move to project" = "프로젝트로 이동";
+"No project" = "프로젝트 없음";
+"Chapters in a project are grouped together when the library is shown by manga." = "만화별 보기에서 같은 프로젝트의 챕터가 함께 묶입니다.";
+"Enter a project name." = "프로젝트 이름을 입력하세요.";
+"Sort" = "정렬";
+"Newest first" = "최신순";
+"Oldest first" = "오래된순";
+"Latest chapter first" = "최신 챕터순";
+"First chapter first" = "첫 챕터순";

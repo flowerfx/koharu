@@ -13,6 +13,7 @@ import UIKit
     var approvedCreditRequest: CreditRequest?
     var showCreditProviderSettings = false
     var chapters: [Chapter] = []
+    var projects: [MangaProject] = []
     var preferences = Preferences()
     var readingMode = ReadingMode(rawValue: UserDefaults.standard.string(forKey: "readingMode") ?? "vertical") ?? .vertical {
         didSet { UserDefaults.standard.set(readingMode.rawValue, forKey: "readingMode") }
@@ -82,6 +83,7 @@ import UIKit
         subscriptions = SubscriptionStore(credits: credits, environment: (try? ConfigurationTarget(bundle: .main).environment) ?? .production)
         do {
             chapters = try disk.chapters()
+            projects = try disk.projects()
             let config = disk.root.appendingPathComponent("preferences.json")
             if FileManager.default.fileExists(atPath: config.path) { preferences = try disk.load(Preferences.self, config) }
             else { try disk.save(preferences, to: config) }
@@ -97,18 +99,24 @@ import UIKit
         if let index = chapters.firstIndex(where: { $0.id == chapter.id }) { chapters[index] = chapter }
         else { chapters.insert(chapter, at: 0) }
     }
-    func importChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool = false, onReady: @escaping @MainActor (UUID) -> Void) {
+    /// Enhanced translation always uses Backend API: the server translates the
+    /// chapter, then reviews that draft against the source in a second pass.
+    func importChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool = false, enhanced: Bool = false, onReady: @escaping @MainActor (UUID) -> Void) {
         guard !busy else { return }
         guard AppConfiguration.current.allowsRawkuma else { return }
-        do { try requireCreditProvider() } catch { self.error = error.localizedDescription; return }
-        requestCredits(.translate, cost: creditCost(.translate), explanation: translationCreditExplanation) {
-            self.startImportChapter(source, revalidate: revalidate, newCopy: newCopy, onReady: onReady)
+        do {
+            if enhanced { try AppConfiguration.current.requireProvider(.backend) } else { try requireCreditProvider() }
+        } catch { self.error = error.localizedDescription; return }
+        let action: CreditAction = enhanced ? .translateEnhanced : .translate
+        requestCredits(action, cost: creditCost(action), explanation: enhanced ? enhancedCreditExplanation : translationCreditExplanation, provider: enhanced ? .backend : nil) {
+            self.startImportChapter(source, revalidate: revalidate, newCopy: newCopy, enhanced: enhanced, onReady: onReady)
         }
     }
-    private func startImportChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool, onReady: @escaping @MainActor (UUID) -> Void) {
+    private func startImportChapter(_ source: SourceChapter, revalidate: Bool, newCopy: Bool, enhanced: Bool, onReady: @escaping @MainActor (UUID) -> Void) {
         // Configuration may change while the credit approval sheet is open.
         guard !busy, AppConfiguration.current.allowsRawkuma else { return }
-        let config = preferences
+        var config = preferences
+        if enhanced { config.provider = .backend }
         busy = true; activeJobUsesGPU = true
         activeTask = Task {
             var translated = false
@@ -117,7 +125,7 @@ import UIKit
             do {
                 let source = try source.validated()
                 let series = try await RawkumaGenreChecker.requireAllowed(source.url, configuration: AppConfiguration.current.contentSafety)
-                ticket = try await credits.reserve(action: .translate, provider: config.provider, rerun: false)
+                ticket = try await credits.reserve(action: enhanced ? .translateEnhanced : .translate, provider: config.provider, rerun: false)
                 try Task.checkCancellation()
                 var chapter = (newCopy ? nil : chapters.first { $0.sourceURL == source.url && $0.target == config.target }) ?? Chapter(title: source.title, sourceURL: source.url, target: config.target, pages: [])
                 var pages: [MangaPage] = []
@@ -130,9 +138,11 @@ import UIKit
                     pages.append(page)
                 }
                 chapter.pages = pages
+                if let title = series?.title, !title.isEmpty { chapter.seriesTitle = title }
                 try update(chapter)
                 onReady(chapter.id)
-                try await processChapter(chapter.id, config: config, ticket: ticket, series: series, force: false) { renderedPages += 1 }
+                // Enhanced translation also replaces pages that already have a normal translation.
+                try await processChapter(chapter.id, config: config, ticket: ticket, series: series, enhanced: enhanced, force: enhanced) { renderedPages += 1 }
                 translated = true
             } catch is CancellationError { status = L("Stopped") }
             catch { processingFailed(error) }
@@ -143,17 +153,28 @@ import UIKit
             busy = false; activeTask = nil
         }
     }
-    func run(_ id: UUID, force: Bool, page: UUID? = nil) {
+    /// Enhanced translation of a saved chapter always retranslates through
+    /// Backend API and is priced like an initial enhanced translation.
+    func run(_ id: UUID, force: Bool, page: UUID? = nil, enhanced: Bool = false) {
         guard !busy else { return }
         guard chapters.contains(where: { $0.id == id && !$0.pages.isEmpty }) else { error = L("Chapter not found"); return }
-        do { try requireCreditProvider() } catch { self.error = error.localizedDescription; return }
-        requestCredits(.translate, cost: rerunCreditCost, explanation: translationCreditExplanation, rerun: true) {
-            self.startRun(id, force: force, page: page)
+        do {
+            if enhanced { try AppConfiguration.current.requireProvider(.backend) } else { try requireCreditProvider() }
+        } catch { self.error = error.localizedDescription; return }
+        if enhanced {
+            requestCredits(.translateEnhanced, cost: creditCost(.translateEnhanced), explanation: enhancedCreditExplanation, provider: .backend) {
+                self.startRun(id, force: true, page: page, enhanced: true)
+            }
+        } else {
+            requestCredits(.translate, cost: rerunCreditCost, explanation: translationCreditExplanation, rerun: true) {
+                self.startRun(id, force: force, page: page, enhanced: false)
+            }
         }
     }
-    private func startRun(_ id: UUID, force: Bool, page: UUID?) {
+    private func startRun(_ id: UUID, force: Bool, page: UUID?, enhanced: Bool) {
         guard !busy else { return }
-        let config = preferences
+        var config = preferences
+        if enhanced { config.provider = .backend }
         busy = true; activeJobUsesGPU = true
         activeTask = Task {
             var translated = false
@@ -164,7 +185,7 @@ import UIKit
                 if let source = chapters.first(where: { $0.id == id }) {
                     series = try await RawkumaGenreChecker.requireAllowed(source.sourceURL, configuration: AppConfiguration.current.contentSafety)
                 }
-                ticket = try await credits.reserve(action: .translate, provider: config.provider, rerun: true)
+                ticket = try await credits.reserve(action: enhanced ? .translateEnhanced : .translate, provider: config.provider, rerun: !enhanced)
                 try Task.checkCancellation()
                 var target = id
                 if let source = chapters.first(where: { $0.id == id }), source.target != config.target {
@@ -178,7 +199,7 @@ import UIKit
                     }
                     try update(copy); target = copy.id
                 }
-                try await processChapter(target, config: config, ticket: ticket, series: series, force: force, only: page) { renderedPages += 1 }
+                try await processChapter(target, config: config, ticket: ticket, series: series, enhanced: enhanced, force: force, only: page) { renderedPages += 1 }
                 translated = true
             }
             catch is CancellationError { status = L("Stopped") }
@@ -195,7 +216,7 @@ import UIKit
         self.error = status + "\n" + error.localizedDescription
         status = L("Failed")
     }
-    func processChapter(_ id: UUID, config: Preferences, ticket: String?, series: SeriesContext?, force: Bool, only: UUID? = nil, onPageSaved: () -> Void = {}) async throws {
+    func processChapter(_ id: UUID, config: Preferences, ticket: String?, series: SeriesContext?, enhanced: Bool = false, force: Bool, only: UUID? = nil, onPageSaved: () -> Void = {}) async throws {
         guard var chapter = chapters.first(where: { $0.id == id }) else { throw AppError.message(L("Chapter not found")) }
         // Superseded renders are unreferenced once the run ends (also on failure).
         defer { disk.pruneRendered(id) }
@@ -203,7 +224,8 @@ import UIKit
         _ = try AppConfiguration.current.requireVision(config.ocrModel ?? "apple")
         if config.inpaint { _ = try AppConfiguration.current.requireVision(config.cleanupModel ?? AppConfiguration.current.defaults.inpainting, inpainting: true) }
         let batchSize = translationBatchSize
-        let mode = translationMode
+        // The review pass needs the whole chapter at once to keep names and address consistent.
+        let mode = enhanced ? .chapter : translationMode
         let model = models.first { $0.id == config.localModel }
         let catalog = config.provider == .local ? try model.flatMap { try AppConfiguration.current.catalog(for: $0) } : nil
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
@@ -271,6 +293,7 @@ import UIKit
                             let fraction = Double(value.completed) / Double(value.total)
                             progress = mode == .chapter ? fraction : (Double(groupOffset) + 0.2 + 0.5 * fraction) / Double(pending.count)
                             status = mode == .page ? pageStatus(completed: value.completed, total: value.total) : value.batches == 0 ? L("Translating chapter · waiting for the server") :
+                                enhanced && value.batch == 1 && value.completed < value.total ? L("Reviewing chapter translation") :
                                 String(format: L("Translating chapter · %lld/%lld regions · batch %lld/%lld"), Int64(value.completed), Int64(value.total), Int64(min(value.batch + 1, value.batches)), Int64(value.batches))
                         case .received(let total):
                             progressIndeterminate = true
@@ -283,7 +306,7 @@ import UIKit
                     defer { continuation.finish(); reporting.cancel() }
                     texts = try await translator.translate(plan.targets.map(\.source), config: config,
                         model: model.map { disk.modelsURL.appendingPathComponent($0.filename) }, catalog: catalog,
-                        batchSize: batchSize, series: series, backendContext: ticket.map { BackendAIContext(reservationID: $0) }) { continuation.yield($0) }
+                        batchSize: batchSize, series: series, enhanced: enhanced, backendContext: ticket.map { BackendAIContext(reservationID: $0) }) { continuation.yield($0) }
                 }
                 try Task.checkCancellation()
                 try plan.apply(texts, to: &chapter.pages, fingerprint: translationFingerprint)

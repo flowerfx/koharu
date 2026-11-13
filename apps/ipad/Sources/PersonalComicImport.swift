@@ -7,25 +7,36 @@ struct PersonalComicImportScreen: View {
     var onReady: (UUID) -> Void
     @State private var title = ""
     @State private var selectingFiles = false
+    @AppStorage("importProject") private var projectID = ""
+    @State private var creatingProject: MangaProject?
+    private var project: UUID? { library.project(UUID(uuidString: projectID))?.id }
     var body: some View {
         Form {
             Section {
                 Text(L("Import images or an image folder from Files, then translate them in your library."))
                 TextField(L("Chapter title (optional)"), text: $title)
             }
+            Section {
+                Picker(L("Project"), selection: Binding(get: { project?.uuidString ?? "" }, set: { projectID = $0 })) {
+                    Text(L("No project")).tag("")
+                    ForEach(library.projects) { Text($0.name).tag($0.id.uuidString) }
+                }
+                Button(L("New project"), systemImage: "folder.badge.plus") { creatingProject = MangaProject(name: "") }
+            } footer: { Text(L("Chapters in a project are grouped together when the library is shown by manga.")) }
             Section(L("Files")) {
                 Button(L("Import images or folder"), systemImage: "folder.badge.plus") { selectingFiles = true }
                     .disabled(library.busy || library.downloadingModel).accessibilityIdentifier("personal-comic-import-files")
-                Text(L("Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate."))
+                Text(L("Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Translate."))
                     .font(.caption).foregroundStyle(.secondary)
             }
             if library.busy {
                 Section { ProgressView(value: library.progress); Text(library.status); Button(L("Stop")) { library.activeTask?.cancel() } }
             }
         }.navigationTitle(L("Import manga"))
+        .sheet(item: $creatingProject) { ProjectEditor(project: $0) { projectID = $0.id.uuidString } }
         .fileImporter(isPresented: $selectingFiles, allowedContentTypes: [.image, .folder], allowsMultipleSelection: true) { result in
             switch result {
-            case .success(let urls): library.importPersonalComic(urls, title: title, onReady: onReady)
+            case .success(let urls): library.importPersonalComic(urls, title: title, project: project, onReady: onReady)
             case .failure(let error): library.error = error.localizedDescription
             }
         }
@@ -33,13 +44,14 @@ struct PersonalComicImportScreen: View {
 }
 
 extension MangaLibrary {
-    func importPersonalComic(_ urls: [URL], title: String, onReady: @escaping (UUID) -> Void) {
+    func importPersonalComic(_ urls: [URL], title: String, project: UUID? = nil, onReady: @escaping (UUID) -> Void) {
         guard !busy, !downloadingModel else { return }
         busy = true; progress = 0; status = L("Importing manga…")
         let id = UUID(), target = preferences.target
         activeTask = Task {
             do {
-                let chapter = try await PersonalComicImporter.load(urls, title: title, id: id, target: target, disk: disk) { self.progress = $0 }
+                var chapter = try await PersonalComicImporter.load(urls, title: title, id: id, target: target, disk: disk) { self.progress = $0 }
+                chapter.projectID = self.project(project)?.id
                 try Task.checkCancellation(); try update(chapter)
                 status = L("Chapter imported"); progress = 1; onReady(chapter.id)
             } catch {

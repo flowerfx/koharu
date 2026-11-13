@@ -12,10 +12,11 @@ enum CreditTier: String, Codable, CaseIterable, Identifiable {
 
 enum CreditAction: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
-    case translate, image, enhance, generatePrompt
+    case translate, translateEnhanced, image, enhance, generatePrompt
     var title: String {
         switch self {
         case .translate: return L("Translate chapter")
+        case .translateEnhanced: return L("Enhanced translation")
         case .image: return L("Generate image")
         case .enhance: return L("Enhance prompt")
         case .generatePrompt: return L("Random character")
@@ -56,6 +57,8 @@ struct CreditConfiguration: Codable {
         let surcharge = provider == .backend ? cost_backend_surcharge : 0
         switch action {
         case .translate: return (premium ? cost_translate_premium : cost_translate_free) + surcharge
+        // Two backend passes (translate, then review the draft): twice an initial backend translation.
+        case .translateEnhanced: return 2 * ((premium ? cost_translate_premium : cost_translate_free) + cost_backend_surcharge)
         case .image: return premium ? cost_image_premium : cost_image_free
         case .enhance: return (premium ? cost_enhance_premium : cost_enhance_free) + surcharge
         case .generatePrompt: return cost_gen_prompt
@@ -219,11 +222,15 @@ extension MangaLibrary {
          ? L("Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded.")
          : L("If you stop or a later page fails, pages already translated are kept and the credits are used. Credits are refunded only when no page was translated."))
     }
+    var enhancedCreditExplanation: String {
+        L("Enhanced translation uses Backend API twice: it translates the chapter, then reviews every line against the original to fix mistakes and keep names consistent.") + "\n" +
+        L("Backend API uses credits when AI output is returned, even if you stop or rendering fails afterwards. Requests that fail without AI output are refunded.")
+    }
     func creditCost(_ action: CreditAction) -> Int {
         credits.policy.cost(action, tier: credits.tier, provider: preferences.provider)
     }
     var rerunCreditCost: Int { credits.policy.rerunCost(provider: preferences.provider) }
-    func requestCredits(_ action: CreditAction, cost: Int, explanation: String = "", changeProvider: Bool = false, rerun: Bool = false, proceed: @escaping @MainActor () -> Void) {
+    func requestCredits(_ action: CreditAction, cost: Int, explanation: String = "", changeProvider: Bool = false, rerun: Bool = false, provider: TranslationProvider? = nil, proceed: @escaping @MainActor () -> Void) {
         guard credits.loaded else {
             error = credits.offline ? L("You're offline. Saved chapters can still be read; translating and generating need a connection.") : L("Could not open credit profile")
             return
@@ -236,7 +243,7 @@ extension MangaLibrary {
             return
         }
         if cost == 0 { proceed(); return }
-        creditRequest = CreditRequest(operation: CreditOperation(action: action, provider: action == .image ? .local : preferences.provider, rerun: rerun), cost: cost, explanation: explanation, canChangeProvider: changeProvider, proceed: proceed)
+        creditRequest = CreditRequest(operation: CreditOperation(action: action, provider: provider ?? (action == .image ? .local : preferences.provider), rerun: rerun), cost: cost, explanation: explanation, canChangeProvider: changeProvider, proceed: proceed)
     }
     func finishCredits(_ ticket: String?, success: Bool, provider: TranslationProvider = .local) async {
         // Settlement must survive cancellation of the generation/translation task.

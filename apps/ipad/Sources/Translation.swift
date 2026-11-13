@@ -58,7 +58,17 @@ enum TranslationContract {
     }
     static func outputTokenLimit(count: Int) -> Int { max(2048, min(8192, count * 96)) }
     static func prompts(_ texts: [String], preferences: Preferences, series: SeriesContext? = nil) throws -> (String, String) {
-        guard let resource = Bundle.main.url(forResource: "translation-system", withExtension: "txt") else { throw AppError.message(L("Translation prompt resource is missing")) }
+        let system = try systemPrompt("translation-system", preferences: preferences, series: series)
+        let payload = TranslationPayload(target_language: preferences.target, series: series, segments: texts.enumerated().map { .init(id: $0.offset, text: $0.element) })
+        return (system, String(decoding: try JSONEncoder().encode(payload), as: UTF8.self))
+    }
+    /// Instructions for enhanced translation's second pass, where the server shows the
+    /// model each source line next to its first-pass draft.
+    static func reviewPrompt(preferences: Preferences, series: SeriesContext? = nil) throws -> String {
+        try systemPrompt("translation-review-system", preferences: preferences, series: series)
+    }
+    private static func systemPrompt(_ name: String, preferences: Preferences, series: SeriesContext?) throws -> String {
+        guard let resource = Bundle.main.url(forResource: name, withExtension: "txt") else { throw AppError.message(L("Translation prompt resource is missing")) }
         let target = TargetLanguage.all.first { $0.tag == preferences.target }?.name ?? preferences.target
         var system = try String(contentsOf: resource, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "{source}", with: "Japanese")
@@ -76,8 +86,7 @@ enum TranslationContract {
             """
         }
         if !preferences.instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { system += "\n\nAdditional instructions:\n" + preferences.instructions }
-        let payload = TranslationPayload(target_language: preferences.target, series: series, segments: texts.enumerated().map { .init(id: $0.offset, text: $0.element) })
-        return (system, String(decoding: try JSONEncoder().encode(payload), as: UTF8.self))
+        return system
     }
     static func schema(count: Int) -> [String: Any] {
         ["type": "object", "additionalProperties": false, "required": ["translations"], "properties": ["translations": ["type": "array", "minItems": count, "maxItems": count, "items": ["type": "object", "additionalProperties": false, "required": ["id", "text"], "properties": ["id": ["type": "integer", "minimum": 0, "maximum": max(0, count - 1)], "text": ["type": "string"]]]]]]
@@ -130,7 +139,7 @@ actor TranslationEngine {
          configuration: @escaping @Sendable () -> AppConfiguration = { .current }) {
         self.hosted = hosted; self.backend = backend; self.configuration = configuration
     }
-    func translate(_ texts: [String], config: Preferences, model: URL?, catalog: GGUFDownload? = nil, batchSize: Int, series: SeriesContext? = nil, backendContext: BackendAIContext? = nil, onProgress: @escaping @Sendable (TranslationProgress) -> Void = { _ in }) async throws -> [String] {
+    func translate(_ texts: [String], config: Preferences, model: URL?, catalog: GGUFDownload? = nil, batchSize: Int, series: SeriesContext? = nil, enhanced: Bool = false, backendContext: BackendAIContext? = nil, onProgress: @escaping @Sendable (TranslationProgress) -> Void = { _ in }) async throws -> [String] {
         try configuration().requireProvider(config.provider)
         if config.provider == .local, let catalog {
             guard catalog.enable else { throw AppError.message(L("This provider or model is disabled in app-config.json. Choose another option in Settings.")) }
@@ -142,7 +151,9 @@ actor TranslationEngine {
             guard let backend, let backendContext else { throw AppError.message(L("Sign in to the backend before using Backend API.")) }
             // The server translates the whole chapter in one call for consistent names and address.
             let (system, user) = try TranslationContract.prompts(texts, preferences: config, series: series)
-            let data = try await backend.generate(system: system, user: user, task: .translate, context: backendContext, count: texts.count, onProgress: onProgress)
+            // Enhanced translation: the server translates, then reviews the draft against the source.
+            let review = enhanced ? try TranslationContract.reviewPrompt(preferences: config, series: series) : nil
+            let data = try await backend.generate(system: system, user: user, task: enhanced ? .translateEnhanced : .translate, reviewSystem: review, context: backendContext, count: texts.count, onProgress: onProgress)
             return try TranslationContract.decode(data, count: texts.count)
         }
         var result: [String] = []

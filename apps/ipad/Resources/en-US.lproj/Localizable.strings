@@ -521,7 +521,7 @@
 "Could not verify this manga's genres. Translation is blocked. Please try again." = "Could not verify this manga's genres. Translation is blocked. Please try again.";
 "External content warning" = "External content warning";
 "Files" = "Files";
-"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate.";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Translate." = "Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Translate.";
 "Import images or an image folder from Files, then translate them in your library." = "Import images or an image folder from Files, then translate them in your library.";
 "Import images or folder" = "Import images or folder";
 "Import manga" = "Import manga";
@@ -584,3 +584,41 @@
 "Text regions per batch" = "Text regions per batch";
 
 "Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits.";
+
+"Enhanced translation" = "Enhanced translation";
+"Reviewing chapter translation" = "Reviewing chapter translation";
+"Enhanced translation uses Backend API twice: it translates the chapter, then reviews every line against the original to fix mistakes and keep names consistent." = "Enhanced translation uses Backend API twice: it translates the chapter, then reviews every line against the original to fix mistakes and keep names consistent.";
+"Translate" = "Translate";
+
+"All chapters" = "All chapters";
+"By manga" = "By manga";
+"Library view" = "Library view";
+"Manga and projects" = "Manga and projects";
+"Imported chapters" = "Imported chapters";
+"Manga page" = "Manga page";
+"Edit project" = "Edit project";
+"New project" = "New project";
+"Manga" = "Manga";
+"Project" = "Project";
+"Pages" = "Pages";
+"Continue reading" = "Continue reading";
+"No chapters yet. Move imported chapters here from the library." = "No chapters yet. Move imported chapters here from the library.";
+"Delete project" = "Delete project";
+"Delete this project?" = "Delete this project?";
+"Its chapters are kept and move back to Imported chapters." = "Its chapters are kept and move back to Imported chapters.";
+"Imported" = "Imported";
+"Read" = "Read";
+"chapters" = "chapters";
+"Last read" = "Last read";
+"Chapter" = "Chapter";
+"Project name" = "Project name";
+"Note (optional)" = "Note (optional)";
+"Move to project" = "Move to project";
+"No project" = "No project";
+"Chapters in a project are grouped together when the library is shown by manga." = "Chapters in a project are grouped together when the library is shown by manga.";
+"Enter a project name." = "Enter a project name.";
+"Sort" = "Sort";
+"Newest first" = "Newest first";
+"Oldest first" = "Oldest first";
+"Latest chapter first" = "Latest chapter first";
+"First chapter first" = "First chapter first";

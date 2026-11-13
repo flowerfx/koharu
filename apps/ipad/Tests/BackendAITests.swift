@@ -21,7 +21,7 @@ private actor BackendRPCFixture {
             value = ["request_id": id, "reservation_id": reservation, "status": "queued"]
         case "ai_result":
             let id = p["request_id"] as! String, request = jobs[id]!
-            let output: [String: Any] = request["task"] as? String == "translate"
+            let output: [String: Any] = ["translate", "translateEnhanced"].contains(request["task"] as? String)
                 ? ["translations": (0..<((request["count"] as? Int ?? 1) + (malformed ? 1 : 0))).reversed().map { ["id": $0, "text": "Translated \($0)"] as [String: Any] }]
                 : ["prompt": "An anime girl with pink hair and a white dress, standing under warm sunlight in a quiet garden.", "character": "Original character"]
             value = ["request_id": id, "reservation_id": reservation, "status": keepRunning ? "running" : "succeeded",
@@ -55,6 +55,28 @@ final class BackendAITests: XCTestCase {
             XCTAssertEqual(payload.segments.map(\.text), input)
             XCTAssertEqual(p["system"] as? String, try TranslationContract.prompts(["Bonjour"], preferences: config).0)
         }
+    }
+    func testEnhancedTranslationSendsReviewInstructionsWithTheChapter() async throws {
+        let f = BackendRPCFixture(), backend = BackendAI(rpc: { try await f.call($0, $1) }, pause: {})
+        let configuration = try AppConfiguration.decode(AppConfiguration.bundledData())
+        let engine = TranslationEngine(backend: backend, configuration: { configuration })
+        var config = Preferences(); config.provider = .backend; config.target = "vi-VN"
+        let input = ["原文 0", "原文 1"]
+        let result = try await engine.translate(input, config: config, model: nil, batchSize: 300, enhanced: true, backendContext: BackendAIContext(reservationID: f.reservation))
+        XCTAssertEqual(result, ["Translated 0", "Translated 1"])
+        let submissions = await f.recorded().filter { $0.0 == "ai_generate" }.map(\.1)
+        let p = try XCTUnwrap(submissions.first)
+        XCTAssertEqual(p["task"] as? String, "translateEnhanced")
+        XCTAssertEqual(p["count"] as? Int, 2)
+        XCTAssertEqual(p["system"] as? String, try TranslationContract.prompts(input, preferences: config).0)
+        let review = try XCTUnwrap(p["review_system"] as? String)
+        XCTAssertEqual(review, try TranslationContract.reviewPrompt(preferences: config))
+        XCTAssertTrue(review.contains("translation editor") && review.contains("Vietnamese") && review.contains("`revisions`") && review.contains("Honorific requirements:"))
+        let plain = try await engine.translate(input, config: config, model: nil, batchSize: 300, backendContext: BackendAIContext(reservationID: f.reservation))
+        XCTAssertEqual(plain.count, 2)
+        let last = await f.recorded().filter { $0.0 == "ai_generate" }.map(\.1).last
+        XCTAssertEqual(try XCTUnwrap(last)["task"] as? String, "translate")
+        XCTAssertNil(try XCTUnwrap(last)["review_system"])
     }
     func testAnimePromptUsesBackendTaskAndOriginalInputWithoutAClientModelOrKey() async throws {
         let f = BackendRPCFixture(), backend = BackendAI(rpc: { try await f.call($0, $1) }, pause: {})

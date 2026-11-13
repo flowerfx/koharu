@@ -166,6 +166,10 @@ struct BrowserScreen: View {
     private var translateTitle: String {
         "\(L("Translate this chapter")) · \(library.creditCost(.translate)) \(L("credits"))"
     }
+    private var enhancedTitle: String {
+        "\(L("Enhanced translation")) · \(library.creditCost(.translateEnhanced)) \(L("credits"))"
+    }
+    private var cannotTranslate: Bool { library.busy || browser.chapter == nil || browser.loading || !browser.canTranslate }
     var body: some View {
         VStack(spacing: 0) {
             if browser.safetyMode.warnsAboutRawkuma {
@@ -200,7 +204,7 @@ struct BrowserScreen: View {
                         Button { browser.webView.goForward() } label: {
                             Image(systemName: "chevron.forward").frame(width: 44, height: 44).contentShape(Rectangle())
                         }.accessibilityLabel(L("Forward")).disabled(!browser.webView.canGoForward)
-                        Button(action: translateChapter) {
+                        Button { translateChapter(enhanced: false) } label: {
                             HStack(spacing: 6) {
                                 Label(translateTitle, systemImage: "translate")
                                     .lineLimit(1).minimumScaleFactor(0.75)
@@ -212,7 +216,14 @@ struct BrowserScreen: View {
                             }.font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity, minHeight: 30)
                         }
                         .buttonStyle(.borderedProminent).controlSize(.small)
-                        .disabled(library.busy || browser.chapter == nil || browser.loading || !browser.canTranslate)
+                        .disabled(cannotTranslate)
+                        Button { translateChapter(enhanced: true) } label: {
+                            Label(enhancedTitle, systemImage: "sparkles")
+                                .lineLimit(1).minimumScaleFactor(0.75)
+                                .font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity, minHeight: 30)
+                        }
+                        .buttonStyle(.bordered).controlSize(.small)
+                        .disabled(cannotTranslate)
                         Menu {
                             if let chapter = browser.chapter { Text("\(chapter.images.count) \(L("pages"))") }
                             Toggle(L("Check source updates"), isOn: $revalidate)
@@ -232,8 +243,10 @@ struct BrowserScreen: View {
                     Button(L("Go")) { browser.goPath() }
                 }.padding(10)
                 HStack {
-                    Button(action: translateChapter) { Label(translateTitle, systemImage: "translate") }
-                    .buttonStyle(.borderedProminent).disabled(library.busy || browser.chapter == nil || browser.loading || !browser.canTranslate)
+                    Button { translateChapter(enhanced: false) } label: { Label(translateTitle, systemImage: "translate") }
+                    .buttonStyle(.borderedProminent).disabled(cannotTranslate)
+                    Button { translateChapter(enhanced: true) } label: { Label(enhancedTitle, systemImage: "sparkles") }
+                    .buttonStyle(.bordered).disabled(cannotTranslate)
                     Toggle(L("Check source updates"), isOn: $revalidate).toggleStyle(.button)
                     Toggle(L("New copy"), isOn: $newCopy).toggleStyle(.button)
                     Spacer()
@@ -275,8 +288,8 @@ struct BrowserScreen: View {
                 .accessibilityIdentifier("rawkuma-address-path")
         }.environment(\.layoutDirection, .leftToRight).frame(maxWidth: .infinity)
     }
-    private func translateChapter() {
+    private func translateChapter(enhanced: Bool) {
         guard browser.canTranslate, let chapter = browser.chapter else { return }
-        library.importChapter(chapter, revalidate: revalidate, newCopy: newCopy, onReady: showLibrary)
+        library.importChapter(chapter, revalidate: revalidate, newCopy: newCopy, enhanced: enhanced, onReady: showLibrary)
     }
 }

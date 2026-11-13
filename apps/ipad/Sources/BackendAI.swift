@@ -8,7 +8,10 @@ struct BackendAIProvider: Decodable, Identifiable, Sendable {
 struct BackendAIContext: Sendable {
     let reservationID: String
 }
-enum BackendAITask: String, Sendable { case translate, enhance, generatePrompt }
+enum BackendAITask: String, Sendable {
+    case translate, translateEnhanced, enhance, generatePrompt
+    var translatesChapter: Bool { self == .translate || self == .translateEnhanced }
+}
 
 // Uses the account's existing authenticated Nakama transport. Provider keys and
 // model choice belong to the server; no hosted credential enters this request.
@@ -37,19 +40,21 @@ actor BackendAI {
     }
     private var invalidResponse: AppError { .message(L("The AI service returned an invalid response. Please try again.")) }
     private func cancel(_ requestID: String) async { _ = try? await call("ai_cancel", ["request_id": requestID]) }
-    func generate(system: String, user: String, task: BackendAITask, context: BackendAIContext, count: Int? = nil, onProgress: @escaping @Sendable (TranslationProgress) -> Void = { _ in }) async throws -> Data {
-        guard let reservation = UUID(uuidString: context.reservationID), !system.isEmpty, !user.isEmpty, system.utf16.count <= 8192, user.utf16.count <= (task == .translate ? 196608 : 32768),
-              task == .translate ? count.map({ (1...2000).contains($0) }) == true : count == nil else {
+    func generate(system: String, user: String, task: BackendAITask, reviewSystem: String? = nil, context: BackendAIContext, count: Int? = nil, onProgress: @escaping @Sendable (TranslationProgress) -> Void = { _ in }) async throws -> Data {
+        guard let reservation = UUID(uuidString: context.reservationID), !system.isEmpty, !user.isEmpty, system.utf16.count <= 8192, user.utf16.count <= (task.translatesChapter ? 196608 : 32768),
+              task == .translateEnhanced ? reviewSystem.map({ !$0.isEmpty && $0.utf16.count <= 8192 }) == true : reviewSystem == nil,
+              task.translatesChapter ? count.map({ (1...2000).contains($0) }) == true : count == nil else {
             throw AppError.message(L("The AI request is too large or invalid. Reduce segments per request or shorten the instructions."))
         }
         let requestID = UUID().uuidString.lowercased(), reservationID = reservation.uuidString.lowercased()
         var payload: [String: Any] = ["request_id": requestID, "reservation_id": reservationID, "task": task.rawValue, "system": system, "user": user]
+        if let reviewSystem { payload["review_system"] = reviewSystem }
         if let count { payload["count"] = count; onProgress(.submitting(total: count)) }
         return try await withTaskCancellationHandler {
             do {
                 try Task.checkCancellation()
                 var response = try await call("ai_generate", payload)
-                let deadline = ContinuousClock.now + .seconds(task == .translate ? 3660 : 660)
+                let deadline = ContinuousClock.now + .seconds(task.translatesChapter ? 3660 : 660)
                 while true {
                     try Task.checkCancellation()
                     guard let job = try JSONSerialization.jsonObject(with: response) as? [String: Any],
@@ -62,7 +67,7 @@ actor BackendAI {
                               let output = result["output"] as? [String: Any] else { throw invalidResponse }
                         let data = try JSONSerialization.data(withJSONObject: output)
                         // The same strict contract validates local, hosted and server output.
-                        if task == .translate { _ = try TranslationContract.decode(data, count: count!); onProgress(.received(total: count!)) }
+                        if task.translatesChapter { _ = try TranslationContract.decode(data, count: count!); onProgress(.received(total: count!)) }
                         else { _ = try AnimePromptContract.decode(data) }
                         return data
                     case "failed":

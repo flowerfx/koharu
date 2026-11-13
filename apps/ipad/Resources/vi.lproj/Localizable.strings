@@ -521,7 +521,7 @@
 "Could not verify this manga's genres. Translation is blocked. Please try again." = "Không thể xác minh thể loại manga này. Việc dịch bị chặn. Vui lòng thử lại.";
 "External content warning" = "Cảnh báo nội dung bên ngoài";
 "Files" = "Tệp";
-"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "Ảnh trong thư mục được sắp xếp theo tên tệp và số trang. Nhập miễn phí; mở chương và chọn Chạy để dịch.";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Translate." = "Ảnh trong thư mục được sắp xếp theo tên tệp và số trang. Nhập miễn phí; mở chương và chọn Dịch.";
 "Import images or an image folder from Files, then translate them in your library." = "Nhập ảnh hoặc thư mục ảnh từ Tệp, sau đó dịch trong thư viện của bạn.";
 "Import images or folder" = "Nhập ảnh hoặc thư mục";
 "Import manga" = "Nhập manga";
@@ -584,3 +584,41 @@
 "Text regions per batch" = "Số vùng chữ mỗi lô";
 
 "Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "Mặc định: 300. Chọn 100–1.000 vùng chữ mỗi lô. Hệ thống có thể chia lô nhỏ hơn để phù hợp giới hạn của model.";
+
+"Enhanced translation" = "Dịch nâng cao";
+"Reviewing chapter translation" = "Đang rà soát bản dịch chương";
+"Enhanced translation uses Backend API twice: it translates the chapter, then reviews every line against the original to fix mistakes and keep names consistent." = "Dịch nâng cao dùng Backend API hai lần: dịch chương, rồi đối chiếu từng câu với bản gốc để sửa lỗi và giữ tên gọi nhất quán.";
+"Translate" = "Dịch";
+
+"All chapters" = "Tất cả chương";
+"By manga" = "Theo manga";
+"Library view" = "Kiểu xem thư viện";
+"Manga and projects" = "Manga và project";
+"Imported chapters" = "Chương đã nhập";
+"Manga page" = "Trang manga";
+"Edit project" = "Sửa project";
+"New project" = "Project mới";
+"Manga" = "Manga";
+"Project" = "Project";
+"Pages" = "Số trang";
+"Continue reading" = "Đọc tiếp";
+"No chapters yet. Move imported chapters here from the library." = "Chưa có chương nào. Hãy chuyển chương đã nhập vào đây từ thư viện.";
+"Delete project" = "Xoá project";
+"Delete this project?" = "Xoá project này?";
+"Its chapters are kept and move back to Imported chapters." = "Các chương vẫn được giữ lại và trở về mục Chương đã nhập.";
+"Imported" = "Truyện nhập";
+"Read" = "Đã đọc";
+"chapters" = "chương";
+"Last read" = "Đọc gần nhất";
+"Chapter" = "Chương";
+"Project name" = "Tên project";
+"Note (optional)" = "Ghi chú (không bắt buộc)";
+"Move to project" = "Chuyển vào project";
+"No project" = "Không thuộc project";
+"Chapters in a project are grouped together when the library is shown by manga." = "Các chương trong cùng project được gom lại khi xem thư viện theo manga.";
+"Enter a project name." = "Hãy nhập tên project.";
+"Sort" = "Sắp xếp";
+"Newest first" = "Mới nhất → cũ nhất";
+"Oldest first" = "Cũ nhất → mới nhất";
+"Latest chapter first" = "Chương mới nhất → chương cũ nhất";
+"First chapter first" = "Chương cũ nhất → chương mới nhất";

@@ -1,7 +1,7 @@
 import UIKit
 
 struct PageTypography {
-    static let version = 2
+    static let version = 3
     let text: NSAttributedString
     let bounds: CGRect
     let font: UIFont

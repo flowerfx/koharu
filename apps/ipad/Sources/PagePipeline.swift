@@ -105,6 +105,7 @@ actor PagePipeline {
             background = try performVisionInference { try inpaintImage(image, boxes: boxes, modelID: modelID, modelRoot: modelRoot, onProgress: onCleanupProgress) }
         } else { background = nil }
         try Task.checkCancellation()
+        let placements = Self.textPlacements(image, segments: segments)
         let format = UIGraphicsImageRendererFormat(); format.scale = 1; format.opaque = true
         let rendered = UIGraphicsImageRenderer(size: size, format: format).image { context in
             image.draw(in: CGRect(origin: .zero, size: size))
@@ -125,11 +126,8 @@ actor PagePipeline {
                     context.cgContext.stroke(box.insetBy(dx: 0.5, dy: 0.5))
                 }
             }
-            for segment in segments {
-                guard let text = segment.text else { continue }
-                let rect = CGRect(x: segment.rect.minX * size.width, y: segment.rect.minY * size.height, width: segment.rect.width * size.width, height: segment.rect.height * size.height).insetBy(dx: -2, dy: -2).intersection(CGRect(origin: .zero, size: size))
+            for (rect, text) in placements {
                 guard rect.width > 1 && rect.height > 1 else { continue }
-                guard !text.isEmpty else { continue }
                 let width = max(0.1, rect.width - 4)
                 let layout = PageTypography(text, size: CGSize(width: width, height: max(0.1, rect.height - 2)))
                 layout.text.draw(in: CGRect(x: rect.minX + 2, y: rect.midY - layout.bounds.height / 2, width: width, height: layout.bounds.height))
@@ -137,6 +135,36 @@ actor PagePipeline {
         }
         guard let data = rendered.pngData() else { throw AppError.message(L("Could not render translated page")) }
         return data
+    }
+    /// Places each translation in its speech bubble when the OCR box sits in a
+    /// closed bubble; regions sharing one bubble are joined in reading order.
+    /// Anything else keeps the padded OCR box.
+    static func textPlacements(_ image: UIImage, segments: [TextSegment]) -> [(CGRect, String)] {
+        let size = image.size, page = CGRect(origin: .zero, size: size)
+        let shown = segments.filter { $0.text != nil }
+        let boxes = shown.map { segment in
+            CGRect(x: segment.rect.minX * size.width, y: segment.rect.minY * size.height, width: segment.rect.width * size.width, height: segment.rect.height * size.height).insetBy(dx: -2, dy: -2).intersection(page)
+        }
+        func plain() -> [(CGRect, String)] { zip(boxes, shown).compactMap { $1.text!.isEmpty ? nil : ($0, $1.text!) } }
+        guard let cgImage = image.cgImage, size.width > 0, size.height > 0 else { return plain() }
+        let width = cgImage.width, height = cgImage.height
+        var gray = [UInt8](repeating: 255, count: width * height)
+        let drawn = gray.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width,
+                                          space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return false }
+            context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return true
+        }
+        guard drawn else { return plain() }
+        let scale = CGFloat(width) / size.width
+        let pixels = boxes.map { CGRect(x: $0.minX * scale, y: $0.minY * scale, width: $0.width * scale, height: $0.height * scale) }
+        return BubbleLayout.groups(gray: gray, width: width, height: height, boxes: pixels).compactMap { group in
+            let text = group.members.compactMap { shown[$0].text }.filter { !$0.isEmpty }.joined(separator: " ")
+            guard !text.isEmpty else { return nil }
+            let rect = group.members.count == 1 && group.rect == pixels[group.members[0]] ? boxes[group.members[0]] :
+                CGRect(x: group.rect.minX / scale, y: group.rect.minY / scale, width: group.rect.width / scale, height: group.rect.height / scale)
+            return (rect, text)
+        }
     }
     func performVisionInference<T>(_ operation: () throws -> T) throws -> T {
         do { return try autoreleasepool(invoking: operation) }

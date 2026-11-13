@@ -122,6 +122,10 @@ struct Chapter: Codable, Identifiable {
     var target: String
     var pages: [MangaPage]
     var readPage = 0
+    /// Rawkuma series title, saved when the chapter is translated.
+    var seriesTitle: String?
+    /// Project of an imported chapter; nil leaves it outside every project.
+    var projectID: UUID?
 }
 struct SourceChapter: Codable {
     var url: String

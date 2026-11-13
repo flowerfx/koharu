@@ -194,7 +194,7 @@ struct RootScreen: View {
     @Environment(MangaLibrary.self) private var library
     @State private var browser = RawkumaBrowser()
     @State private var selection = MainTab.library
-    @State private var readerPath: [UUID] = []
+    @State private var readerPath: [LibraryRoute] = []
     @AppStorage("translationProviderSetupPending") private var providerSetupPending = false
     @State private var settingsProvider: TranslationProvider?
     var body: some View {
@@ -204,21 +204,24 @@ struct RootScreen: View {
             Tab(MainTab.library.title, systemImage: MainTab.library.symbol, value: .library) {
                 NavigationStack(path: $readerPath) {
                     LibraryScreen { url in openSource(url) } browse: { selection = AppConfiguration.current.allowsRawkuma ? .browser : .importManga }
-                        .navigationDestination(for: UUID.self) { id in
-                            ReaderScreen(chapterID: id, openSource: openSource).id(id)
+                        .navigationDestination(for: LibraryRoute.self) { route in
+                            switch route {
+                            case .chapter(let id): ReaderScreen(chapterID: id, openSource: openSource).id(id)
+                            case .shelf(let kind): ShelfScreen(kind: kind, openSource: openSource)
+                            }
                         }
                 }
                 .modifier(MainTabLayout())
             }
             Tab(MainTab.importManga.title, systemImage: MainTab.importManga.symbol, value: .importManga) {
                 NavigationStack {
-                    PersonalComicImportScreen() { id in readerPath = [id]; selection = .library }
+                    PersonalComicImportScreen() { id in readerPath = [.chapter(id)]; selection = .library }
                 }.modifier(MainTabLayout())
             }
             if AppConfiguration.current.allowsRawkuma {
                 Tab(MainTab.browser.title, systemImage: MainTab.browser.symbol, value: .browser) {
                     NavigationStack {
-                        BrowserScreen(browser: browser) { id in readerPath = [id]; selection = .library }
+                        BrowserScreen(browser: browser) { id in readerPath = [.chapter(id)]; selection = .library }
                     }.modifier(MainTabLayout())
                 }
             }
@@ -369,77 +372,6 @@ struct ChapterProcessingIndicator: View {
     }
 }
 
-struct LibraryScreen: View {
-    @Environment(MangaLibrary.self) private var library
-    var openSource: (String) -> Void
-    var browse: () -> Void
-    @State private var deleting: Chapter?
-    @State private var deletingAll = false
-    @State private var searchText = ""
-    private var query: String { searchText.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private var visibleChapters: [Chapter] {
-        query.isEmpty ? library.chapters : library.chapters.filter { $0.title.localizedStandardContains(query) }
-    }
-    var body: some View {
-        List {
-            Section {
-                if library.chapters.isEmpty {
-                    ContentUnavailableView {
-                        Label(L("Your manga library"), systemImage: "books.vertical")
-                    } description: { Text(AppConfiguration.current.allowsRawkuma ? L("Browse Rawkuma and translate a chapter. Saved chapters stay on this device.") : L("Import images or an image folder from Files, then translate them in your library.")) } actions: { Button(AppConfiguration.current.allowsRawkuma ? MainTab.browser.title : MainTab.importManga.title, action: browse).buttonStyle(.borderedProminent) }
-                }
-                if !library.chapters.isEmpty && visibleChapters.isEmpty {
-                    ContentUnavailableView(L("No matching chapters"), systemImage: "magnifyingglass", description: Text(L("Try another chapter title.")))
-                }
-                ForEach(visibleChapters) { chapter in
-                    NavigationLink(value: chapter.id) {
-                        VStack(alignment: .leading, spacing: 7) {
-                            Text(chapter.title).font(.headline).lineLimit(2)
-                            Text("\(chapter.pages.count) \(L("pages")) · \(AppLocalization.shared.locale.localizedString(forIdentifier: chapter.target) ?? chapter.target)").font(.caption).foregroundStyle(.secondary)
-                            ProgressView(value: Double(chapter.pages.filter { $0.rendered != nil }.count), total: Double(max(1, chapter.pages.count))).tint(.pink)
-                        }.padding(.vertical, 8)
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(L("Delete"), systemImage: "trash", role: .destructive) { deleting = chapter }.disabled(library.busy)
-                    }
-                    .contextMenu {
-                        Button(L("Original chapter"), systemImage: "globe") { openSource(chapter.sourceURL) }
-                            .disabled(!AppConfiguration.current.allowsRawkuma || AppConfiguration.current.rawkuma?.contains(chapter.sourceURL) != true)
-                        Button(library.preferences.provider == .backend ? "\(L("Retranslate")) · \(library.rerunCreditCost) \(L("credits"))" : L("Retranslate"), systemImage: "arrow.clockwise") { library.run(chapter.id, force: true) }.disabled(library.busy)
-                        Divider()
-                        Button(L("Delete"), systemImage: "trash", role: .destructive) { deleting = chapter }.disabled(library.busy)
-                    }
-                }
-            } header: {
-                Text("\(L("Chapters")): \(query.isEmpty ? "\(library.chapters.count)" : "\(visibleChapters.count) / \(library.chapters.count)")")
-                    .monospacedDigit().textCase(nil)
-            }
-        }
-        .navigationTitle(L("Library"))
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: L("Search chapters"))
-        .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                Button(L("Delete all chapters"), systemImage: "trash") { deletingAll = true }
-                    .disabled(library.busy || library.chapters.isEmpty)
-                Button(AppConfiguration.current.allowsRawkuma ? MainTab.browser.title : MainTab.importManga.title,
-                       systemImage: AppConfiguration.current.allowsRawkuma ? "globe" : "folder.badge.plus", action: browse)
-            }
-        }
-        .confirmationDialog(L("Delete this saved chapter?"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
-            Button(L("Delete"), role: .destructive) { if let deleting { library.delete([deleting.id]) }; deleting = nil }
-            Button(L("Cancel"), role: .cancel) { deleting = nil }
-        } message: {
-            Text(L("Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept."))
-        }
-        .confirmationDialog(L("Delete all saved chapters?"), isPresented: $deletingAll, titleVisibility: .visible) {
-            Button(L("Delete all chapters"), role: .destructive) { library.delete(library.chapters.map(\.id)) }
-            Button(L("Cancel"), role: .cancel) {}
-        } message: {
-            Text(L("Original images, translations and chapter history will be permanently deleted. Downloaded models and settings are kept."))
-        }
-    }
-}
-
 struct ReaderScreen: View {
     @Environment(MangaLibrary.self) private var library
     let chapterID: UUID
@@ -493,8 +425,8 @@ struct ReaderScreen: View {
                             .disabled(!AppConfiguration.current.allowsRawkuma || AppConfiguration.current.rawkuma?.contains(chapter.sourceURL) != true)
                         Menu {
                             Toggle(L("Entire project"), isOn: $entireProject)
-                            Button(L("Run") + rerunCreditSuffix, systemImage: "play") { library.run(chapterID, force: false, page: entireProject ? nil : page.id) }.disabled(library.busy)
-                            Button(L("Retranslate") + rerunCreditSuffix, systemImage: "arrow.clockwise") { library.run(chapterID, force: true, page: entireProject ? nil : page.id) }.disabled(library.busy)
+                            Button(L("Translate") + rerunCreditSuffix, systemImage: "arrow.clockwise") { library.run(chapterID, force: true, page: entireProject ? nil : page.id) }.disabled(library.busy)
+                            Button("\(L("Enhanced translation")) · \(library.creditCost(.translateEnhanced)) \(L("credits"))", systemImage: "sparkles") { library.run(chapterID, force: true, page: entireProject ? nil : page.id, enhanced: true) }.disabled(library.busy)
                             Button(L("Undo"), systemImage: "arrow.uturn.backward") { library.restore(chapterID, redo: false) }.disabled(library.busy || !FileManager.default.fileExists(atPath: library.disk.chapterURL(chapterID).appendingPathComponent("undo.json").path))
                             Button(L("Redo"), systemImage: "arrow.uturn.forward") { library.restore(chapterID, redo: true) }.disabled(library.busy || !FileManager.default.fileExists(atPath: library.disk.chapterURL(chapterID).appendingPathComponent("redo.json").path))
                             Button(L("Share page"), systemImage: "square.and.arrow.up") { share = pageURL(page) }

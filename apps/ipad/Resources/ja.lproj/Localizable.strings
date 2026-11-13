@@ -521,7 +521,7 @@
 "Could not verify this manga's genres. Translation is blocked. Please try again." = "このマンガのジャンルを確認できませんでした。翻訳がブロックされています。再度お試しください。";
 "External content warning" = "外部コンテンツの警告";
 "Files" = "ファイル";
-"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "フォルダ内の画像はファイル名とページ番号でソートされています。インポートは無料です。チャプターを開き、[実行]を選択して翻訳してください。";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Translate." = "フォルダ内の画像はファイル名とページ番号でソートされています。インポートは無料です。チャプターを開き、[翻訳]を選択してください。";
 "Import images or an image folder from Files, then translate them in your library." = "ファイルから画像または画像フォルダをインポートし、ライブラリで翻訳してください。";
 "Import images or folder" = "画像またはフォルダをインポート";
 "Import manga" = "マンガをインポート";
@@ -584,3 +584,41 @@
 "Text regions per batch" = "バッチごとのテキスト領域数";
 
 "Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "初期値：300。バッチごとに100〜1,000のテキスト領域を指定します。モデルの制限に応じて、より小さいバッチに分割される場合があります。";
+
+"Enhanced translation" = "高品質翻訳";
+"Reviewing chapter translation" = "チャプターの翻訳を見直し中";
+"Enhanced translation uses Backend API twice: it translates the chapter, then reviews every line against the original to fix mistakes and keep names consistent." = "高品質翻訳は Backend API を2回使います。チャプターを翻訳した後、全ての行を原文と照らし合わせて誤りを直し、名前の表記を統一します。";
+"Translate" = "翻訳";
+
+"All chapters" = "すべてのチャプター";
+"By manga" = "マンガ別";
+"Library view" = "ライブラリ表示";
+"Manga and projects" = "マンガとプロジェクト";
+"Imported chapters" = "インポートしたチャプター";
+"Manga page" = "マンガページ";
+"Edit project" = "プロジェクトを編集";
+"New project" = "新規プロジェクト";
+"Manga" = "マンガ";
+"Project" = "プロジェクト";
+"Pages" = "ページ数";
+"Continue reading" = "続きを読む";
+"No chapters yet. Move imported chapters here from the library." = "まだチャプターがありません。ライブラリからインポートしたチャプターを移動してください。";
+"Delete project" = "プロジェクトを削除";
+"Delete this project?" = "このプロジェクトを削除しますか？";
+"Its chapters are kept and move back to Imported chapters." = "チャプターは残り、「インポートしたチャプター」に戻ります。";
+"Imported" = "インポート";
+"Read" = "既読";
+"chapters" = "チャプター";
+"Last read" = "最後に読んだ";
+"Chapter" = "チャプター";
+"Project name" = "プロジェクト名";
+"Note (optional)" = "メモ（任意）";
+"Move to project" = "プロジェクトへ移動";
+"No project" = "プロジェクトなし";
+"Chapters in a project are grouped together when the library is shown by manga." = "マンガ別表示では、同じプロジェクトのチャプターがまとめて表示されます。";
+"Enter a project name." = "プロジェクト名を入力してください。";
+"Sort" = "並べ替え";
+"Newest first" = "新しい順";
+"Oldest first" = "古い順";
+"Latest chapter first" = "最新チャプター順";
+"First chapter first" = "最初のチャプター順";

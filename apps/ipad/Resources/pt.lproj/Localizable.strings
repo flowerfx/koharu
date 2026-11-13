@@ -521,7 +521,7 @@
 "Could not verify this manga's genres. Translation is blocked. Please try again." = "Não foi possível verificar os gêneros deste mangá. A tradução está bloqueada. Por favor, tente novamente.";
 "External content warning" = "Aviso de conteúdo externo";
 "Files" = "Arquivos";
-"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Run to translate." = "Imagens na pasta são ordenadas por nome de arquivo e número da página. Importar é gratuito; abra o capítulo e escolha Executar para traduzir.";
+"Images in a folder are sorted by filename and page number. Importing is free; open the chapter and choose Translate." = "Imagens na pasta são ordenadas por nome de arquivo e número da página. Importar é gratuito; abra o capítulo e escolha Traduzir.";
 "Import images or an image folder from Files, then translate them in your library." = "Importe imagens ou uma pasta do app Arquivos, depois traduza na sua biblioteca.";
 "Import images or folder" = "Importar imagens ou pasta";
 "Import manga" = "Importar mangá";
@@ -584,3 +584,41 @@
 "Text regions per batch" = "Regiões de texto por lote";
 
 "Default: 300. Set 100–1,000 text regions per batch. Smaller batches may be used to fit the model's limits." = "Padrão: 300. Escolha de 100 a 1.000 regiões de texto por lote. Os lotes podem ser menores conforme os limites do modelo.";
+
+"Enhanced translation" = "Tradução aprimorada";
+"Reviewing chapter translation" = "Revisando a tradução do capítulo";
+"Enhanced translation uses Backend API twice: it translates the chapter, then reviews every line against the original to fix mistakes and keep names consistent." = "A tradução aprimorada usa o Backend API duas vezes: traduz o capítulo e depois revê cada linha com o original para corrigir erros e manter os nomes consistentes.";
+"Translate" = "Traduzir";
+
+"All chapters" = "Todos os capítulos";
+"By manga" = "Por mangá";
+"Library view" = "Visualização da biblioteca";
+"Manga and projects" = "Mangás e projetos";
+"Imported chapters" = "Capítulos importados";
+"Manga page" = "Página do mangá";
+"Edit project" = "Editar projeto";
+"New project" = "Novo projeto";
+"Manga" = "Mangá";
+"Project" = "Projeto";
+"Pages" = "Páginas";
+"Continue reading" = "Continuar lendo";
+"No chapters yet. Move imported chapters here from the library." = "Ainda não há capítulos. Mova capítulos importados da biblioteca para cá.";
+"Delete project" = "Excluir projeto";
+"Delete this project?" = "Excluir este projeto?";
+"Its chapters are kept and move back to Imported chapters." = "Os capítulos são mantidos e voltam para Capítulos importados.";
+"Imported" = "Importado";
+"Read" = "Lido";
+"chapters" = "capítulos";
+"Last read" = "Última leitura";
+"Chapter" = "Capítulo";
+"Project name" = "Nome do projeto";
+"Note (optional)" = "Nota (opcional)";
+"Move to project" = "Mover para projeto";
+"No project" = "Sem projeto";
+"Chapters in a project are grouped together when the library is shown by manga." = "Os capítulos de um projeto ficam agrupados quando a biblioteca é exibida por mangá.";
+"Enter a project name." = "Digite um nome para o projeto.";
+"Sort" = "Ordenar";
+"Newest first" = "Mais recentes primeiro";
+"Oldest first" = "Mais antigos primeiro";
+"Latest chapter first" = "Último capítulo primeiro";
+"First chapter first" = "Primeiro capítulo primeiro";
